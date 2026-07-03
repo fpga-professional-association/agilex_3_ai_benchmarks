@@ -29,7 +29,7 @@ Per-dataset strides and capacities (16 MB − 64 KB log reserve; minus resident 
 |---|---|---|---|
 | ToyADMOS slices (AD) | 640 | 704 | 23,738 |
 | Speech Commands (KWS) | 490 | 512 | 32,640 (full 4,890-record test ×6) |
-| CIFAR-10 (ResNet-8) | 3,072 | 3,136 | 5,329 (53% of 10,000) |
+| CIFAR-10 (ResNet-8) | 3,072 | 3,136 | 5,328 (53% of 10,000) |
 | VWW 96² (MobileNetV1-0.25) | 27,648 | 27,712 | 603 |
 | 224² RGB (MobileNetV2 / ResNet-18) | 150,528 | 150,592 | 87 / 33 (after weights) |
 | 416² (Tiny-YOLOv3) | 519,168 | 519,232 | 15 (after weights) |
