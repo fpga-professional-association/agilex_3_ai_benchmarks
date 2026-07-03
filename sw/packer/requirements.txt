@@ -1,0 +1,3 @@
+# Record packer deps (issue #5). numpy only — no OpenVINO here; the packer consumes already-quantized
+# tensors plus the scale/zero-point extracted by sw/model_prep (issue #3).
+numpy>=1.26

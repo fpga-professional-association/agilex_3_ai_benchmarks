@@ -107,7 +107,7 @@ Pipeline: `QSPI/JTAG loader → HyperRAM (records+labels) → HBMC+DMA (linear b
 - Scoreboard register map: see `docs/register_map.md`.
 - `FPS = DONE_COUNT × f_clk / CYCLES_64`; `accuracy = PASS_COUNT / DONE_COUNT`.
 - Record-store capacity (16 MB − 64 KB result log, minus resident weights when >400 KB):
-  AD 23,738 · KWS 32,640 (full test ×6) · ResNet-8 5,329 (53% of 10 k) · VWW 603 ·
+  AD 23,738 · KWS 32,640 (full test ×6) · ResNet-8 5,328 (53% of 10 k) · VWW 603 ·
   MobileNetV2 87 · ResNet-18 33 · Tiny-YOLOv3 15.
 - Loop the resident set for sustained-rate runs; report cold-pass and looped numbers separately.
   For CIFAR-10 full-set accuracy, stage the remaining half from QSPI between passes.
