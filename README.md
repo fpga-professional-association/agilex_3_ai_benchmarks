@@ -35,6 +35,33 @@ context, exact deliverables, step-by-step instructions, acceptance criteria.
 Dependency spine: `M0 → M1 → (M2 ∥ M3-software) → M3-integration → M4 → M5`. Software-only issues
 (label `software-only`) can be picked up in parallel at any time.
 
+| # | Issue | Depends on |
+|---|---|---|
+| [#1](../../issues/1) | Quartus Pro ≥25.3 + FPGA AI Suite install | — |
+| [#2](../../issues/2) | Model zoo → ONNX + fp32 baselines | — |
+| [#3](../../issues/3) | OpenVINO IR + NNCF INT8 + CPU reference | #2 |
+| [#4](../../issues/4) | Results tooling + CI | — |
+| [#5](../../issues/5) | HyperRAM record packer | #3 |
+| [#6](../../issues/6) | PH0 estimator sweep | #1 #3 |
+| [#7](../../issues/7) | Hostless JTAG example on AXC3000 | #1 #3 |
+| [#8](../../issues/8) | DDR-free example (MIF weights) | #7 |
+| [#9](../../issues/9) | L0 tensor-mode chain + audit script | #1 |
+| [#10](../../issues/10) | L0b soft-MAC density INT4/2/1 | #1 |
+| [#11](../../issues/11) | L1 fmax vs PE-array sweep | #9 |
+| [#12](../../issues/12) | L2 M20K bandwidth vs banking | #1 #7 |
+| [#13](../../issues/13) | HyperBus controller port (W957D8NB) | #1 |
+| [#14](../../issues/14) | L3 training + shmoo + sustained BW | #13 |
+| [#15](../../issues/15) | Scoreboard RTL + testbench | — |
+| [#16](../../issues/16) | Record-replay datapath | #13 #15 |
+| [#17](../../issues/17) | Host benchmark runner | #15 #5 |
+| [#18](../../issues/18) | Integration (a): L5 Tiny dataset | #8 #14 #15 #16 #17 |
+| [#19](../../issues/19) | Integration (b): >400 KB models | #18 |
+| [#20](../../issues/20) | L4 overlay fixed cost | #18 |
+| [#21](../../issues/21) | Accuracy parity gate | #18 |
+| [#22](../../issues/22) | Power → µJ/inference | #18 |
+| [#23](../../issues/23) | LV7 quantization Pareto | #18 #10 |
+| [#24](../../issues/24) | Spatial Compiler + dataflow memo | #18 #20 |
+
 ## Repository layout
 
 ```
