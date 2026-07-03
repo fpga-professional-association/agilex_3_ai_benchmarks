@@ -1,0 +1,13 @@
+{
+  "kind": "measured",
+  "level": "L2",
+  "subject": "measured-without-fclk",
+  "date": "2026-08-10",
+  "config": {
+    "device": "A3CY100BM16AE7S",
+    "tool_versions": {"quartus": "25.3"}
+  },
+  "metrics": {
+    "gbps_aggregate": 264.0
+  }
+}
