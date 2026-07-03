@@ -1,0 +1,14 @@
+{
+  "kind": "estimate",
+  "level": "PH0",
+  "subject": "model-estimate-without-arch-file",
+  "date": "2026-07-10",
+  "config": {
+    "device": "A3CY100BM16AE7S",
+    "model": "ds-cnn-kws",
+    "tool_versions": {"ai_suite": "25.3"}
+  },
+  "metrics": {
+    "fps": 103000
+  }
+}

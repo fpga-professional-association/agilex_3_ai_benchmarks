@@ -1,0 +1,6 @@
+# Lightweight deps for the results tooling and CI (issue #4).
+# Heavy model deps (openvino, nncf, torch, tensorflow) live in sw/model_prep/requirements.txt,
+# never here — CI must stay fast and must not import them.
+jsonschema>=4.10
+numpy>=1.26
+pytest>=7

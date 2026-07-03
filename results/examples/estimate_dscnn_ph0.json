@@ -1,0 +1,23 @@
+{
+  "kind": "estimate",
+  "level": "PH0",
+  "subject": "dscnn-kws-estimator-250mbps",
+  "date": "2026-07-10",
+  "plan_ref": "§5 table",
+  "config": {
+    "device": "A3CY100BM16AE7S",
+    "board": "Arrow AXC3000",
+    "arch_file": "models/arch/agilex3_ddrfree.arch",
+    "model": "ds-cnn-kws",
+    "quantization": "int8-nncf-ptq",
+    "tool_versions": {
+      "quartus": "25.3",
+      "ai_suite": "25.3",
+      "openvino": "2024.6"
+    }
+  },
+  "metrics": {
+    "fps": 103000
+  },
+  "notes": "FPGA AI Suite performance-estimator output at 250 MB/s external memory bandwidth. Template/example result — replace with a real PH0 run (issue #6). Compare against PLAN §5 planning FPS (~103k)."
+}

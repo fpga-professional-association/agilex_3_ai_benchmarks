@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  python:
+    name: Python tooling + result validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install lightweight test deps
+        # CI stays dependency-light on purpose (issue #4): only what the schema/report/packer
+        # tooling needs. Heavy model deps (openvino, nncf, torch) are NOT imported by CI tests —
+        # tests that need them skip when the import is missing.
+        run: python -m pip install --upgrade pip jsonschema numpy pytest
+
+      - name: Validate all result JSONs
+        run: python scripts/validate_results.py
+
+      - name: Check results summary is up to date
+        run: python scripts/make_report.py --check
+
+      - name: Run pytest (scripts/ + sw/)
+        run: python -m pytest

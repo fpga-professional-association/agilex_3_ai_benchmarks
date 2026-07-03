@@ -1,0 +1,32 @@
+{
+  "kind": "measured",
+  "level": "L0",
+  "subject": "tensor-chain-n32-macs-per-dsp",
+  "date": "2026-08-01",
+  "plan_ref": "§7 L0",
+  "config": {
+    "device": "A3CY100BM16AE7S",
+    "board": "Arrow AXC3000",
+    "fclk_mhz": 300,
+    "tool_versions": {
+      "quartus": "25.3",
+      "python": "3.12"
+    },
+    "utilization": {
+      "dsp": 32,
+      "dsp_tensor_mode": 32,
+      "alm": 1840,
+      "m20k": 4
+    },
+    "bitstream_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "report_paths": [
+      "quartus/l0_tensor_chain/output_files/l0_n32.fit.rpt",
+      "quartus/l0_tensor_chain/output_files/l0_n32.sta.rpt"
+    ]
+  },
+  "metrics": {
+    "macs_per_dsp_cycle": 20,
+    "fmax_mhz": 312
+  },
+  "notes": "Template/example result — replace with a real L0 hardware run (issue #9). All 32 DSPs confirmed in tensor mode by scripts/audit_tensor_mode.py; 20/20 MACs/DSP/cycle achieved."
+}

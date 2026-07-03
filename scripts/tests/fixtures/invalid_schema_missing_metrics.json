@@ -1,0 +1,11 @@
+{
+  "kind": "measured",
+  "level": "L0",
+  "subject": "missing-metrics-object",
+  "date": "2026-08-01",
+  "config": {
+    "device": "A3CY100BM16AE7S",
+    "fclk_mhz": 300,
+    "tool_versions": {"quartus": "25.3"}
+  }
+}
