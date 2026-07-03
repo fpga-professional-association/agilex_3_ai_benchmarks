@@ -16,6 +16,8 @@ quartus/**/synth_dumps/
 
 # Simulation
 sim/**/obj_dir/
+sim/**/obj_*/
+sim/**/*.build.log
 sim/**/work/
 *.vcd
 *.fst

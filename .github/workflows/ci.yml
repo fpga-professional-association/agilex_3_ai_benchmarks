@@ -30,3 +30,15 @@ jobs:
 
       - name: Run pytest (scripts/ + sw/)
         run: python -m pytest
+
+  rtl:
+    name: RTL lint + Verilator testbenches
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Verilator
+        run: sudo apt-get update && sudo apt-get install -y verilator
+
+      - name: Scoreboard lint + testbenches (issue #15)
+        run: bash sim/scoreboard/run.sh
