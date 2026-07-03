@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "result.schema.json",
+  "title": "AXC3000 benchmark result",
+  "type": "object",
+  "required": ["kind", "level", "subject", "date", "config", "metrics"],
+  "additionalProperties": false,
+  "properties": {
+    "kind": {
+      "enum": ["estimate", "measured", "reference"],
+      "description": "estimate = desk/estimator number; measured = from hardware; reference = software accuracy baseline"
+    },
+    "level": {
+      "type": "string",
+      "pattern": "^(L0b?|L[1-5]|PH[0-6])$",
+      "description": "Characterization-ladder level or tool-flow phase that produced this (PLAN §7/§9)"
+    },
+    "subject": {
+      "type": "string",
+      "description": "What was measured, kebab-case, e.g. 'hyperbus-sustained-bw', 'resnet8-methodB-int8'"
+    },
+    "date": { "type": "string", "format": "date" },
+    "plan_ref": { "type": "string", "description": "PLAN.md section this number replaces or informs, e.g. '§5 table'" },
+    "config": {
+      "type": "object",
+      "required": ["device", "tool_versions"],
+      "additionalProperties": true,
+      "properties": {
+        "device": { "const": "A3CY100BM16AE7S" },
+        "board": { "type": "string", "default": "Arrow AXC3000" },
+        "fclk_mhz": { "type": "number", "description": "Hot-domain fabric clock. Mandatory for kind=measured on-fabric results" },
+        "hyperbus_mhz": { "type": "number" },
+        "tool_versions": {
+          "type": "object",
+          "description": "quartus, ai_suite, openvino, nncf, python — whichever apply",
+          "additionalProperties": { "type": "string" }
+        },
+        "arch_file": { "type": "string", "description": "models/arch/ path, mandatory for AI Suite IP results" },
+        "model": { "type": "string" },
+        "quantization": { "type": "string", "description": "e.g. int8-nncf-ptq, int4, fp32" },
+        "feed_method": { "enum": ["A", "B", "C", "D"], "description": "PLAN §8" },
+        "utilization": {
+          "type": "object",
+          "properties": {
+            "alm": { "type": "number" },
+            "dsp": { "type": "integer" },
+            "dsp_tensor_mode": { "type": "integer", "description": "from scripts/audit_tensor_mode.py" },
+            "m20k": { "type": "integer" }
+          }
+        },
+        "bitstream_sha256": { "type": "string" },
+        "report_paths": { "type": "array", "items": { "type": "string" } },
+        "licensed_ip": { "type": "boolean", "description": "false = 10k-inference cap applies (PLAN §9 PH1)" }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": true,
+      "properties": {
+        "fps": { "type": "number" },
+        "latency_us_p50": { "type": "number" },
+        "latency_us_p99": { "type": "number" },
+        "latency_us_min": { "type": "number" },
+        "latency_us_max": { "type": "number" },
+        "accuracy_top1": { "type": "number" },
+        "n_records": { "type": "integer" },
+        "cold_pass": { "type": "boolean", "description": "true = first pass from cold store; false = looped resident set" },
+        "sustained_mbps": { "type": "number" },
+        "fmax_mhz": { "type": "number" },
+        "macs_per_dsp_cycle": { "type": "number" },
+        "macs_per_kalm": { "type": "number" },
+        "gbps_aggregate": { "type": "number" },
+        "overlay_fixed_us": { "type": "number" },
+        "uj_per_inference": { "type": "number" },
+        "board_watts": { "type": "number" }
+      }
+    },
+    "notes": { "type": "string" }
+  }
+}

@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AXC3000 · AI Capacity &amp; Benchmark Plan</title>
+<style>
+  :root{
+    --bg:#0B0F14; --panel:#121820; --panel2:#0E141B;
+    --line:#1F2933; --hair:#263241;
+    --txt:#C9D4DE; --dim:#7C8B99; --faint:#4E5D6B;
+    --amber:#E8A33D;        /* compute-side */
+    --amber-dim:#8A6524;
+    --cyan:#4FB8CE;         /* memory-side */
+    --cyan-dim:#2E6B79;
+    --mono:ui-monospace,"SF Mono","Cascadia Code",Consolas,Menlo,monospace;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto} *{transition:none!important}}
+  body{background:var(--bg);color:var(--txt);font:16px/1.6 var(--sans);
+       -webkit-font-smoothing:antialiased}
+  .wrap{max-width:900px;margin:0 auto;padding:0 20px 96px}
+
+  /* ---------- datasheet header block ---------- */
+  header{border-bottom:1px solid var(--line);padding:34px 0 22px;margin-bottom:8px}
+  .idrow{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:baseline;
+         font:12px/1.4 var(--mono);color:var(--dim);letter-spacing:.08em;text-transform:uppercase}
+  .idrow b{color:var(--txt);font-weight:600}
+  h1{font:600 clamp(24px,5vw,34px)/1.15 var(--sans);letter-spacing:-.01em;margin:14px 0 10px;color:#E8EEF3}
+  .thesis{color:var(--dim);max-width:64ch}
+  .thesis em{font-style:normal;color:var(--txt)}
+  .legend{display:flex;gap:18px;margin-top:16px;font:12px var(--mono);letter-spacing:.06em}
+  .legend span{display:inline-flex;align-items:center;gap:7px;color:var(--dim)}
+  .dot{width:9px;height:9px;border-radius:2px;display:inline-block}
+  .dot.a{background:var(--amber)} .dot.c{background:var(--cyan)}
+
+  /* ---------- toc ---------- */
+  nav{display:flex;flex-wrap:wrap;gap:6px 14px;padding:14px 0 6px;font:12.5px var(--mono);
+      border-bottom:1px solid var(--line)}
+  nav a{color:var(--dim);text-decoration:none;letter-spacing:.04em}
+  nav a:hover,nav a:focus-visible{color:var(--amber)}
+  a:focus-visible{outline:1.5px solid var(--amber);outline-offset:2px;border-radius:2px}
+
+  /* ---------- sections ---------- */
+  section{padding:38px 0 6px;border-bottom:1px solid var(--line)}
+  .sec-label{font:11px var(--mono);letter-spacing:.22em;text-transform:uppercase;color:var(--faint)}
+  h2{font:600 21px/1.3 var(--sans);margin:6px 0 16px;color:#E8EEF3}
+  h3{font:600 15px/1.4 var(--sans);margin:26px 0 10px;color:var(--txt)}
+  p{margin:0 0 14px;max-width:72ch}
+  p.note{font-size:14px;color:var(--dim)}
+  code{font:.88em var(--mono);color:var(--cyan);background:var(--panel2);
+       padding:1px 5px;border-radius:3px;border:1px solid var(--hair)}
+  .amberc{color:var(--amber)} .cyanc{color:var(--cyan)}
+  ul{margin:0 0 14px 20px;max-width:72ch} li{margin-bottom:7px}
+  strong{color:#E8EEF3;font-weight:600}
+
+  /* ---------- tables ---------- */
+  .scroll{overflow-x:auto;margin:14px 0 18px;border:1px solid var(--line);border-radius:6px}
+  table{border-collapse:collapse;width:100%;min-width:560px;font:13.5px var(--mono);background:var(--panel2)}
+  th{font:10.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--faint);
+     text-align:left;padding:9px 12px;border-bottom:1px solid var(--hair);white-space:nowrap}
+  td{padding:8px 12px;border-bottom:1px solid #161E28;vertical-align:top;white-space:nowrap}
+  tr:last-child td{border-bottom:none}
+  td.l,th.l{white-space:normal;min-width:130px}
+  td.r,th.r{text-align:right}
+  .chip{display:inline-block;font:10.5px var(--mono);letter-spacing:.07em;padding:2px 8px;
+        border-radius:3px;border:1px solid}
+  .chip.a{color:var(--amber);border-color:var(--amber-dim);background:rgba(232,163,61,.07)}
+  .chip.c{color:var(--cyan);border-color:var(--cyan-dim);background:rgba(79,184,206,.07)}
+  .ok{color:#8FB89B}.no{color:#C97B6E}
+
+  /* ---------- callout ---------- */
+  .callout{border:1px solid var(--hair);border-left:3px solid var(--amber);
+           background:var(--panel);border-radius:0 6px 6px 0;padding:14px 18px;margin:18px 0;max-width:76ch}
+  .callout.mem{border-left-color:var(--cyan)}
+  .callout p{margin:0;font-size:14.5px}
+
+  /* ---------- waterfall ---------- */
+  .wf{margin:16px 0 6px}
+  .wf-row{display:grid;grid-template-columns:190px 1fr 130px;gap:12px;align-items:center;margin-bottom:9px}
+  .wf-name{font:12px var(--mono);color:var(--dim);text-align:right;letter-spacing:.03em}
+  .wf-track{height:16px;background:var(--panel2);border:1px solid var(--hair);border-radius:3px;overflow:hidden}
+  .wf-bar{height:100%;background:linear-gradient(90deg,var(--amber-dim),var(--amber));transition:width .25s}
+  .wf-val{font:12.5px var(--mono);color:var(--txt)}
+  @media(max-width:640px){
+    .wf-row{grid-template-columns:1fr;gap:4px}
+    .wf-name{text-align:left}
+  }
+
+  /* ---------- assumptions panel ---------- */
+  .panel{border:1px solid var(--hair);background:var(--panel);border-radius:8px;padding:18px 20px;margin:20px 0}
+  .panel h3{margin-top:0;font:11px var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--faint)}
+  .ctl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px 26px}
+  .ctl label{display:flex;justify-content:space-between;font:12px var(--mono);
+             color:var(--dim);margin-bottom:6px;letter-spacing:.03em}
+  .ctl output{color:var(--amber);font-weight:600}
+  .ctl.mem output{color:var(--cyan)}
+  input[type=range]{width:100%;accent-color:var(--amber);height:20px;background:transparent}
+  .ctl.mem input[type=range]{accent-color:var(--cyan)}
+  .derived{display:flex;flex-wrap:wrap;gap:10px 28px;margin-top:16px;padding-top:14px;
+           border-top:1px solid var(--hair);font:13px var(--mono)}
+  .derived b{font-weight:600}
+  .derived .a b{color:var(--amber)} .derived .c b{color:var(--cyan)}
+  .derived span{color:var(--dim)}
+
+  /* ---------- svg diagram ---------- */
+  .diagram{margin:18px 0;border:1px solid var(--hair);border-radius:6px;background:var(--panel2);padding:10px}
+  .diagram svg{width:100%;height:auto;display:block}
+
+  /* ---------- flow phases ---------- */
+  .phase{display:grid;grid-template-columns:54px 1fr;gap:16px;padding:16px 0;border-bottom:1px dashed var(--hair)}
+  .phase:last-of-type{border-bottom:none}
+  .ph-n{font:600 13px var(--mono);color:var(--amber);letter-spacing:.05em;padding-top:2px}
+  .phase h4{font:600 15px var(--sans);margin-bottom:6px;color:#E8EEF3}
+  .phase p{font-size:14.5px;margin-bottom:8px}
+  .phase p:last-child{margin-bottom:0}
+
+  footer{padding-top:28px;font:12px var(--mono);color:var(--faint);letter-spacing:.05em}
+  .refs{font-size:13px;color:var(--dim);word-break:break-all}
+  .refs li{margin-bottom:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="idrow">
+    <span>DOC <b>AXC3000-AICAP</b></span><span>REV <b>B</b></span><span><b>2026-07-03</b></span>
+    <span>BOARD <b>Arrow AXC3000</b></span><span>DEVICE <b>A3CY100BM16AE7S</b> (no HPS)</span>
+  </div>
+  <h1>What fits on an Agilex 3 100K — and how fast it classifies from HyperRAM</h1>
+  <p class="thesis">Every number in this document reduces to one question: does the workload hit the
+  <em>compute wall</em> (2,760 INT8 MACs/cycle in tensor mode) or the <em>memory wall</em>
+  (an 8-bit HyperBus at a few hundred MB/s)? The dividing line is ~350–400&nbsp;KB of INT8 weights —
+  the point where a model stops fitting in on-chip SRAM.</p>
+  <div class="legend">
+    <span><i class="dot a"></i>COMPUTE-LIMITED</span>
+    <span><i class="dot c"></i>MEMORY-LIMITED</span>
+  </div>
+</header>
+
+<nav aria-label="Sections">
+  <a href="#s1">§1 Budget</a><a href="#s2">§2 Ceiling</a><a href="#s3">§3 Levers</a>
+  <a href="#s4">§4 Memory walls</a><a href="#s5">§5 What fits</a><a href="#s6">§6 HyperRAM benchmark</a>
+  <a href="#s7">§7 Ladder</a><a href="#s8">§8 Alternatives</a><a href="#s9">§9 Tool flow</a>
+  <a href="#s10">§10 Checklist</a><a href="#s11">§11 References</a>
+</nav>
+
+<!-- ================================================================ -->
+<section id="s1">
+  <div class="sec-label">§1 · Silicon and board budget</div>
+  <h2>The resources you are dividing up</h2>
+  <div class="scroll"><table>
+    <tr><th class="l">Resource</th><th>Quantity</th><th class="l">Notes</th></tr>
+    <tr><td class="l">Logic</td><td>100K LE</td><td class="l">A3CY100; "Y" = no HPS → Nios V soft-core only</td></tr>
+    <tr><td class="l">DSP blocks</td><td>138</td><td class="l">Enhanced DSP w/ AI tensor block (Agilex 5-derived)</td></tr>
+    <tr><td class="l">INT8 MACs / DSP / cycle</td><td>20</td><td class="l">Tensor mode, two-column structure, INT32/FP32 accumulate</td></tr>
+    <tr><td class="l">18×19 multipliers</td><td>276</td><td class="l">Classic DSP mode (2 per block)</td></tr>
+    <tr><td class="l">On-chip M20K SRAM</td><td>4.47 Mb ≈ <b>559 KB</b></td><td class="l">Weights + activations + FIFOs all compete here</td></tr>
+    <tr><td class="l">HyperRAM</td><td>128 Mb = <b>16 MB</b></td><td class="l">Winbond W957D8NB, ×8 HyperBus DDR, 1.8 V</td></tr>
+    <tr><td class="l">QSPI flash</td><td>256 Mb = <b>32 MB</b></td><td class="l">Bitstream + spare capacity for dataset staging</td></tr>
+    <tr><td class="l">Fabric f<sub>max</sub></td><td>up to 345 MHz</td><td class="l">Vendor figure for the family; assume less for a packed design</td></tr>
+    <tr><td class="l">Host links</td><td>USB-C</td><td class="l">FTDI JTAG — control plane only, not a data plane</td></tr>
+    <tr><td class="l">Expansion</td><td>CRUVI HS, MKR pads</td><td class="l">LVDS to 1.25 Gbps, MIPI D-PHY — future live-stream input</td></tr>
+  </table></div>
+  <p class="note">No HPS means no Linux-side OpenVINO runtime on-chip. The practical control paths are
+  (a) JTAG-attached System Console from a workstation, or (b) a Nios V/g running bare-metal or an RTOS.
+  Both are supported by FPGA AI Suite example designs — see §9. Timing plans in this doc must be checked against the ordered speed grade’s models in Quartus — family-headline f<sub>max</sub> figures are not per-grade guarantees.</p>
+</section>
+
+<!-- ================================================================ -->
+<section id="s2">
+  <div class="sec-label">§2 · Compute ceiling</div>
+  <h2>Where 1.90 TOPS comes from, and what survives contact with reality</h2>
+  <p>The marketing number decomposes exactly:
+  <span class="amberc">138 DSP × 20 INT8 MACs × 2 ops × 345 MHz = 1,904 GOPS ≈ 1.90 TOPS.</span>
+  It closes to three significant figures, which tells you it assumes every DSP in tensor mode,
+  100% issue efficiency, at maximum fabric clock. None of those hold in a real design, so derate in three stages:</p>
+  <ul>
+    <li><strong>Fabric clock.</strong> A packed 100K-LE design with an accelerator, DMA, Nios V, and a HyperBus
+        controller will not close at 345 MHz on the first pass. Plan 250–300 MHz.</li>
+    <li><strong>MAC allocation.</strong> The inference IP will not get all 138 DSPs — the rest of the system
+        (DMA, address generators, any classic-mode DSP use) takes a cut. Plan 70–85%.</li>
+    <li><strong>Scheduler efficiency.</strong> Fraction of allocated MAC-cycles doing useful work. Layer-edge
+        drain/fill, depthwise layers that map poorly to tensor mode, and buffer stalls land sequenced overlays
+        at 30–60% on CNNs. Small models sit at the low end because fixed per-inference overhead dominates.</li>
+  </ul>
+
+  <div class="wf" id="waterfall">
+    <div class="wf-row"><div class="wf-name">Peak (datasheet, 345 MHz)</div>
+      <div class="wf-track"><div class="wf-bar" id="wf0" style="width:100%"></div></div>
+      <div class="wf-val" id="wfv0">952 GMAC/s</div></div>
+    <div class="wf-row"><div class="wf-name">At planned fabric clock</div>
+      <div class="wf-track"><div class="wf-bar" id="wf1"></div></div>
+      <div class="wf-val" id="wfv1"></div></div>
+    <div class="wf-row"><div class="wf-name">× MAC allocation</div>
+      <div class="wf-track"><div class="wf-bar" id="wf2"></div></div>
+      <div class="wf-val" id="wfv2"></div></div>
+    <div class="wf-row"><div class="wf-name">× scheduler efficiency</div>
+      <div class="wf-track"><div class="wf-bar" id="wf3"></div></div>
+      <div class="wf-val" id="wfv3"></div></div>
+  </div>
+  <p class="note">The last bar is the planning number used everywhere below. It is a slider function,
+  not a constant — adjust it in §5 and the whole document recomputes. The second and third derates are not weather: §3 names the lever and the test that moves each one.</p>
+</section>
+<!-- ================================================================ -->
+<!-- ================================================================ -->
+<section id="s3">
+  <div class="sec-label">§3 · Performance levers, Agilex 3-specific</div>
+  <h2>Seven disciplines that separate the datasheet from a shipped f<sub>max</sub></h2>
+  <p>Each lever names the mistake that costs performance, the discipline that recovers it, and the
+  §7 ladder test that proves the recovery with a number. This list is the specialization: generic
+  "FPGA optimization" advice ends where these begin.</p>
+
+  <div class="phase"><div class="ph-n">LV 1</div><div>
+    <h4>Retiming-clean RTL — 2nd-gen Hyperflex</h4>
+    <p>Agilex puts registers in the routing fabric, and Hyper-Retiming can only use them where the RTL
+    permits. Discipline: reset-less pipeline registers on the datapath (synchronous reset only where the
+    architecture truly needs state), no clock gating, duplicate high-fanout control, and treat the Fast
+    Forward report as a work queue rather than commentary. <strong>Proof → L1:</strong> the same PE array
+    compiled reset-heavy vs retiming-clean; the f<sub>max</sub> delta is the cash value of the discipline.
+    Moves the fabric-clock slider.</p>
+  </div></div>
+
+  <div class="phase"><div class="ph-n">LV 2</div><div>
+    <h4>Tensor-mode capture</h4>
+    <p>The 20-INT8 mode is a structured block — two tensor columns with INT32/FP32 cascade accumulation
+    and a block-floating exponent — and naive <code>a*b+c</code> inference does not find it; it lands in
+    classic 18×19 mode at 2 multipliers per block, a silent 10×. Discipline: instantiate or use the DSP
+    UG templates, shape the dataflow to the block’s native dot-product, cascade accumulation through
+    the DSP column instead of ALM adder trees, and audit the fitter report for tensor-mode block count on
+    every build. <strong>Proof → L0.</strong> Moves the allocation and scheduler sliders.</p>
+  </div></div>
+
+  <div class="phase"><div class="ph-n">LV 3</div><div>
+    <h4>M20K banking geometry</h4>
+    <p>The ~330 GB/s aggregate figure exists only if weights and activations are banked one-port-per-PE-column,
+    output registers enabled in the hot domain, widths matched to lane count. A single shared port is a
+    serialization you will not see until the scheduler stalls. <strong>Proof → L2</strong> measures achieved
+    GB/s per banking configuration. Converts the on-chip “unlimited” claim into a number.</p>
+  </div></div>
+
+  <div class="phase"><div class="ph-n">LV 4</div><div>
+    <h4>Clock-domain split</h4>
+    <p>Hot domain for the PE array and its M20K banks; cool domain (100–150 MHz) for Nios V, CSRs, and
+    housekeeping; HyperBus in its own. Async FIFOs at the seams. One merged domain lets a lazy CSR
+    decode set the ceiling for 138 DSPs. <strong>Proof → L1</strong>, merged vs isolated compile of the
+    identical array. Moves the fabric-clock slider.</p>
+  </div></div>
+
+  <div class="phase"><div class="ph-n">LV 5</div><div>
+    <h4>Soft-logic MAC overflow</h4>
+    <p>Past 138 DSPs, sub-8-bit MACs go into ALMs, where Quartus fractal synthesis optimizes soft multiplier
+    trees (confirm Agilex 3 family support in the current synthesis handbook). This is what makes INT4 and
+    ternary nets scale past the DSP count. <strong>Proof → L0b:</strong> MACs per kALM and f<sub>max</sub>
+    at INT4/INT2/INT1. Extends the amber ceiling for aggressively quantized models.</p>
+  </div></div>
+
+  <div class="phase"><div class="ph-n">LV 6</div><div>
+    <h4>Trained HyperBus capture</h4>
+    <p>RWDS-strobed reads want constraints referenced to RWDS and an init-time training pass that centers
+    the capture window per board and temperature — static constraints alone leave margin (and MHz) on the
+    table. <strong>Proof → L3</strong> shmoo: HyperBus clock vs error rate, then sustained MB/s at the
+    chosen operating point. Replaces both cyan sliders with measurements.</p>
+  </div></div>
+
+  <div class="phase"><div class="ph-n">LV 7</div><div>
+    <h4>Quantization aggression, priced by the harness</h4>
+    <p>Each bit removed multiplies effective compute only where the datapath exploits it (LV5, packing),
+    and costs accuracy the §6 harness measures on real records. The output is an accuracy-vs-bits Pareto
+    per model — the signature plot of the whole exercise, and the thing generic benchmarks never publish.
+    <strong>Proof → L5.</strong></p>
+  </div></div>
+</section>
+
+<section id="s4">
+  <div class="sec-label">§4 · Memory walls</div>
+  <h2>Three tiers, three very different bandwidths</h2>
+  <div class="scroll"><table>
+    <tr><th class="l">Tier</th><th>Capacity</th><th>Peak BW</th><th>Sustained (plan)</th><th class="l">Role in this design</th></tr>
+    <tr><td class="l">M20K on-chip</td><td>559 KB</td><td>~330 GB/s aggregate @300 MHz</td><td>banked (L2 verifies)</td>
+        <td class="l">Weights (small models), activations, ping-pong input buffers</td></tr>
+    <tr><td class="l"><span class="cyanc">HyperRAM ×8</span></td><td>16 MB</td><td>333 MB/s @166 MHz DDR<br>400 MB/s @200 MHz DDR</td>
+        <td id="hrsust">~250 MB/s</td>
+        <td class="l">Test-record store (§6); weight store for models &gt;~400 KB</td></tr>
+    <tr><td class="l">QSPI flash</td><td>32 MB</td><td>~50–66 MB/s (×4, 100–133 MHz)</td><td>~40–55 MB/s</td>
+        <td class="l">Bitstream + full-dataset cold storage, staged into HyperRAM</td></tr>
+  </table></div>
+
+  <p>HyperBus is 8 bits DDR: bytes/s = 2 × f<sub>HB</sub>. Sustained efficiency after refresh
+  collisions, row-boundary latency, and command overhead on long linear bursts is typically 70–85%.
+  <strong>Verify the speed grade of the W957D8NB on your board against the Winbond datasheet before
+  hard-committing a number</strong> — 166 vs 200 MHz is a 20% swing on every cyan number in §5.
+  Also note the HyperBus clock you actually close in Agilex 3 GPIO is a timing-closure result,
+  not a datasheet right; a conservative first pass at 100 MHz gives 200 MB/s peak.</p>
+
+  <div class="callout mem">
+    <p><strong>Controller gap:</strong> Quartus does not ship a HyperBus controller, and the stock AXC3000
+    Nios V example runs from internal RAM only. Options, in order of least effort: (1) check the Arrow
+    Agilex-3 GitHub reference designs for a released controller; (2) port an open-source portable
+    controller (several proven VHDL/Verilog HyperBus masters exist and this bus is simple — CA phase,
+    latency count, RWDS strobe); (3) licensed IP from the usual HyperBus vendors. Budget the port +
+    timing closure as its own task, not a footnote.</p>
+  </div>
+
+  <p class="note">Escape hatch for a future custom board: Agilex 3 EMIF supports LPDDR4 to 2133 Mbps —
+  roughly a 10–15× lift on the memory wall. Everything memory-bound in §5 scales accordingly.</p>
+</section>
+
+<!-- ================================================================ -->
+<section id="s5">
+  <div class="sec-label">§5 · What fits — the capacity table</div>
+  <h2>Model-by-model verdicts under your assumptions</h2>
+
+  <div class="panel">
+    <h3>Assumptions — drag to recompute the document</h3>
+    <div class="ctl-grid">
+      <div class="ctl"><label>Fabric clock <output id="o_fclk">300 MHz</output></label>
+        <input type="range" id="s_fclk" min="200" max="345" step="5" value="300" aria-label="Fabric clock MHz"></div>
+      <div class="ctl"><label>MAC allocation to inference IP <output id="o_alloc">75%</output></label>
+        <input type="range" id="s_alloc" min="50" max="100" step="5" value="75" aria-label="MAC allocation percent"></div>
+      <div class="ctl"><label>Scheduler efficiency <output id="o_sched">45%</output></label>
+        <input type="range" id="s_sched" min="15" max="80" step="5" value="45" aria-label="Scheduler efficiency percent"></div>
+      <div class="ctl mem"><label>HyperBus clock <output id="o_hclk">166 MHz</output></label>
+        <input type="range" id="s_hclk" min="100" max="200" step="2" value="166" aria-label="HyperBus clock MHz"></div>
+      <div class="ctl mem"><label>HyperRAM sustained efficiency <output id="o_heff">75%</output></label>
+        <input type="range" id="s_heff" min="50" max="90" step="5" value="75" aria-label="HyperRAM efficiency percent"></div>
+    </div>
+    <div class="derived">
+      <div class="a"><span>Effective compute&nbsp;</span><b id="d_gmac">—</b></div>
+      <div class="c"><span>Effective HyperRAM BW&nbsp;</span><b id="d_bw">—</b></div>
+    </div>
+  </div>
+
+  <div class="scroll"><table id="fitTable">
+    <thead>
+    <tr><th class="l">Model / task</th><th class="r">Weights INT8</th><th class="r">MACs/inf</th>
+        <th>Weights home</th><th class="r">Compute FPS</th><th class="r">Feed / traffic need</th>
+        <th>Bound</th><th class="r">Net FPS</th></tr>
+    </thead>
+    <tbody><!-- rows injected by JS --></tbody>
+  </table></div>
+
+  <div class="callout">
+    <p><strong>The design line.</strong> Below ~350–400 KB of INT8 weights (all four MLPerf Tiny models),
+    the network lives entirely in M20K, FPGA AI Suite's DDR-free mode applies, and HyperRAM is left
+    free to do exactly what you proposed: hold the test-record set. Above the line, HyperRAM becomes
+    the weight store <em>and</em> the input path, the cyan column takes over, and net FPS drops two
+    orders of magnitude into the 15–50 FPS class.</p>
+  </div>
+
+  <p class="note">Traffic model for HyperRAM-resident weights: bytes/frame ≈ weights + input +
+  ~2.5 MB inter-layer activation spill (rough constant; real spill depends on the architecture file's
+  cache configuration — refine with the §9 estimator, which accepts memory bandwidth as an input).
+  One more honesty clause: sequenced overlays carry fixed per-inference cost (descriptor setup,
+  config, drain), so measured rates on sub-millisecond models land <em>below</em> the amber roofline.
+  Quantifying that gap is a primary output of your benchmark.</p>
+</section>
+
+<!-- ================================================================ -->
+<section id="s6">
+  <div class="sec-label">§6 · The HyperRAM record-replay benchmark</div>
+  <h2>Your method, engineered: records in, counters out</h2>
+  <p>Store the quantized test set in HyperRAM with golden labels inline; a burst DMA replays records
+  through a ping-pong buffer into the engine; a hardware scoreboard accumulates cycle counts and
+  hit counts. FPS and accuracy fall out of two register reads — no host in the timed loop.</p>
+
+  <div class="diagram" role="img" aria-label="Benchmark pipeline block diagram">
+  <svg viewBox="0 0 760 250" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="arr" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+        <path d="M0,0 L8,4 L0,8 z" fill="#4FB8CE"/></marker>
+      <marker id="arrA" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+        <path d="M0,0 L8,4 L0,8 z" fill="#E8A33D"/></marker>
+    </defs>
+    <style>
+      .box{fill:#121820;stroke:#263241;rx:5}
+      .boxA{fill:#17130A;stroke:#8A6524}
+      .t{font:11px ui-monospace,Consolas,monospace;fill:#C9D4DE}
+      .ts{font:9.5px ui-monospace,Consolas,monospace;fill:#7C8B99}
+      .flow{stroke:#4FB8CE;stroke-width:1.5;fill:none;marker-end:url(#arr)}
+      .flowA{stroke:#E8A33D;stroke-width:1.5;fill:none;marker-end:url(#arrA)}
+      .flowD{stroke:#4E5D6B;stroke-width:1.2;fill:none;stroke-dasharray:4 3;marker-end:url(#arr)}
+    </style>
+    <!-- loader -->
+    <rect class="box" x="10" y="16" width="120" height="46" rx="5"/>
+    <text class="t" x="22" y="35">QSPI / JTAG</text><text class="ts" x="22" y="50">dataset loader</text>
+    <!-- hyperram -->
+    <rect class="box" x="10" y="100" width="120" height="60" rx="5"/>
+    <text class="t" x="22" y="122">HyperRAM 16MB</text>
+    <text class="ts" x="22" y="137">records + labels</text><text class="ts" x="22" y="150">+ result log</text>
+    <!-- dma -->
+    <rect class="box" x="180" y="108" width="110" height="46" rx="5"/>
+    <text class="t" x="192" y="127">HBMC + DMA</text><text class="ts" x="192" y="142">linear bursts</text>
+    <!-- pingpong -->
+    <rect class="box" x="340" y="108" width="110" height="46" rx="5"/>
+    <text class="t" x="352" y="127">M20K ping-pong</text><text class="ts" x="352" y="142">2 × record buf</text>
+    <!-- engine -->
+    <rect class="boxA" x="500" y="96" width="120" height="70" rx="5"/>
+    <text class="t" x="512" y="118">INT8 engine</text>
+    <text class="ts" x="512" y="133">AI Suite IP or</text><text class="ts" x="512" y="146">custom dataflow</text>
+    <!-- scoreboard -->
+    <rect class="box" x="500" y="196" width="120" height="44" rx="5"/>
+    <text class="t" x="512" y="214">scoreboard</text><text class="ts" x="512" y="228">argmax·cmp·cnt</text>
+    <!-- sysconsole -->
+    <rect class="box" x="300" y="196" width="150" height="44" rx="5"/>
+    <text class="t" x="312" y="214">System Console</text><text class="ts" x="312" y="228">JTAG · Python readback</text>
+    <!-- flows -->
+    <path class="flowD" d="M70,62 L70,100"/>
+    <path class="flow" d="M130,131 L180,131"/>
+    <path class="flow" d="M290,131 L340,131"/>
+    <path class="flow" d="M450,131 L500,131"/>
+    <path class="flowA" d="M560,166 L560,196"/>
+    <path class="flow" d="M500,218 L450,218"/>
+    <text class="ts" x="140" y="122" fill="#4FB8CE">records</text>
+    <text class="ts" x="568" y="184" fill="#E8A33D">top-1</text>
+  </svg>
+  </div>
+
+  <h3>Record format</h3>
+  <p>Pack offline with a Python script that applies the <em>exact</em> input quantization scale/zero-point
+  from the compiled model, so hardware sees bit-identical tensors to the software reference:</p>
+  <div class="scroll"><table>
+    <tr><th>Offset</th><th class="l">Field</th><th class="l">Size</th></tr>
+    <tr><td>0x00</td><td class="l">Input tensor, INT8, engine-native layout</td><td class="l">N bytes</td></tr>
+    <tr><td>N</td><td class="l">Golden label (class index)</td><td class="l">1 byte</td></tr>
+    <tr><td>N+1</td><td class="l">Pad to 64 B stride (burst-aligned)</td><td class="l">—</td></tr>
+  </table></div>
+
+  <h3>Record-store capacity (16 MB − 64 KB result log)</h3>
+  <div class="scroll"><table id="capTable">
+    <thead><tr><th class="l">Dataset</th><th class="r">Record stride</th><th class="r">Records that fit</th>
+    <th class="l">Coverage</th></tr></thead>
+    <tbody><!-- injected --></tbody>
+  </table></div>
+  <p class="note">Loop the resident set for sustained-rate runs; report cold-pass and looped numbers
+  separately. For CIFAR-10 full-set accuracy, stage the remaining half from QSPI between passes —
+  accuracy needs all 10,000, throughput does not.</p>
+
+  <h3>Scoreboard register map (Avalon-MM, JTAG-visible)</h3>
+  <div class="scroll"><table>
+    <tr><th>Addr</th><th class="l">Register</th><th class="l">Function</th></tr>
+    <tr><td>0x00</td><td class="l">CTRL</td><td class="l">start · loop-enable · reset; self-clearing start</td></tr>
+    <tr><td>0x04</td><td class="l">N_RECORDS</td><td class="l">records per pass</td></tr>
+    <tr><td>0x08</td><td class="l">REC_STRIDE / BASE</td><td class="l">record stride and HyperRAM base address</td></tr>
+    <tr><td>0x10</td><td class="l">CYCLES_64</td><td class="l">free-running counter latched first-issue → last-retire</td></tr>
+    <tr><td>0x18</td><td class="l">DONE_COUNT</td><td class="l">inferences retired</td></tr>
+    <tr><td>0x1C</td><td class="l">PASS_COUNT</td><td class="l">argmax == golden label</td></tr>
+    <tr><td>0x20</td><td class="l">LAT_MIN / LAT_MAX</td><td class="l">per-inference cycle extremes</td></tr>
+    <tr><td>0x28</td><td class="l">HIST[64]</td><td class="l">optional latency histogram, one M20K → p50/p99</td></tr>
+  </table></div>
+  <p>Then: <code>FPS = DONE_COUNT × f_clk / CYCLES_64</code> and
+  <code>accuracy = PASS_COUNT / DONE_COUNT</code>. Two reads, no host jitter, defensible in a review.</p>
+  <p class="note">Throughput and latency decouple the moment the engine overlaps in-flight requests — quote FPS from CYCLES_64 and the latency story from LAT_MIN/MAX and the histogram, never one as a proxy for the other.</p>
+</section>
+<!-- ================================================================ -->
+<!-- ================================================================ -->
+<section id="s7">
+  <div class="sec-label">§7 · Characterization ladder</div>
+  <h2>Six tests that turn sliders into a device corpus</h2>
+  <p>Run bottom-up. Every level produces one number that overwrites an assumption in §5, and every
+  level is a self-contained result worth writing up. By L5 nothing in this document is an estimate.</p>
+  <div class="scroll"><table>
+    <tr><th>Lvl</th><th class="l">Measures</th><th class="l">Method</th><th class="l">Replaces</th><th class="l">Target</th></tr>
+    <tr><td>L0</td><td class="l">Achieved MACs/DSP/cycle; tensor-chain f<sub>max</sub></td>
+        <td class="l">8–32 DSP dot-product chain, cycle-counted; fitter-mode audit</td>
+        <td class="l">allocation + scheduler floor</td><td class="l">20/20; tensor count = DSP count</td></tr>
+    <tr><td>L0b</td><td class="l">Soft-MAC density (MACs/kALM) + f<sub>max</sub> at INT4/2/1</td>
+        <td class="l">fractal-synth multiplier array</td>
+        <td class="l">ceiling extension past 138 DSPs</td><td class="l">characterized curve</td></tr>
+    <tr><td>L1</td><td class="l">f<sub>max</sub> vs PE-array size; reset style; domain split</td>
+        <td class="l">systolic tile sweep 8→138 DSPs, retiming-clean vs reset-heavy, merged vs isolated</td>
+        <td class="l">fabric-clock slider</td><td class="l">locate the cliff; quantify LV1/LV4 deltas</td></tr>
+    <tr><td>L2</td><td class="l">Aggregate M20K GB/s vs banking</td>
+        <td class="l">parallel wide readers into checksum sinks</td>
+        <td class="l">on-chip BW claim (§4)</td><td class="l">≥ 0.8× theoretical</td></tr>
+    <tr><td>L3</td><td class="l">HyperBus shmoo + sustained MB/s</td>
+        <td class="l">trained capture; LFSR/address-in-data memtest; linear-burst sweep</td>
+        <td class="l">both cyan sliders</td><td class="l">operating point with plotted margin</td></tr>
+    <tr><td>L4</td><td class="l">Overlay fixed cost per inference (µs)</td>
+        <td class="l">graph-size sweep on AI Suite IP via method A; repeat under Spatial Compiler</td>
+        <td class="l">the tiny-model sub-roofline gap</td><td class="l">µs constant per configuration</td></tr>
+    <tr><td>L5</td><td class="l">Model corpus: FPS, p50/p99, accuracy, µJ/inf</td>
+        <td class="l">§6 harness, methods A and B, per quantization point (LV7)</td>
+        <td class="l">the entire §5 table</td><td class="l">the publishable dataset</td></tr>
+  </table></div>
+  <div class="callout">
+    <p><strong>Why this is an ownable niche.</strong> Agilex 3 silicon started shipping in 2025 and the
+    third-party performance literature is effectively empty — no published tensor-capture audits, no
+    f<sub>max</sub>-vs-array-size curves, no HyperBus shmoos, no MLPerf-Tiny-class numbers. The ladder is
+    all vendor-public silicon on a $129 board, so every level is publishable without touching anything
+    proprietary, and every number transfers straight into any Agilex 3 product design — inference or not,
+    since LV1–LV4 and LV6 are device disciplines, not ML ones.</p>
+  </div>
+</section>
+
+<section id="s8">
+  <div class="sec-label">§8 · Alternative feed methods</div>
+  <h2>Run A first, then your method — the delta is the feed cost</h2>
+  <div class="scroll"><table>
+    <tr><th class="l">Method</th><th class="l">Dataset size</th><th>Feed BW</th><th class="l">What it isolates</th></tr>
+    <tr><td class="l"><strong>A · On-chip loop</strong> — preload 16–128 records into spare M20K, loop</td>
+        <td class="l">tiny</td><td>fabric-rate</td>
+        <td class="l">Pure engine ceiling; zero external memory in the timed loop</td></tr>
+    <tr><td class="l"><strong>B · HyperRAM replay</strong> (§6, primary)</td>
+        <td class="l">≤16 MB resident</td><td id="altB">~250 MB/s</td>
+        <td class="l">Engine + realistic feed; B−A = feed/DMA overhead</td></tr>
+    <tr><td class="l"><strong>C · QSPI-resident</strong>, streamed or staged into HyperRAM</td>
+        <td class="l">≤32 MB</td><td>~40–55 MB/s</td>
+        <td class="l">Full-set accuracy passes; too slow for peak-rate runs</td></tr>
+    <tr><td class="l"><strong>D · Live CRUVI LVDS / MIPI source</strong></td>
+        <td class="l">unbounded</td><td>≫ HyperRAM</td>
+        <td class="l">Future end-to-end demo; out of scope for benchmark v1</td></tr>
+    <tr><td class="l"><strong>E · JTAG streaming</strong></td>
+        <td class="l">—</td><td>~1–2 MB/s</td>
+        <td class="l">Control and readback only. Never the data plane.</td></tr>
+  </table></div>
+  <p class="note">Report every result as a pair: method-A rate (engine ceiling) and method-B rate
+  (fed from HyperRAM). If B ≈ A, the record store is invisible — expected for KWS/ResNet-8. If B &lt; A,
+  you've measured the memory wall directly — expected for VWW and anything with HyperRAM-resident weights.</p>
+</section>
+
+<!-- ================================================================ -->
+<section id="s9">
+  <div class="sec-label">§9 · Tool-flow path</div>
+  <h2>Desk estimate → stock example → HyperRAM harness → custom RTL</h2>
+
+  <div class="phase"><div class="ph-n">PH 0</div><div>
+    <h4>Desk-check every number in §5 — no hardware required</h4>
+    <p>Install Quartus Prime Pro ≥25.3 (free Agilex 3 license; hard-IP use included with the device)
+    and select FPGA AI Suite in the same installer. Run the <strong>performance estimator</strong> per
+    candidate model and architecture file — since 25.1 it accepts <em>external memory bandwidth</em> as
+    an input, added specifically for memory-limited parts like Agilex 3. Feed it your §5 slider value
+    (~250 MB/s) and let the vendor tool arbitrate compute-vs-memory before you synthesize anything.</p>
+  </div></div>
+
+  <div class="phase"><div class="ph-n">PH 1</div><div>
+    <h4>Bring up the stock hostless example on the board</h4>
+    <p>AI Suite 25.3 ships Agilex 3 production support including a <strong>hostless JTAG design for the
+    Agilex 3 C-series dev kit</strong> — build it with <code>dla_build_example_design.py</code>, drive it
+    from the streaming-capable System Console Python interface, and confirm the IP runs on your silicon
+    before touching anything custom. Also relevant: the hostless <strong>DDR-free</strong> example
+    ([HL-NO-DDR]) keeps the whole model in M20K with weights delivered as MIF files — that is the §5
+    "below the line" configuration, verbatim.</p>
+    <p><strong>License gate:</strong> unlicensed IP generation carries a hard limit of 10,000 inference
+    requests. Fine for accuracy passes on ≤10K records; for sustained-rate soak runs, generate licensed
+    IP or plan a bitstream reload per run.</p>
+  </div></div>
+
+  <div class="phase"><div class="ph-n">PH 2</div><div>
+    <h4>Model preparation</h4>
+    <p>TF/PyTorch → ONNX → OpenVINO IR (AI Suite 25.x tracks OpenVINO 2024.6) → NNCF post-training INT8
+    with a calibration slice → <code>dla_compiler</code> against your Agilex 3 architecture file.
+    Record the compiled report's fold/streaming decisions — they set the real activation-spill term
+    in the §5 traffic model. Keep an OpenVINO CPU-INT8 run of the same IR as the accuracy reference.</p>
+  </div></div>
+
+  <div class="phase"><div class="ph-n">PH 3</div><div>
+    <h4>HyperRAM integration</h4>
+    <p>Select and port a HyperBus controller (§4 callout), close I/O timing at your target clock, and
+    verify with an LFSR/address-in-data memtest + sustained-burst BW measurement <em>before</em> attaching inference — the
+    measured MB/s replaces the cyan slider assumption. Platform Designer system: JTAG-Avalon master
+    (or Nios V/g) + mSGDMA + HBMC + inference IP. Two build configs: <strong>(a)</strong> DDR-free IP,
+    HyperRAM = record store only — the small-model sweet spot; <strong>(b)</strong> HyperRAM as IP
+    global memory for &gt;400 KB models, record store shrinks by the weight footprint.</p>
+  </div></div>
+
+  <div class="phase"><div class="ph-n">PH 4</div><div>
+    <h4>Benchmark harness</h4>
+    <p>Python record packer (quantize with IR scales → append label → pad to 64 B → binary image,
+    load via System Console master or QSPI). RTL scoreboard per the §6 register map. Host script
+    pulls two registers, emits FPS/accuracy/p50/p99 per model, sweeps the model set.</p>
+  </div></div>
+
+  <div class="phase"><div class="ph-n">PH 5</div><div>
+    <h4>Cross-checks</h4>
+    <p>Hardware accuracy must match the OpenVINO CPU-INT8 reference on identical records — a mismatch
+    means layout or scale bugs, not "FPGA error." Power: inline USB-C meter for board watts per
+    inference class; Quartus Power &amp; Thermal Analyzer for the fabric-side estimate.</p>
+  </div></div>
+
+  <div class="phase"><div class="ph-n">PH 6</div><div>
+    <h4>Stretch: beat the overlay</h4>
+    <p>Where the sequenced overlay's fixed cost dominates (KWS, anomaly detection), two escalations:
+    the AI Suite <strong>Spatial Compiler</strong> (beta) maps MLP-class dataflow straight into fabric —
+    vendor claims order-of-magnitude latency cuts at a fraction of the resources — and beyond that,
+    custom dataflow RTL (hls4ml's Quartus/oneAPI path, or hand-rolled tensor-mode systolic) is the
+    ceiling. Your method-A vs method-B data tells you exactly how much headroom that work buys.</p>
+  </div></div>
+</section>
+
+<!-- ================================================================ -->
+<section id="s10">
+  <div class="sec-label">§10 · Measurement checklist &amp; risks</div>
+  <h2>What a defensible result includes</h2>
+  <ul>
+    <li>Batch = 1, end-to-end from record fetch to scoreboard retire; report p50/p99 and FPS, cold and looped.</li>
+    <li>Accuracy on the full test set post-quantization, against the fp32 and CPU-INT8 baselines of the same graph.</li>
+    <li>Achieved HyperRAM MB/s from the memtest, quoted next to every memory-bound number.</li>
+    <li>f<sub>clk</sub>, resource utilization (ALM/DSP/M20K), and the architecture file logged per result — numbers without configs are noise.</li>
+    <li>Board watts via USB inline meter → µJ/inference; fabric estimate from the Power &amp; Thermal Analyzer.</li>
+    <li>Fitter-report tensor-mode audit as a merge gate — DSPs left in classic 18×19 mode are a silent 10× loss (LV2 / L0).</li>
+    <li>Throughput and per-inference latency reported as separate numbers; pipelined engines decouple them.</li>
+  </ul>
+  <h3>Risk register</h3>
+  <ul>
+    <li><strong>HyperBus timing closure</strong> at 166+ MHz in GPIO — mitigation: start at 100 MHz, measure, then push.</li>
+    <li><strong>Refresh-collision jitter</strong> inflating p99 — mitigation: latch per-inference min/max; expect a bimodal histogram.</li>
+    <li><strong>Depthwise layers</strong> (MobileNet family) mapping poorly to tensor mode — scheduler efficiency slider low end.</li>
+    <li><strong>10K-inference cap</strong> on unlicensed IP silently truncating soak runs — check DONE_COUNT against intent.</li>
+    <li><strong>Quantization drift</strong> between packer and IR — mitigation: PH 5 parity gate is mandatory, not optional.</li>
+  </ul>
+</section>
+
+<!-- ================================================================ -->
+<section id="s11">
+  <div class="sec-label">§11 · References</div>
+  <h2>Sources</h2>
+  <ul class="refs">
+    <li>Arrow AXC3000 product page + Agilex-3 GitHub (board spec, reference designs): github.com/ArrowElectronics/Agilex-3</li>
+    <li>AXC3000 board teardown/analysis incl. no-HPS "Y" variant and Winbond HyperRAM: jsykora.info/2025/11/axc3000-agilex-fpga-starter-kit</li>
+    <li>Altera Agilex 3 overview (2.8 peak INT8 TOPS family, FPGA AI Suite, 345 MHz fabric): altera.com/products/fpga/agilex/3</li>
+    <li>Agilex 5/3 Enhanced DSP with AI Tensor Block (20 INT8 mults per block): Altera architecture brief 776602 + community UG thread</li>
+    <li>Quartus Prime Pro 25.1 release blog (Agilex 3 support; estimator takes memory bandwidth; hostless JTAG example; TinyML-on-Nios-V app note)</li>
+    <li>Quartus / FPGA AI Suite 25.3 release blog (Agilex 3 production support; hostless JTAG for C-series devkit; DDR-free mode; System Console Python)</li>
+    <li>FPGA AI Suite Design Examples User Guide 848957 ([HL-JTAG], [HL-NO-DDR], dla_build_example_design.py, dla_benchmark)</li>
+    <li>altera-fpga/agilex-ed-ai-suite GitHub (10,000-inference unlicensed limit)</li>
+    <li>MLPerf Tiny model set (DS-CNN, MobileNetV1-0.25 VWW, ResNet-8, AD autoencoder): mlcommons.org/tiny + arXiv:2206.11791</li>
+    <li>Agilex Hyperflex architecture handbook (2nd-gen retiming, Fast Forward methodology) · Agilex 3 DSP user guide (tensor-mode structure, inference/instantiation templates)</li>
+    <li>Agilex 3 device datasheet — per-speed-grade timing · Winbond W957D8NB datasheet — HyperBus AC specs and speed grade</li>
+  </ul>
+  <p class="note">Model parameter/MAC figures are standard published values; treat FPS columns as
+  roofline estimates to be replaced by PH 0 estimator output and then by measured data.</p>
+</section>
+
+<footer>AXC3000-AICAP · REV B · assumptions live in §5 until the §7 ladder replaces them with measurements</footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var PEAK_MACS = 138*20;                       // 2760 MACs/cycle
+  var LOG_RESERVE = 65536;                      // 64 KB result log
+  var HR_BYTES = 16*1024*1024;
+
+  // params(B INT8), MACs, input bytes, dataset info
+  var MODELS=[
+    {n:"AD autoencoder · MLPerf Tiny", w:267000,  m:264e3,  inb:640,    set:"ToyADMOS slices"},
+    {n:"DS-CNN · keyword spotting",    w:24900,   m:2.7e6,  inb:490,    set:"Speech Commands test (4,890)"},
+    {n:"ResNet-8 · CIFAR-10",          w:78700,   m:12.5e6, inb:3072,   set:"CIFAR-10 test (10,000)"},
+    {n:"MobileNetV1-0.25 · VWW 96²",   w:325000,  m:7.5e6,  inb:27648,  set:"VWW val subset"},
+    {n:"MobileNetV2-1.0 · 224²",       w:3538984, m:300e6,  inb:150528, set:"ImageNet-class inputs", spill:2.5e6},
+    {n:"ResNet-18 · 224²",             w:11690000,m:1814e6, inb:150528, set:"ImageNet-class inputs", spill:2.5e6},
+    {n:"Tiny-YOLOv3 · 416² detect",    w:8860000, m:2780e6, inb:519168, set:"COCO-class frames",     spill:2.5e6}
+  ];
+  var ONCHIP_W_LIMIT = 400*1024; // design line
+
+  function $(id){return document.getElementById(id)}
+  function fmt(x,u){ // engineering format
+    if(x>=1e9) return (x/1e9).toPrecision(3)+" G"+u;
+    if(x>=1e6) return (x/1e6).toPrecision(3)+" M"+u;
+    if(x>=1e3) return (x/1e3).toPrecision(3)+" k"+u;
+    return Math.round(x)+" "+u;
+  }
+  function fmtB(x){
+    if(x>=1048576) return (x/1048576).toPrecision(3)+" MB";
+    if(x>=1024) return Math.round(x/1024)+" KB";
+    return x+" B";
+  }
+  function stride(inb){ return Math.ceil((inb+1)/64)*64 }
+
+  function recompute(){
+    var fclk=+$("s_fclk").value, alloc=+$("s_alloc").value/100,
+        sched=+$("s_sched").value/100, hclk=+$("s_hclk").value, heff=+$("s_heff").value/100;
+    $("o_fclk").textContent=fclk+" MHz"; $("o_alloc").textContent=Math.round(alloc*100)+"%";
+    $("o_sched").textContent=Math.round(sched*100)+"%"; $("o_hclk").textContent=hclk+" MHz";
+    $("o_heff").textContent=Math.round(heff*100)+"%";
+
+    var peak=PEAK_MACS*345e6;                 // MAC/s
+    var g1=PEAK_MACS*fclk*1e6, g2=g1*alloc, g3=g2*sched;   // effective MAC/s
+    var bw=2*hclk*1e6*heff;                   // bytes/s
+
+    // waterfall
+    var bars=[[peak,"wf0","wfv0"],[g1,"wf1","wfv1"],[g2,"wf2","wfv2"],[g3,"wf3","wfv3"]];
+    bars.forEach(function(b){
+      $(b[1]).style.width=(100*b[0]/peak)+"%";
+      $(b[2]).textContent=fmt(b[0],"MAC/s")+"  ("+(2*b[0]/1e12).toFixed(2)+" TOPS)";
+    });
+    $("d_gmac").textContent=fmt(g3,"MAC/s");
+    $("d_bw").textContent=Math.round(bw/1e6)+" MB/s";
+    $("hrsust").textContent="~"+Math.round(bw/1e6)+" MB/s (slider-linked)";
+    var altB=$("altB"); if(altB) altB.textContent="~"+Math.round(bw/1e6)+" MB/s";
+
+    // fit table
+    var tb=$("fitTable").tBodies[0]; tb.innerHTML="";
+    MODELS.forEach(function(md){
+      var onchip = md.w<=ONCHIP_W_LIMIT;
+      var cfps=g3/md.m;
+      var traffic = onchip ? stride(md.inb) : md.w+md.inb+(md.spill||0);
+      var mfps=bw/traffic;
+      var bound = cfps<=mfps ? "a":"c";
+      var net=Math.min(cfps,mfps);
+      var feedNeed = cfps*stride(md.inb);
+      var feedTxt = onchip
+        ? fmt(feedNeed,"B/s")+" feed"+(feedNeed>bw?' <span class="no">▲&gt;BW</span>':"")
+        : fmtB(traffic)+"/frame";
+      var tr=document.createElement("tr");
+      tr.innerHTML=
+        '<td class="l">'+md.n+'</td>'+
+        '<td class="r">'+fmtB(md.w)+'</td>'+
+        '<td class="r">'+fmt(md.m,"MAC")+'</td>'+
+        '<td>'+(onchip?'<span class="ok">M20K ✓</span>':'<span class="no">HyperRAM</span>')+'</td>'+
+        '<td class="r amberc">'+fmt(cfps,"/s")+'</td>'+
+        '<td class="r cyanc">'+feedTxt+'</td>'+
+        '<td><span class="chip '+bound+'">'+(bound==="a"?"COMPUTE":"MEMORY")+'</span></td>'+
+        '<td class="r"><strong>'+fmt(net,"/s")+'</strong></td>';
+      tb.appendChild(tr);
+    });
+
+    // capacity table
+    var ct=$("capTable").tBodies[0]; ct.innerHTML="";
+    MODELS.forEach(function(md){
+      var st=stride(md.inb);
+      var avail=HR_BYTES-LOG_RESERVE-(md.w>ONCHIP_W_LIMIT?md.w:0);
+      var n=Math.max(0,Math.floor(avail/st));
+      var cov = md.n.indexOf("CIFAR")>=0 ? Math.min(100,Math.round(100*n/10000))+"% of test set"
+              : md.n.indexOf("keyword")>=0 ? "full test set ×"+Math.floor(n/4890)
+              : (md.w>ONCHIP_W_LIMIT?"after weights resident":"—");
+      var tr=document.createElement("tr");
+      tr.innerHTML='<td class="l">'+md.n+'</td><td class="r">'+fmtB(st)+'</td>'+
+                   '<td class="r"><strong>'+n.toLocaleString()+'</strong></td><td class="l">'+cov+'</td>';
+      ct.appendChild(tr);
+    });
+  }
+  ["s_fclk","s_alloc","s_sched","s_hclk","s_heff"].forEach(function(id){
+    $(id).addEventListener("input",recompute);
+  });
+  recompute();
+})();
+</script>
+</body>
+</html>
