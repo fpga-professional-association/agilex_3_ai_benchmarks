@@ -1,0 +1,26 @@
+{
+  "kind": "reference",
+  "level": "PH2",
+  "subject": "mobilenetv2-1.0-imagenet-fp32",
+  "date": "2026-07-04",
+  "config": {
+    "device": "A3CY100BM16AE7S",
+    "board": "Arrow AXC3000",
+    "model": "mobilenetv2-1.0-imagenet",
+    "quantization": "fp32",
+    "tool_versions": {
+      "python": "3.12.3",
+      "tensorflow": "2.16.1",
+      "torch": "2.12.1+cu130",
+      "torchvision": "0.27.1+cu130",
+      "onnx": "1.16.1",
+      "onnxruntime": "1.27.0"
+    }
+  },
+  "metrics": {
+    "accuracy_top1": 0.5908,
+    "n_records": 10000
+  },
+  "plan_ref": "\u00a75 table",
+  "notes": "ImageNetV2 'matched-frequency' (10000 images, 1000 classes, class-balanced) -- NOT the original ILSVRC val set (gated behind an image-net.org account approval this pipeline can't clear non-interactively). torchvision reports 71.878% clean-val top-1 for this checkpoint; ImageNetV2 numbers run several points lower due to distribution shift (Recht et al. 2019) -- expected, not an export bug."
+}
