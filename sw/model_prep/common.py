@@ -18,6 +18,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 MODELS_DIR = REPO_ROOT / "models"
 DOWNLOADS_DIR = MODELS_DIR / "downloads"
 ONNX_DIR = MODELS_DIR / "onnx"
+IR_DIR = MODELS_DIR / "ir"
 DATASETS_DIR = REPO_ROOT / "datasets"
 RESULTS_DIR = REPO_ROOT / "results"
 
@@ -142,6 +143,45 @@ def write_result(
 
 
 @dataclass
+class QuantManifest:
+    """The record_format.md packer's contract (issue #3): input scale/zero-point + IR provenance."""
+
+    model_id: str
+    scale: float
+    zero_point: int
+    input_shape: list[int]
+    layout: str
+    element_order: str
+    fp32_ir_sha256: dict[str, str]
+    int8_ir_sha256: dict[str, str]
+    tool_versions: dict[str, str] = field(default_factory=dict)
+    notes: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "model_id": self.model_id,
+            "scale": self.scale,
+            "zero_point": self.zero_point,
+            "input_shape": self.input_shape,
+            "layout": self.layout,
+            "element_order": self.element_order,
+            "fp32_ir_sha256": self.fp32_ir_sha256,
+            "int8_ir_sha256": self.int8_ir_sha256,
+            "tool_versions": self.tool_versions,
+            "notes": self.notes,
+        }
+
+    def write(self, path: Path) -> None:
+        path.write_text(json.dumps(self.to_dict(), indent=2) + "\n")
+
+
+def ir_pair_sha256(ir_xml_path: Path) -> dict[str, str]:
+    """sha256 of an IR's .xml + .bin pair, keyed by filename."""
+    bin_path = ir_xml_path.with_suffix(".bin")
+    return {ir_xml_path.name: sha256_file(ir_xml_path), bin_path.name: sha256_file(bin_path)}
+
+
+@dataclass
 class ModelSpec:
     """Uniform interface each model module exposes, so the four CLI dispatchers stay generic.
 
@@ -157,6 +197,9 @@ class ModelSpec:
     fetch_dataset: Optional[Callable[[Path], Path]]
     export_onnx: Callable[[Path, Path], tuple]
     eval_fp32: Optional[Callable[[Path, Path], dict]]
+    # issue #3: calibration data + backend-agnostic accuracy eval (shared by eval_fp32/eval_int8_cpu)
+    calibration_samples: Optional[Callable[[Path], list]] = None
+    eval_with_predictor: Optional[Callable[[Callable, Path], dict]] = None
 
 
 def convert_tflite_to_onnx(tflite_path: Path, onnx_path: Path, *, opset: int = 13) -> None:
@@ -165,6 +208,106 @@ def convert_tflite_to_onnx(tflite_path: Path, onnx_path: Path, *, opset: int = 1
 
     onnx_path.parent.mkdir(parents=True, exist_ok=True)
     tf2onnx.convert.from_tflite(str(tflite_path), opset=opset, output_path=str(onnx_path))
+
+
+def make_onnxruntime_predictor(onnx_path: Path) -> Callable[[Any], Any]:
+    """A ``predict(batch) -> logits`` callable backed by onnxruntime (single input/output models)."""
+    import onnxruntime as ort
+
+    sess = ort.InferenceSession(str(onnx_path), providers=["CPUExecutionProvider"])
+    input_name = sess.get_inputs()[0].name
+
+    def predict(batch):
+        return sess.run(None, {input_name: batch})[0]
+
+    return predict
+
+
+def make_openvino_predictor(ir_path: Path) -> Callable[[Any], Any]:
+    """A ``predict(batch) -> logits`` callable backed by a compiled OpenVINO IR model."""
+    import openvino as ov
+
+    core = ov.Core()
+    model = core.read_model(str(ir_path))
+    compiled = core.compile_model(model, "CPU")
+    output = compiled.output(0)
+
+    def predict(batch):
+        return compiled(batch)[output]
+
+    return predict
+
+
+def convert_onnx_to_ir(onnx_path: Path, ir_dir: Path, model_id: str) -> Path:
+    """ONNX -> fp32 OpenVINO IR (issue #3 step 1). Returns the ``.xml`` path (``.bin`` sits next to it)."""
+    import openvino as ov
+
+    ir_dir.mkdir(parents=True, exist_ok=True)
+    xml_path = ir_dir / f"{model_id}.xml"
+    ov_model = ov.convert_model(str(onnx_path))
+    ov.save_model(ov_model, str(xml_path))
+    return xml_path
+
+
+def quantize_ir_int8(fp32_ir_path: Path, int8_ir_path: Path, calibration_samples: list) -> Path:
+    """NNCF post-training INT8 quantization of a fp32 IR (issue #3 step 2).
+
+    ``calibration_samples`` is a list of single-example arrays already shaped as the model expects
+    (batch dim included) — NNCF's OpenVINO backend infers the model directly on each item.
+    """
+    import nncf
+    import openvino as ov
+
+    core = ov.Core()
+    model = core.read_model(str(fp32_ir_path))
+    calibration_dataset = nncf.Dataset(calibration_samples)
+    quantized = nncf.quantize(model, calibration_dataset, subset_size=len(calibration_samples))
+    int8_ir_path.parent.mkdir(parents=True, exist_ok=True)
+    ov.save_model(quantized, str(int8_ir_path))
+    return int8_ir_path
+
+
+def fakequantize_params_at_input(ir_path: Path) -> dict:
+    """Read the (input_low, input_high, output_low, output_high, levels) of the FakeQuantize
+    node NNCF places directly on an IR's first input (issue #3 step 5).
+
+    Raises ``ValueError`` if the input isn't fed straight into a FakeQuantize (e.g. an fp32,
+    unquantized IR).
+    """
+    import openvino.runtime as ov
+
+    core = ov.Core()
+    model = core.read_model(str(ir_path))
+    param = model.inputs[0].get_node()
+    consumers = list(param.output(0).get_target_inputs())
+    if not consumers or consumers[0].get_node().get_type_name() != "FakeQuantize":
+        raise ValueError(f"{ir_path}: model input is not directly consumed by a FakeQuantize node")
+    fq = consumers[0].get_node()
+
+    names = ["data", "input_low", "input_high", "output_low", "output_high"]
+    values: dict[str, float] = {}
+    for i in range(fq.get_input_size()):
+        src = fq.input_value(i).get_node()
+        if src.get_type_name() == "Constant":
+            values[names[i]] = float(src.get_data().reshape(-1)[0])
+    values["levels"] = fq.get_levels()
+    return values
+
+
+def signed_int8_affine_params(input_low: float, input_high: float, levels: int = 256) -> tuple[float, int]:
+    """Convert a FakeQuantize (input_low, input_high, levels) range into (scale, zero_point) for
+    the project's signed-INT8 packer convention (docs/record_format.md / sw/packer/packlib.py):
+    ``q = clip(round(x / scale) + zero_point, -128, 127)``.
+
+    Derivation: FakeQuantize maps ``input_low -> code 0`` and ``input_high -> code levels-1``
+    (an unsigned convention). Shifting both codes by -128 to land in [-128, 127] gives
+    ``zero_point = -128 - round(input_low / scale)``.
+    """
+    import numpy as np
+
+    scale = (input_high - input_low) / (levels - 1)
+    zero_point = int(-128 - np.rint(input_low / scale))
+    return scale, zero_point
 
 
 def param_count_from_onnx(onnx_path: Path) -> int:

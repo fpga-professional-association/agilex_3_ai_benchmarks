@@ -85,14 +85,43 @@ def _eval_file_list(dataset_root: Path) -> list[tuple[Path, int]]:
     return items
 
 
-def eval_fp32(onnx_path: Path, dataset_dir: Path) -> dict:
-    import onnxruntime as ort
+CALIBRATION_SEED = 1234
+CALIBRATION_SIZE = 300
+
+
+def _train_file_list(dataset_root: Path) -> list[tuple[Path, int]]:
+    """The complementary first-90%-per-class split -- never overlaps _eval_file_list's last 10%."""
+    items: list[tuple[Path, int]] = []
+    for class_idx, class_name in enumerate(CLASSES):
+        files = sorted((dataset_root / class_name).glob("*.jpg"))
+        n_val = max(1, int(round(len(files) * VALIDATION_SPLIT)))
+        for path in files[:len(files) - n_val]:
+            items.append((path, class_idx))
+    return items
+
+
+def calibration_samples(dataset_dir: Path) -> list:
+    """300 random images from the 90% training portion (fixed seed), disjoint from the eval set."""
+    from PIL import Image
+
+    dataset_root = dataset_dir / "vww" / "vw_coco2014_96"
+    items = _train_file_list(dataset_root)
+    rng = np.random.default_rng(CALIBRATION_SEED)
+    idx = sorted(rng.choice(len(items), size=CALIBRATION_SIZE, replace=False))
+    samples = []
+    for i in idx:
+        path, _label = items[i]
+        with Image.open(path) as im:
+            arr = np.asarray(im.convert("RGB").resize((IMAGE_SIZE, IMAGE_SIZE)), dtype=np.float32) / 255.0
+        samples.append(arr[np.newaxis, ...])
+    return samples
+
+
+def eval_with_predictor(predict_fn, dataset_dir: Path) -> dict:
     from PIL import Image
 
     dataset_root = dataset_dir / "vww" / "vw_coco2014_96"
     items = _eval_file_list(dataset_root)
-    sess = ort.InferenceSession(str(onnx_path), providers=["CPUExecutionProvider"])
-    input_name = sess.get_inputs()[0].name
 
     correct = 0
     batch_imgs: list[np.ndarray] = []
@@ -103,7 +132,7 @@ def eval_fp32(onnx_path: Path, dataset_dir: Path) -> dict:
         if not batch_imgs:
             return
         batch = np.stack(batch_imgs).astype(np.float32) / 255.0
-        logits = sess.run(None, {input_name: batch})[0]
+        logits = predict_fn(batch)
         preds = np.argmax(logits, axis=1)
         correct += int(np.sum(preds == np.array(batch_labels)))
         batch_imgs.clear()
@@ -129,3 +158,7 @@ def eval_fp32(onnx_path: Path, dataset_dir: Path) -> dict:
             "MLPerf Tiny reference ballpark: 80%+ top-1."
         ),
     }
+
+
+def eval_fp32(onnx_path: Path, dataset_dir: Path) -> dict:
+    return eval_with_predictor(common.make_onnxruntime_predictor(onnx_path), dataset_dir)

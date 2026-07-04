@@ -1,0 +1,23 @@
+{
+  "kind": "reference",
+  "level": "PH2",
+  "subject": "ds-cnn-kws-int8",
+  "date": "2026-07-04",
+  "config": {
+    "device": "A3CY100BM16AE7S",
+    "board": "Arrow AXC3000",
+    "model": "ds-cnn-kws",
+    "quantization": "int8-nncf-ptq",
+    "tool_versions": {
+      "python": "3.12.3",
+      "openvino": "2024.6.0-17404-4c0f47d2335-releases/2024/6",
+      "nncf": "2.14.1"
+    }
+  },
+  "metrics": {
+    "accuracy_top1": 0.9177914110429448,
+    "n_records": 4890
+  },
+  "plan_ref": "\u00a75 table",
+  "notes": "Full Speech Commands v2 'test' split (4890 records) via tensorflow_datasets, matching docs/record_format.md's 4,890-record count. MLPerf Tiny quality target: 90%+ top-1. fp32->int8 accuracy_top1 delta: -0.0008 (fp32=0.9186)."
+}

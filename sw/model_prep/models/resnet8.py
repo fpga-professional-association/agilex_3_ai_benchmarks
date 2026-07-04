@@ -40,6 +40,9 @@ _CHECKPOINT_URL = (
 )
 _SOURCE_COMMIT = "mlcommons/tiny@master"
 _DATASET_URL = "https://huggingface.co/api/datasets/uoft-cs/cifar10/parquet/plain_text/test/0.parquet"
+_TRAIN_DATASET_URL = "https://huggingface.co/api/datasets/uoft-cs/cifar10/parquet/plain_text/train/0.parquet"
+CALIBRATION_SEED = 1234
+CALIBRATION_SIZE = 300
 
 # Canonical CIFAR-10 label order (batches.meta label_names / torchvision.datasets.CIFAR10.classes
 # / this HF mirror's int label 0..9) — no remapping needed.
@@ -80,17 +83,36 @@ def export_onnx(checkpoint_path: Path, onnx_dir: Path) -> tuple[Path, "common.Mo
     return onnx_path, manifest
 
 
-def eval_fp32(onnx_path: Path, dataset_dir: Path) -> dict:
-    import onnxruntime as ort
+def fetch_train_dataset(dest_dir: Path) -> Path:
+    """Download the CIFAR-10 *train* split (50,000 rows) -- calibration data only, never eval."""
+    dest = dest_dir / "cifar10" / "train.parquet"
+    common.download(_TRAIN_DATASET_URL, dest)
+    return dest
+
+
+def calibration_samples(dataset_dir: Path) -> list:
+    """300 random train-split images (fixed seed) -- never drawn from the eval/test split."""
+    import pyarrow.parquet as pq
+    from PIL import Image
+
+    parquet_path = fetch_train_dataset(dataset_dir)
+    rows = pq.read_table(parquet_path).to_pylist()
+    idx = np.random.default_rng(CALIBRATION_SEED).choice(len(rows), size=CALIBRATION_SIZE, replace=False)
+    idx.sort()
+    samples = []
+    for i in idx:
+        img = np.asarray(Image.open(io.BytesIO(rows[i]["img"]["bytes"])).convert("RGB"), dtype=np.float32)
+        samples.append(img[np.newaxis, ...])
+    return samples
+
+
+def eval_with_predictor(predict_fn, dataset_dir: Path) -> dict:
     import pyarrow.parquet as pq
     from PIL import Image
 
     parquet_path = dataset_dir / "cifar10" / "test.parquet"
     table = pq.read_table(parquet_path)
     rows = table.to_pylist()
-
-    sess = ort.InferenceSession(str(onnx_path), providers=["CPUExecutionProvider"])
-    input_name = sess.get_inputs()[0].name
 
     correct = 0
     n = len(rows)
@@ -102,7 +124,7 @@ def eval_fp32(onnx_path: Path, dataset_dir: Path) -> dict:
             for r in chunk
         ])
         labels = np.array([r["label"] for r in chunk], dtype=np.int64)
-        logits = sess.run(None, {input_name: images})[0]
+        logits = predict_fn(images)
         preds = np.argmax(logits, axis=1)
         correct += int(np.sum(preds == labels))
 
@@ -118,3 +140,7 @@ def eval_fp32(onnx_path: Path, dataset_dir: Path) -> dict:
             "85%+ top-1 on the full test set."
         ),
     }
+
+
+def eval_fp32(onnx_path: Path, dataset_dir: Path) -> dict:
+    return eval_with_predictor(common.make_onnxruntime_predictor(onnx_path), dataset_dir)
