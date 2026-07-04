@@ -1,0 +1,5 @@
+# Host runner (issue #17). The runtime is Python standard library only (argparse, json, hashlib,
+# time) so it drops onto a bare workstation next to `system-console`. Tests additionally use pytest
+# and the results validator (jsonschema, via scripts/). No numpy/OpenVINO on the host control path.
+pytest>=7
+jsonschema>=4.10
