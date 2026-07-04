@@ -45,3 +45,6 @@ jobs:
 
       - name: HyperBus controller lint + testbench (issue #13)
         run: bash sim/hyperbus/run.sh
+
+      - name: Record-replay datapath lint + testbenches (issue #16)
+        run: bash sim/replay/run.sh
