@@ -42,3 +42,6 @@ jobs:
 
       - name: Scoreboard lint + testbenches (issue #15)
         run: bash sim/scoreboard/run.sh
+
+      - name: HyperBus controller lint + testbench (issue #13)
+        run: bash sim/hyperbus/run.sh
