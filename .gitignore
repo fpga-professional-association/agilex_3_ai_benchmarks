@@ -14,6 +14,17 @@ quartus/**/synth_dumps/
 *.jic
 *.rbf
 
+# Per-run Quartus reports/logs/state left directly in a project dir by `quartus_sh --flow
+# compile` (issue #1: these are not covered by the directory-shaped ignores above, and appear
+# even for the trivial smoke project — .rpt/.summary per stage, .pin from the Fitter, .sld from
+# the Assembler/SignalTap, .done as a flow completion marker, serv_req_info.txt from licensing).
+quartus/**/*.rpt
+quartus/**/*.summary
+quartus/**/*.pin
+quartus/**/*.sld
+quartus/**/*.done
+quartus/**/serv_req_info.txt
+
 # Simulation
 sim/**/obj_dir/
 sim/**/obj_*/
