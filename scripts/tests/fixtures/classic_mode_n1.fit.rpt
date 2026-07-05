@@ -1,0 +1,30 @@
+-- fixture provenance (issue #9): a trimmed excerpt of the REAL "Fitter Resource Usage Summary"
+-- table from an actual `quartus_sh --flow compile l0_tensor_chain -c l0_tensor_chain_n1` run in
+-- this session (Quartus Prime Pro 26.1.0 Build 110, FAMILY "Agilex 3", DEVICE A3CY100BM16AE7S).
+-- N_BLOCKS=1 (one l0_mac_block, a 10-wide INT8 dot product) landed entirely in classic 18x19 mode:
+-- 5 Fixed Point DSP blocks (10 multiplies / 2 per classic block), 0 DSP_PRIME (tensor mode) blocks
+-- — see rtl/microbench/l0_tensor_chain/README.md for why tensor mode could not be reached on this
+-- toolchain/device combination. This is exactly the audit script's real, demonstrated FAIL case.
+;     -- LAB logic registers:                             ;                    ;       ;
+;             -- Primary logic registers                      ; 218 / 68,000       ; < 1 % ;
+;             -- Secondary logic registers                    ; 25 / 68,000        ; < 1 % ;
+;         -- Hyper-Registers:                                 ; 94                 ;       ;
+;                                                             ;                    ;       ;
+; Register control circuitry for power estimation             ; 182                ;       ;
+;                                                             ;                    ;       ;
+; ALMs adjustment for power estimation                        ; 32                 ;       ;
+;                                                             ;                    ;       ;
+; I/O pins                                                    ; 18 / 254           ; 7 %   ;
+;     -- Clock pins                                           ; 4 / 19             ; 21 %  ;
+;     -- Dedicated input pins                                 ; 3 / 14             ; 21 %  ;
+;                                                             ;                    ;       ;
+; M20K blocks                                                 ; 0 / 262            ; 0 %   ;
+; Total MLAB memory bits                                      ; 0                  ;       ;
+; Total block memory bits                                     ; 0 / 5,365,760      ; 0 %   ;
+;                                                             ;                    ;       ;
+; DSP Blocks Needed [=A+B+C-D]                                ; 5 / 138            ; 4 %   ;
+;     [A] Total Fixed Point DSP Blocks                        ; 5                  ;       ;
+;     [B] Total Floating Point DSP Blocks                     ; 0                  ;       ;
+;     [C] Total DSP_PRIME Blocks                              ; 0                  ;       ;
+;     [D] Estimate of DSP Blocks recoverable by dense merging ; 0                  ;       ;
+;                                                             ;                    ;       ;

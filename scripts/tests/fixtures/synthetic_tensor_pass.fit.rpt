@@ -1,0 +1,14 @@
+-- fixture provenance (issue #9): SYNTHETIC / HAND-AUTHORED, in the exact column format Quartus's
+-- real "Fitter Resource Usage Summary" table uses (see classic_mode_n1.fit.rpt for a real excerpt
+-- of that same format). This is NOT a real compile — Quartus Prime Pro 26.1 refuses to elaborate
+-- the tensor-mode WYSIWYG primitive for FAMILY "Agilex 3" in this toolchain (error 24863: "The
+-- native AI-optimized DSP (DSP Prime block) only supports Stratix 10 NX and Agilex 5 devices"; see
+-- rtl/microbench/l0_tensor_chain/README.md), so no real N=8-tensor-mode report exists to fixture
+-- from. This file exists ONLY to exercise the audit script's PASS branch (parsing + the
+-- tensor-count-matches-expected comparison) since the real classic-mode report above only exercises
+-- the FAIL branch. Do not cite these numbers as a measurement.
+; DSP Blocks Needed [=A+B+C-D]                                ; 8 / 138            ; 6 %   ;
+;     [A] Total Fixed Point DSP Blocks                        ; 0                  ;       ;
+;     [B] Total Floating Point DSP Blocks                     ; 0                  ;       ;
+;     [C] Total DSP_PRIME Blocks                              ; 8                  ;       ;
+;     [D] Estimate of DSP Blocks recoverable by dense merging ; 0                  ;       ;
