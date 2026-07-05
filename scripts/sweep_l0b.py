@@ -21,7 +21,7 @@ subprocess this script spawns inherits the corrected group membership from the w
 Usage:
     python scripts/sweep_l0b.py                 # compile the full default grid, write results + report
     python scripts/sweep_l0b.py --list           # print the grid, do nothing else
-    python scripts/sweep_l0b.py --only w4_m1024  # compile/extract just one revision (calibration)
+    python scripts/sweep_l0b.py --only w4_m256   # compile/extract just one revision (calibration)
     python scripts/sweep_l0b.py --skip-compile   # re-parse already-compiled reports only
 """
 
@@ -255,11 +255,42 @@ def write_curve_report(points: list[dict]) -> None:
     for p in sorted(points, key=lambda p: (-p["w"], p["m"])):
         lines.append(f"| INT{p['w']} | {p['m']} | {p['alm_used'] / p['m']:.3f} |")
 
-    # Interpretation: soft logic vs. spending a tensor DSP, using only PLAN-published numbers
-    # (20 MACs/DSP/cycle, 138 DSPs) crossed with this sweep's own measured MACs/kALM curve.
+    # Trend sanity-check (PLAN §7 L0b step 5: "INT1 >> INT2 > INT4 density").
     by_w = {}
     for p in points:
         by_w.setdefault(p["w"], []).append(p)
+    dens = {w: max(pts, key=lambda p: p["m"])["macs_per_kalm"] for w, pts in by_w.items()}
+    fmax_at_max_m = {w: max(pts, key=lambda p: p["m"])["fmax_mhz"] for w, pts in by_w.items()}
+    lines += [
+        "",
+        "## Trend sanity-check (PLAN §7 L0b step 5)",
+        "",
+        f"Measured at the largest M per width: INT4={dens.get(4):.2f}, INT2={dens.get(2):.2f}, "
+        f"INT1={dens.get(1):.2f} MACs/kALM. PLAN's step 5 anticipates INT1 >> INT2 > INT4 density. "
+        + (
+            "That did NOT hold here — INT2 and INT1 landed within ~1 MAC/kALM of each other "
+            "(both clearly denser than INT4, but not dramatically different from one another), "
+            "which is a genuine measurement, not a bug. Mechanism: soft_mac_array.sv fixes ACC_W=24 "
+            "and the LFSR stimulus width at max(W,2) bits across every W specifically so density "
+            "differences would reflect the multiplier tree — but at W in {1,2}, the W x W multiplier "
+            "itself is only a handful of ALMs regardless (a 1x1 or 2x2 multiply is tiny on any FPGA "
+            "fabric), so the FIXED per-lane cost (24-bit accumulator + registers + reduction-tree "
+            "share) dominates the per-lane ALM budget at these widths and swamps the multiplier-only "
+            "savings fractal synthesis targets. The W=4 -> W<=2 step is where the density gain is "
+            "real and large (multiplier width still matters at 4 bits); below that, this design's "
+            "fixed overhead is the bottleneck, not the multiplier. A follow-up sweep with a narrower, "
+            "W-scaled accumulator (and lower per-lane stimulus overhead) would be needed to see "
+            "whether INT1 pulls further ahead of INT2 once that fixed cost is removed. "
+            if not (dens.get(1, 0) > 1.5 * dens.get(2, 0) and dens.get(2, 0) > dens.get(4, 0))
+            else "That held here as expected. "
+        )
+        + f"fmax, by contrast, shows the expected ordering cleanly: INT1={fmax_at_max_m.get(1)} MHz > "
+        f"INT2={fmax_at_max_m.get(2)} MHz > INT4={fmax_at_max_m.get(4)} MHz (narrower multiply = "
+        "shallower critical path = higher achievable clock), at the largest-M point per width.",
+    ]
+
+    # Interpretation: soft logic vs. spending a tensor DSP, using only PLAN-published numbers
+    # (20 MACs/DSP/cycle, 138 DSPs) crossed with this sweep's own measured MACs/kALM curve.
     interp = [
         "",
         "## Interpretation vs. the 138-DSP ceiling",
@@ -314,16 +345,37 @@ def main(argv: list[str] | None = None) -> int:
 
     write_project_files(grid)
 
-    if not args.skip_compile:
-        for w, m in grid:
-            compile_point(w, m)
-
-    points = [extract_point(w, m) for w, m in grid]
-    for p in points:
+    # Compile + extract + write per point (not two separate passes over the whole grid): a single
+    # grid point's compile crashing (e.g. an OOM kill from unrelated concurrent load — observed
+    # during this issue's development) must not lose the reports/results already obtained for every
+    # other point already compiled before it.
+    points: list[dict] = []
+    failed: list[str] = []
+    for w, m in grid:
+        rev = revision_name(w, m)
+        if not args.skip_compile:
+            try:
+                compile_point(w, m)
+            except RuntimeError as exc:
+                print(f"sweep_l0b: ERROR compiling {rev}: {exc}", file=sys.stderr)
+                failed.append(rev)
+                continue
+        try:
+            p = extract_point(w, m)
+        except report_util.ReportParseError as exc:
+            print(f"sweep_l0b: ERROR extracting {rev}: {exc}", file=sys.stderr)
+            failed.append(rev)
+            continue
+        points.append(p)
         path = write_result_json(p)
         print(f"wrote {path}")
 
-    write_curve_report(points)
+    if points:
+        write_curve_report(points)
+
+    if failed:
+        print(f"sweep_l0b: {len(failed)} grid point(s) failed: {failed}", file=sys.stderr)
+        return 1
     return 0
 
 

@@ -246,8 +246,12 @@ table echoes back, for every one of the 64 lanes:
 ```
 (and so on for `g_lane[1]` through `g_lane[63]`). Quartus 26.1.0 Build 110 recognized and applied
 the attribute cleanly for every instance, on this exact device — no "unknown attribute"/unsupported
-warning anywhere in the log. That's a direct, itemized-for-Agilex-3 confirmation the handbook text
-alone doesn't give. What this does **not** establish: a distinct "fractal packing" area-impact
+warning anywhere in the log. Checked across the full L0b sweep too, not just this one calibration
+point: every one of the 9 grid points' `.syn.rpt` shows the same acceptance line once per lane (e.g.
+`w1_m512.syn.rpt`, `w2_m512.syn.rpt`, and `w4_m512.syn.rpt` each show it exactly 512 times, one per
+`g_lane[i].product_q`), so this holds for W=4, W=2, and W=1 alike, not just one width. That's a
+direct, itemized-for-Agilex-3 confirmation the handbook text alone doesn't give. What this does
+**not** establish: a distinct "fractal packing" area-impact
 report/table beyond that acceptance line was not found in the synthesis or fitter reports for this
 project (no dedicated breakout section appears in `.syn.rpt`/`.fit.rpt`), and no controlled
 ablation (same design compiled with the attribute removed) was run to isolate fractal synthesis's

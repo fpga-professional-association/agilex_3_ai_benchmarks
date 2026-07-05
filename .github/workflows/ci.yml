@@ -48,3 +48,6 @@ jobs:
 
       - name: Record-replay datapath lint + testbenches (issue #16)
         run: bash sim/replay/run.sh
+
+      - name: L0b soft-MAC array lint + testbenches (issue #10)
+        run: bash sim/microbench/l0b_soft_mac/run.sh
