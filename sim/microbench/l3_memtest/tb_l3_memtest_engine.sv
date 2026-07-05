@@ -25,7 +25,7 @@ module tb_l3_memtest_engine;
   logic [31:0] hbmc_csr_readdata, hbmc_csr_writedata;
 
   // ---- engine CSR (host-facing) ----
-  logic [4:0]  csr_address; logic csr_read, csr_write;
+  logic [5:0]  csr_address; logic csr_read, csr_write;
   logic [31:0] csr_readdata, csr_writedata;
 
   // ---- engine <-> hbmc_core Avalon data path ----
@@ -75,11 +75,11 @@ module tb_l3_memtest_engine;
     @(negedge clk); hbmc_csr_write = 1'b0;
   endtask
 
-  task automatic eng_csr_wr(input logic [4:0] a, input logic [31:0] d);
+  task automatic eng_csr_wr(input logic [5:0] a, input logic [31:0] d);
     @(negedge clk); csr_address = a; csr_writedata = d; csr_write = 1'b1;
     @(negedge clk); csr_write = 1'b0;
   endtask
-  task automatic eng_csr_rd(input logic [4:0] a, output logic [31:0] d);
+  task automatic eng_csr_rd(input logic [5:0] a, output logic [31:0] d);
     @(negedge clk); csr_address = a; csr_read = 1'b1;
     @(posedge clk); #1 d = csr_readdata;
     @(negedge clk); csr_read = 1'b0;
@@ -137,6 +137,18 @@ module tb_l3_memtest_engine;
     check(pdone == 32'd1, $sformatf("corrupt run pass_done got %0d exp 1", pdone));
     check(err == 32'd1, $sformatf("corrupt run err_count got %0d exp 1", err));
     check(erraddr == 32'd1005, $sformatf("corrupt run err_addr got %0d exp 1005", erraddr));
+
+    // ---- 3. regression guard: MT_ERR_ADDR (0x20) must be a genuinely distinct register from
+    // MT_CTRL (0x00), not an address-width truncation alias (9 registers span 0x00-0x20, which
+    // needs 6 csr_address bits -- a 5-bit port would silently wrap 0x20 to 0x00). MT_CTRL has no
+    // read case of its own, so reading it must fall through to the default sentinel, not ERR_ADDR.
+    begin
+      logic [31:0] ctrl_readback;
+      eng_csr_rd(MT_CTRL, ctrl_readback);
+      check(ctrl_readback == 32'hDEAD_C0DE,
+            $sformatf("MT_CTRL readback got %h, expected default sentinel DEAD_C0DE (MT_ERR_ADDR may be aliasing onto MT_CTRL's offset)",
+                      ctrl_readback));
+    end
 
     if (errors == 0) $display("PASS");
     else             $display("FAIL: %0d error(s)", errors);

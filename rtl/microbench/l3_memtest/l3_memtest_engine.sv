@@ -21,7 +21,7 @@ module l3_memtest_engine
     input  logic clk,
     input  logic rst,
 
-    input  logic [4:0]  csr_address,
+    input  logic [5:0]  csr_address,   // 9 registers span 0x00-0x20 -> needs 6 bits, not 5
     input  logic        csr_read,
     output logic [31:0] csr_readdata,
     input  logic        csr_write,

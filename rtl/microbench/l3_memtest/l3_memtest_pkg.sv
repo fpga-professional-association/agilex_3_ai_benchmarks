@@ -30,15 +30,18 @@ package l3_memtest_pkg;
   endfunction
 
   // ---- l3_memtest_engine CSR map (word-addressed byte offsets, 32-bit registers) ----
-  localparam logic [4:0] MT_CTRL        = 5'h00;  // bit0 START (self-clearing)
-  localparam logic [4:0] MT_SEED        = 5'h04;  // LFSR seed (0 is remapped to a fixed nonzero default)
-  localparam logic [4:0] MT_BASE_ADDR   = 5'h08;  // HyperRAM word base address under test
-  localparam logic [4:0] MT_SPAN_WORDS  = 5'h0C;  // words covered per write/read-verify pass
-  localparam logic [4:0] MT_PASS_TARGET = 5'h10;  // number of write+read-verify passes to run
-  localparam logic [4:0] MT_STATUS      = 5'h14;  // bit0 BUSY, bit1 DONE
-  localparam logic [4:0] MT_PASS_DONE   = 5'h18;  // RO passes completed
-  localparam logic [4:0] MT_ERR_COUNT   = 5'h1C;  // RO cumulative mismatch count (all passes)
-  localparam logic [4:0] MT_ERR_ADDR    = 5'h20;  // RO word address of the first mismatch seen
+  // 9 registers spanning 0x00-0x20 -> needs 6 address bits (5 bits only reaches 0x1C and would
+  // silently truncate MT_ERR_ADDR to 0x00, aliasing it onto MT_CTRL -- caught by hand-checking
+  // width vs register count, not by Verilator, which does not flag literal truncation by default).
+  localparam logic [5:0] MT_CTRL        = 6'h00;  // bit0 START (self-clearing)
+  localparam logic [5:0] MT_SEED        = 6'h04;  // LFSR seed (0 is remapped to a fixed nonzero default)
+  localparam logic [5:0] MT_BASE_ADDR   = 6'h08;  // HyperRAM word base address under test
+  localparam logic [5:0] MT_SPAN_WORDS  = 6'h0C;  // words covered per write/read-verify pass
+  localparam logic [5:0] MT_PASS_TARGET = 6'h10;  // number of write+read-verify passes to run
+  localparam logic [5:0] MT_STATUS      = 6'h14;  // bit0 BUSY, bit1 DONE
+  localparam logic [5:0] MT_PASS_DONE   = 6'h18;  // RO passes completed
+  localparam logic [5:0] MT_ERR_COUNT   = 6'h1C;  // RO cumulative mismatch count (all passes)
+  localparam logic [5:0] MT_ERR_ADDR    = 6'h20;  // RO word address of the first mismatch seen
 
   // ---- l3_bw_engine CSR map ----
   localparam logic [4:0] BW_CTRL        = 5'h00;  // bit0 START (self-clearing), bit1 DIR(1=read)
