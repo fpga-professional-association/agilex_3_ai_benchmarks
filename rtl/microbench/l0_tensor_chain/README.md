@@ -117,13 +117,37 @@ since a single unpipelined 10-wide dot product is a lot of combinational depth f
 microbench does not attempt internal pipelining (PLAN §3 LV1 retiming disciplines matter far more
 once there's a production datapath to retime — see `l1_pe_array` for that level).
 
-At **N=8** (`quartus/l0_tensor_chain/l0_tensor_chain_n8`), N ⋅ 10 = 80 multiplies would need up to 40
-classic DSP blocks (2 multiplies/block) — well inside the 138-DSP budget. At **N=32**, the naive
-classic-mode analogue would need up to 160 DSP blocks, **exceeding the device's entire 138-DSP
-budget** — i.e. reproducing PLAN's tensor-mode density in classic mode for the largest requested N
-does not even physically fit on this chip. That arithmetic alone is a second, independent
-illustration of the "10x loss" this issue is about (see the compile log referenced in the PR / final
-session report for which of N∈{8,16,32} were actually compiled this session vs. left for later).
+All of N=1, N=8, and N=16 were actually compiled this session (real `quartus_sh --flow compile`
+runs, not extrapolated): N=8 -> 40 classic DSP blocks, fmax 56.25 MHz; N=16 -> 80 classic DSP blocks,
+fmax 52.59 MHz — both exactly 2 multiplies/classic-DSP-block, both comfortably inside the 138-DSP
+budget (`results/l0_tensor-chain-fmax-n{1,8,16}_20260704.json`).
+
+**N=32 was also actually compiled, and it does not fit.** Real Fitter output from
+`quartus_sh --flow compile l0_tensor_chain -c l0_tensor_chain_n32` in this session:
+
+```
+Error (184035): Design uses 139 DSP blocks, but only 138 DSP blocks are available in the device
+Error: An error occurred during placement
+Error: Quartus Prime Fitter was unsuccessful. 2 errors, 2 warnings
+```
+
+Analysis & Synthesis alone estimates the naive "2 multiplies/DSP" figure (`l0_tensor_chain_n32.
+syn.rpt`: "Total DSP Blocks; 160"); the Fitter's own denser packing gets it down to 139
+(`l0_tensor_chain_n32.fit.rpt`: `DSP Blocks Needed [=A+B+C-D] ; 139 / 138 ; 101 %`) — but **still one
+DSP block over the device's entire 138-DSP budget**, so placement fails outright:
+
+```
+Error (184035): Design uses 139 DSP blocks, but only 138 DSP blocks are available in the device
+Error: An error occurred during placement
+Error: Quartus Prime Fitter was unsuccessful. 2 errors, 2 warnings
+```
+
+This is real, concrete, better-than-hypothetical evidence for the "10x loss" this whole issue is
+about: reproducing PLAN's tensor-mode density in classic mode for the largest requested N does not
+even physically fit on this chip, regardless of how well Quartus packs it. `l0_tensor_chain_n32.
+fit.rpt` exists (a partial report up to the placement failure — its DSP-count table above is real,
+its timing/pin sections are not) but there is no `.sta.rpt` (Timing Analysis never ran) and no
+results/ JSON was emitted for this revision — a compile failure is not a number to report.
 
 ## Register map (Avalon-MM, byte offsets, 32-bit; mirrors `bench_pkg::L0_ADDR_*`)
 
