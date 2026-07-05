@@ -1,0 +1,39 @@
+{
+  "kind": "estimate",
+  "level": "PH0",
+  "subject": "mobilenetv2-1.0-imagenet-agx3-performance-estimator-250mbps",
+  "date": "2026-07-04",
+  "plan_ref": "\u00a75 table",
+  "config": {
+    "device": "A3CY100BM16AE7S",
+    "board": "Arrow AXC3000",
+    "arch_file": "models/arch/AGX3_Performance.arch",
+    "model": "mobilenetv2-1.0-imagenet",
+    "quantization": "int8-nncf-ptq",
+    "tool_versions": {
+      "python": "3.12.3",
+      "openvino": "2024.6.0-17404-4c0f47d2335-releases/2024/6",
+      "nncf": "2.14.1",
+      "ai_suite": "2026.1.1+b17"
+    },
+    "memory_bandwidth_mbps": 250.0,
+    "ir_sha256": {
+      "xml": "10d8a089997a8381c9b9386346b3dc69ad8abef5095f47ef7384ea3936be92a9",
+      "bin": "2e1de9fcc20eed2f60390f9fc84877ea67dd460a3509185f454a00c60a637fee"
+    },
+    "estimator_invocation": "source scripts/env.sh >/dev/null 2>&1 && dla_compiler --fanalyze-performance --march models/arch/AGX3_Performance.arch --network-file models/ir/mobilenetv2-1.0-imagenet/int8/mobilenetv2-1.0-imagenet.xml --foutput-format open_vino_hetero --fplugin HETERO:FPGA --o out.aot --dumpdir models/compiled/_ph0_scratch/mobilenetv2-1.0-imagenet_vgd23kde --overwrite-output-files --fdump-performance-report perf.txt --fassumed-memory-bandwidth 250",
+    "estimator_report_path": "models/compiled/_ph0_scratch/mobilenetv2-1.0-imagenet_vgd23kde/main_graph/reports/perf_0.txt",
+    "estimator_fplugin": "HETERO:FPGA",
+    "quant_manifest_hash_mismatch": false
+  },
+  "metrics": {
+    "fps": 6.4,
+    "ddr_bandwidth_required_mbps": 443.73,
+    "ddr_transfers_required_mb": 37.97,
+    "ddr_filter_reads_mb": 12.86,
+    "ddr_feature_reads_mb": 13.35,
+    "ddr_feature_writes_mb": 10.96,
+    "memory_bound": true
+  },
+  "notes": "FPGA AI Suite performance-estimator (HETERO:FPGA) output for mobilenetv2-1.0-imagenet (int8). Memory-bandwidth bottleneck reported: throughput was scaled down from the compute-only rate to match the assumed external memory bandwidth. DDR filter (weight) reads per inference: 12.860 MB vs 3.449 MB of on-disk INT8 weights -> 3.73x re-read factor. Weights are being streamed from external memory on every inference, not folded into on-chip M20K -- this arch is not a DDR-free/MIF-resident configuration regardless of model size. Activation-spill traffic (DDR feature reads + writes) per inference: 13.350 + 10.960 = 24.310 MB -- refines PLAN \u00a75's flat 2.5 MB spill constant (above it by 21.81 MB)."
+}
