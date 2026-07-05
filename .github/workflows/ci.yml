@@ -28,6 +28,9 @@ jobs:
       - name: Check results summary is up to date
         run: python scripts/make_report.py --check
 
+      - name: Check L3 shmoo report is up to date (issue #14)
+        run: python scripts/make_l3_shmoo_report.py --check
+
       - name: Run pytest (scripts/ + sw/)
         run: python -m pytest
 
