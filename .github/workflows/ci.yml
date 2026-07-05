@@ -43,8 +43,11 @@ jobs:
       - name: Scoreboard lint + testbenches (issue #15)
         run: bash sim/scoreboard/run.sh
 
-      - name: HyperBus controller lint + testbench (issue #13)
+      - name: HyperBus controller + capture trainer lint + testbenches (issues #13/#14)
         run: bash sim/hyperbus/run.sh
 
       - name: Record-replay datapath lint + testbenches (issue #16)
         run: bash sim/replay/run.sh
+
+      - name: L3 HyperBus memtest/bandwidth engines lint + testbenches (issue #14)
+        run: bash sim/microbench/l3_memtest/run.sh
