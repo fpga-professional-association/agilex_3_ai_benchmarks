@@ -53,6 +53,15 @@ Marketing peak: `138 DSP × 20 INT8 MACs × 2 ops × 345 MHz = 1,904 GOPS ≈ 1.
 | LV6 Trained HyperBus capture | Constraints referenced to RWDS + init-time training pass centering the capture window per board/temperature | L3 |
 | LV7 Quantization aggression | Each bit removed multiplies effective compute only where the datapath exploits it; accuracy priced by the §6 harness → accuracy-vs-bits Pareto per model | L5 |
 
+> **Toolchain caveat on LV2 (added by #9, measured 2026-07-05):** on **Quartus Prime Pro 26.1.0**,
+> the Agilex 3 DSP's tensor mode (DSP Prime block) is **not reachable from hand-written RTL or the
+> IP Catalog** — the tool restricts DSP Prime to Stratix 10 NX and Agilex 5 (message ID 24863).
+> This is a *tooling* gap, not a silicon limit (the fabric is genuinely Agilex-5-derived per §1).
+> Consequence: the 20 INT8 MACs/DSP/cycle density in §2 is reachable **only** through FPGA AI
+> Suite's `dla_compiler` (its own internal netlist path), **not** through the custom RTL that LV2,
+> §7 L0/L0b/L1, and the §11 hand-rolled-systolic stretch assume. Custom-RTL MACs land in classic
+> 18×19 mode (≈half the density). Re-check on future Quartus/AI-Suite releases. See #9 README.
+
 ## §4 Memory walls
 
 | Tier | Capacity | Peak BW | Sustained (plan) | Role |
@@ -127,6 +136,14 @@ Run bottom-up. Every level produces one number that overwrites an assumption in 
 | L3 | HyperBus shmoo + sustained MB/s | trained capture; LFSR/address-in-data memtest; linear-burst sweep | both memory assumptions | operating point with plotted margin |
 | L4 | Overlay fixed cost per inference (µs) | graph-size sweep on AI Suite IP via method A; repeat under Spatial Compiler | tiny-model sub-roofline gap | µs constant per configuration |
 | L5 | Model corpus: FPS, p50/p99, accuracy, µJ/inf | §6 harness, methods A and B, per quantization point | the entire §5 table | the publishable dataset |
+
+> **L0 target caveat (added by #9, measured 2026-07-05):** the L0 "20/20; tensor count = DSP count"
+> target is **unachievable via the custom-RTL microbench** on Quartus Pro 26.1 — Agilex 3 tensor
+> mode is not exposed to hand-written RTL (see §3 LV2 caveat, msg 24863). L0/L0b/L1 therefore
+> characterize the **classic-mode** ceiling (~10 MACs/block, one of the tensor block's two columns)
+> and the fmax/retiming behaviour of that datapath, which is still a real, publishable number and
+> the honest "what can custom RTL do on this silicon" answer. The tensor-mode density itself is a
+> §7 L4/L5 measurement of the FPGA AI Suite IP, not of hand RTL.
 
 Why this niche is ownable: Agilex 3 shipped in 2025; third-party performance literature is effectively
 empty. Everything here is vendor-public silicon on a $129 board — every level is publishable.
