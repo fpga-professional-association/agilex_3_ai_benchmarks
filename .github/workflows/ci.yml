@@ -48,3 +48,9 @@ jobs:
 
       - name: Record-replay datapath lint + testbenches (issue #16)
         run: bash sim/replay/run.sh
+
+      - name: L0 tensor-chain lint + testbench (issue #9)
+        run: bash sim/l0_tensor_chain/run.sh
+
+      - name: L1 PE-array lint + variant-equivalence testbench (issue #11)
+        run: bash sim/l1_pe_array/run.sh
