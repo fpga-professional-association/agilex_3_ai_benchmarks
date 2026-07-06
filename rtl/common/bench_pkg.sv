@@ -42,6 +42,11 @@ package bench_pkg;
   // scoreboard's above, so distinct names, not distinct bit-position conventions: CTRL/STATUS bit
   // positions are deliberately kept identical to CTRL_START/CTRL_SOFT_RESET/ST_RUNNING/ST_DONE
   // above and reused as-is). ----
+  // lint_off UNUSEDPARAM: this is a shared constants package (AGENTS.md), so any single consumer
+  // compiles params it doesn't use — the scoreboard/replay TBs (issue #15/#16) include bench_pkg
+  // but not the L0 microbench, and lint it with strict -Wall. Same reason hyperbus_pkg waives
+  // UNUSEDSIGNAL. Waived at the declaration so it holds for every consumer, not per-TB run.sh.
+  /* verilator lint_off UNUSEDPARAM */
   localparam logic [7:0] L0_ADDR_CTRL       = 8'h00;
   localparam logic [7:0] L0_ADDR_N_VECTORS = 8'h04;
   localparam logic [7:0] L0_ADDR_CYCLES_LO  = 8'h08;
@@ -50,6 +55,7 @@ package bench_pkg;
   localparam logic [7:0] L0_ADDR_CHECKSUM   = 8'h14;
   localparam logic [7:0] L0_ADDR_STATUS     = 8'h18;
   localparam logic [7:0] L0_ADDR_N_BLOCKS   = 8'h1C;
+  /* verilator lint_on UNUSEDPARAM */
 
 endpackage
 `endif
