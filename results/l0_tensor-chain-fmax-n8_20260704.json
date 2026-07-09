@@ -1,0 +1,28 @@
+{
+  "kind": "estimate",
+  "level": "L0",
+  "subject": "tensor-chain-fmax-n8",
+  "date": "2026-07-04",
+  "plan_ref": "§7 L0",
+  "config": {
+    "device": "A3CY100BM16AE7S",
+    "board": "Arrow AXC3000",
+    "fclk_mhz": 300,
+    "tool_versions": {
+      "quartus": "26.1.0 Build 110",
+      "python": "3.12.3"
+    },
+    "utilization": {
+      "dsp": 40,
+      "dsp_tensor_mode": 0
+    },
+    "report_paths": [
+      "quartus/l0_tensor_chain/l0_tensor_chain_n8.fit.rpt",
+      "quartus/l0_tensor_chain/l0_tensor_chain_n8.sta.rpt"
+    ]
+  },
+  "metrics": {
+    "fmax_mhz": 56.25
+  },
+  "notes": "kind=estimate per issue #9 text ('fmax per N from timing report, kind: estimate until hardware-run') — Quartus Timing Analyzer static-timing result (Fmax Summary), not a silicon measurement; no AXC3000 board available in this session. dsp_tensor_mode=0 is real and expected: see rtl/microbench/l0_tensor_chain/README.md — Quartus Prime Pro 26.1 refuses to elaborate the tensor-mode WYSIWYG primitive for FAMILY \"Agilex 3\". 40 real classic Fixed-Point [A] DSP blocks used (8 blocks x 10-wide dot product / 2 multiplies per classic DSP = 40), 0 DSP_PRIME [C] blocks — matches the N=1 revision's per-block DSP cost (5 DSPs/block) exactly, confirming the N_BLOCKS Verilog parameter override (`set_parameter -name N_BLOCKS 8` in the .qsf) took effect correctly per revision. scripts/audit_tensor_mode.py correctly FAILs this report against any expected tensor count > 0. Emitted manually from a real `quartus_sh --flow compile l0_tensor_chain -c l0_tensor_chain_n8` run in this session."
+}

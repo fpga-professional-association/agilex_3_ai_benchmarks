@@ -1,0 +1,28 @@
+# Quartus settings for the AXC3000 real LED-blink bring-up (blinks physical user LEDs off the
+# board's real 25 MHz oscillator). Build: scripts/build.sh axc3000_blink.
+#
+# Unlike quartus/smoke (Fitter-auto-placed pins, license/flow smoke only), this targets the REAL
+# Arrow AXC3000 pinout via the vetted provenance file quartus/constraints/axc3000_board.tcl
+# (issue #7), so the produced .sof is genuinely flashable to the board's LEDs.
+
+set_global_assignment -name FAMILY "Agilex 3"
+set_global_assignment -name DEVICE A3CY100BM16AE7S
+set_global_assignment -name TOP_LEVEL_ENTITY axc3000_blink
+set_global_assignment -name LAST_QUARTUS_VERSION "26.1.0 Pro Edition"
+
+# Design sources: the top module plus the sanctioned 2-FF synchronizer it instantiates.
+set_global_assignment -name SYSTEMVERILOG_FILE axc3000_blink.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/common/cdc_bit_sync.sv
+
+# Timing: creates the 25 MHz CLK_25M_C clock and false-paths USER_BTN. No PLL here, so no
+# derive_pll_clocks is needed (see the .sdc header).
+set_global_assignment -name SDC_FILE ../constraints/axc3000_board.sdc
+
+# Real board pin locations + I/O standards (clock, USER_BTN, LEDs, and also HyperRAM). Sourced
+# intact from the provenance file so the exact vetted pinout is reused. This blink design has no
+# HyperRAM ports, so the hb_* location/IO assignments target nodes that don't exist here and are
+# expected to draw only Fitter warnings ("assignment to non-existent node"), never errors. If a
+# future Quartus escalated those to errors, replace this line with
+#   source ../constraints/axc3000_blink_pins.tcl
+# which carries only the clock/USER_BTN/LED subset verbatim.
+source ../constraints/axc3000_board.tcl

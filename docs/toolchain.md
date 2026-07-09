@@ -263,3 +263,59 @@ to exercise it, only locate where it's documented.
   successful. 0 errors, 4 warnings`; license line in the log: `Info (24849): Successfully acquired
   license for quartus_agilex3.`; no license errors anywhere in the log.
 - `quartus/smoke/smoke.sof` exists after that compile (533644 bytes) — gitignored, not committed.
+
+## Fractal synthesis on Agilex 3 (issue #10, PLAN §3 LV5 / §7 L0b)
+
+PLAN §3 LV5 flags this as unverified: "Past 138 DSPs, sub-8-bit MACs go into ALMs via fractal
+synthesis (confirm Agilex 3 support in current synthesis handbook)." Answered two ways: a doc
+citation, and an empirical compile against this repo's actual device.
+
+**Doc citation.** Fetched the Quartus Prime Pro Edition User Guide: Design Compilation's "Fractal
+Synthesis Optimization" section directly (`docs.altera.com`, doc 683236, **version 25.3, dated
+2025-09-29** — this is what the `.../683236/current` alias resolves to right now; the public web
+handbook lags the installed 26.1.0 toolchain here, same situation already noted above for the FPGA
+AI Suite's `100'000`-inference doc). Its device-family line names **"Arria 10, Cyclone 10 GX,
+Stratix 10, and Agilex family devices"** — generic "Agilex family," not itemized per sub-family
+(Agilex 3 vs 5 vs 7 vs 9). So the handbook text alone does **not** explicitly single out Agilex 3
+either way — it's covered only by the generic "Agilex family" wording. Not papering over that
+ambiguity, which is why the second check below matters more for this specific device.
+
+The doc also states the optimization targets low-precision multiplication ("implement high-
+precision multipliers, where every operand's width exceeds 11 bits, using DSP blocks instead" —
+comfortably covers this sweep's W ∈ {4,2,1}), claims 20-45% area reduction for such designs, and
+gives two enabling mechanisms:
+- **Per-instance** (used by this issue's RTL): a Verilog attribute on the signal being packed,
+  `(* altera_attribute = "-name FRACTAL_SYNTHESIS ON" *)` — see
+  `rtl/microbench/l0b_soft_mac/soft_mac_array.sv`'s `product_q` declaration.
+- **Project-wide**: `set_global_assignment -name FRACTAL_SYNTHESIS ON` in the QSF. The doc itself
+  warns enabling it globally "can cause unnecessary bloat on modules that are not suitable for
+  fractal optimizations," which is why this issue's sweep uses the per-instance form instead,
+  applied only to the one multiplier register meant to be characterized.
+
+**Empirical check against A3CY100BM16AE7S.** Compiled `soft_mac_array` (W=4, M=64) with the
+per-instance attribute in place and grepped the resulting Analysis & Synthesis report
+(`quartus/l0b_soft_mac/output_files/w4_m64.syn.rpt`). Its "Source Assignments for Top-Level Entity"
+table echoes back, for every one of the 64 lanes:
+```
+; FRACTAL_SYNTHESIS ; ON    ; -    ; g_lane[0].product_q  ; soft_mac_array.sv:76 ;
+```
+(and so on for `g_lane[1]` through `g_lane[63]`). Quartus 26.1.0 Build 110 recognized and applied
+the attribute cleanly for every instance, on this exact device — no "unknown attribute"/unsupported
+warning anywhere in the log. Checked across the full L0b sweep too, not just this one calibration
+point: every one of the 9 grid points' `.syn.rpt` shows the same acceptance line once per lane (e.g.
+`w1_m512.syn.rpt`, `w2_m512.syn.rpt`, and `w4_m512.syn.rpt` each show it exactly 512 times, one per
+`g_lane[i].product_q`), so this holds for W=4, W=2, and W=1 alike, not just one width. That's a
+direct, itemized-for-Agilex-3 confirmation the handbook text alone doesn't give. What this does
+**not** establish: a distinct "fractal packing" area-impact
+report/table beyond that acceptance line was not found in the synthesis or fitter reports for this
+project (no dedicated breakout section appears in `.syn.rpt`/`.fit.rpt`), and no controlled
+ablation (same design compiled with the attribute removed) was run to isolate fractal synthesis's
+own area contribution from this device's baseline soft-multiplier mapping — that would be a
+reasonable follow-up if a future issue needs the effect quantified in isolation, rather than only
+confirmed-present. For this issue's purposes (characterize the achieved MACs/kALM curve, whatever
+mapping produced it), the curve in `results/reports/l0b_soft_mac_curve.md` is the deliverable
+either way, per the issue's own fallback instruction ("If unsupported, measure the default
+soft-multiplier mapping instead and say so — the curve is still the deliverable").
+
+Sources:
+- https://docs.altera.com/r/docs/683236/25.3/quartus-prime-pro-edition-user-guide/fractal-synthesis-optimization (v25.3, 2025-09-29)

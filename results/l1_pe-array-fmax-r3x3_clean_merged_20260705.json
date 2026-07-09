@@ -1,0 +1,48 @@
+{
+  "kind": "estimate",
+  "level": "L1",
+  "subject": "pe-array-fmax-r3x3_clean_merged",
+  "date": "2026-07-05",
+  "plan_ref": "\u00a77 L1",
+  "config": {
+    "device": "A3CY100BM16AE7S",
+    "board": "Arrow AXC3000",
+    "fclk_mhz": 300,
+    "tool_versions": {
+      "quartus": "26.1.0 Build 110",
+      "python": "3.12.3"
+    },
+    "pe_grid": {
+      "rows": 3,
+      "cols": 3,
+      "pe_count": 9,
+      "n_taps": 10
+    },
+    "variant": {
+      "reset_style": "retime_clean",
+      "clock_domain": "merged"
+    },
+    "target_clock": "clk",
+    "utilization": {
+      "dsp": 45,
+      "dsp_tensor_mode": 0,
+      "alm": 578,
+      "m20k": 4
+    },
+    "fmax_all_clocks_mhz": {
+      "clk": 50.48
+    },
+    "fast_forward_limit": [
+      "clk: Insufficient Registers"
+    ],
+    "report_paths": [
+      "quartus/l1_sweep/l1_r3x3_clean_merged.sta.rpt",
+      "quartus/l1_sweep/l1_r3x3_clean_merged.fit.rpt",
+      "quartus/l1_sweep/l1_r3x3_clean_merged.fit.retime.rpt"
+    ]
+  },
+  "metrics": {
+    "fmax_mhz": 50.48
+  },
+  "notes": "Quartus Timing-Analyzer static-timing estimate (kind=estimate per issue #11: fmax from the timing report until a hardware run), worst corner, restricted fmax of the single (clk) clock at the 300 MHz aggressive SDC target. CLASSIC-mode datapath (dsp_tensor_mode=0, 0 expected \u2014 Agilex 3 tensor mode is unreachable from hand RTL on Quartus 26.1, PLAN \u00a73 LV2 caveat / #9). reset_style=retime_clean (LV1), clock_domain=merged (LV4). Emitted by scripts/sweep_l1.py."
+}
