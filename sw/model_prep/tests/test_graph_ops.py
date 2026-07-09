@@ -11,12 +11,18 @@ from __future__ import annotations
 from pathlib import Path
 
 import numpy as np
-import onnx
-import onnxruntime as ort
 import pytest
-from onnx import TensorProto, helper, numpy_helper
 
-from graph_ops import (
+# Heavy deps (AGENTS.md: skipped in CI, same convention as test_common.py). Must precede the
+# graph_ops import too, since graph_ops imports onnx transitively.
+pytest.importorskip("onnx")
+pytest.importorskip("onnxruntime")
+
+import onnx  # noqa: E402
+import onnxruntime as ort  # noqa: E402
+from onnx import TensorProto, helper, numpy_helper  # noqa: E402
+
+from graph_ops import (  # noqa: E402
     check_coredla_friendly,
     decompose_pools,
     find_oversized_pools,
@@ -24,7 +30,7 @@ from graph_ops import (
     fold_transposes,
     make_coredla_friendly,
 )
-from graph_ops.pool_decompose import factorize_into
+from graph_ops.pool_decompose import factorize_into  # noqa: E402
 
 ONNX_DIR = Path(__file__).resolve().parents[3] / "models" / "onnx"
 RTOL = 1e-5
