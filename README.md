@@ -31,12 +31,24 @@ reason stated.
 | ad-toycar INT8 → CoreDLA IP | compiles 100 % to FPGA, 350 MHz IP target, `out.aot` produced | **measured** compile |
 | ad-toycar throughput | 521.6 fps @ 250 MB/s assumed DDR BW; **memory-bound** (needs 519.8 MB/s; weights re-streamed ~2×/inference) — `results/ph0_ad-toycar-*.json` | **estimate** |
 
+### Memory-subsystem bandwidth — measured on the AXC3000
+
+The board is in hand and the first on-silicon benchmarks landed. The full loop (`usbipd` attach → JTAG
+→ program → System-Console readback) is proven; JTAG is control-plane only (counters time the on-chip
+datapath, not the link — PLAN §8 method E).
+
+| Result | Detail | Status |
+|---|---|---|
+| HyperRAM sustained bandwidth | **342.4 MB/s write / 337.3 MB/s read** peak (175 MHz CK, SDR PHY), burst sweep 16→768 words, every point integrity-clean (`ERR_COUNT=0`) — `results/ph3_hyperbus_bw_len*.json`, [`results/reports/hyperbus_bw.md`](results/reports/hyperbus_bw.md) | **measured** |
+| L2 aggregate M20K bandwidth | banked, one port per reader = **38.4 GB/s = 100 % of theoretical** (32 banks × 4 B × 300 MHz). Shared round-robin = **1.2 GB/s (3.1 %) — a 32× penalty**, the cost of getting banking wrong. Output-register-off collapses M20K inference (33→1 blocks, 7× the ALMs). All checksum-verified vs golden — `results/l2_m20k_bw_*.json` | **measured** |
+
 ### PH3 — running a model on the AXC3000 (HyperRAM ↔ CoreDLA)
 
 The AXC3000 has no LPDDR4 (only 16 MB HyperRAM), but CoreDLA requires a 256-bit AXI4 DDR memory.
-PH3 bridges that gap. Branch `ph3-hyperram-axi4-coredla`; design in
+PH3 bridges that gap (merged to `main`); design in
 [`docs/ph3_interfaces.md`](docs/ph3_interfaces.md), [`docs/ph3_bridge_design.md`](docs/ph3_bridge_design.md),
-[`docs/ph3_integration.md`](docs/ph3_integration.md).
+[`docs/ph3_integration.md`](docs/ph3_integration.md); **ordered next-steps roadmap in
+[`docs/ph3_coredla_nextsteps.md`](docs/ph3_coredla_nextsteps.md)**.
 
 | Result | Detail | Status |
 |---|---|---|
@@ -45,16 +57,21 @@ PH3 bridges that gap. Branch `ph3-hyperram-axi4-coredla`; design in
 | LPDDR4 EMIF → HyperRAM swap | Platform Designer regenerates + `quartus_syn` **0 errors** on A3CY100, no unresolved black box; fitter enters (physical synthesis + clock promotion, 0 errors). Two integration bugs found + fixed. | **synthesized** (structural) |
 | Model classifying on-board | — | **blocked** |
 
-**Why on-board inference is still blocked** (honest handoff — full detail in `docs/ph3_integration.md`):
+**Why on-board inference is still blocked** (honest handoff — ordered roadmap in
+[`docs/ph3_coredla_nextsteps.md`](docs/ph3_coredla_nextsteps.md)):
 
-1. **Real DDR-IO HyperBus PHY** — the wrapper's PHY is a synthesizable tristate *stub*, not a
-   datasheet-timed DDR PHY; it will not clock a real W957D8NB. This is the #1 remaining piece.
-2. **25 MHz IOPLL reparam + regenerated SDC + board pinout** — required before a fit/STA number
-   means anything (the stock example assumes a 100 MHz reference; the AXC3000 has only 25 MHz).
+1. ~~Real DDR-IO HyperBus PHY~~ — **CLOSED.** The `third_party/hyperram` submodule supplies a real,
+   silicon-proven SDR PHY, measured on *this* board at 342 MB/s (see the bandwidth table above). The
+   old tristate stub is gone; the `clk`/`clk2x`-from-one-IOPLL pattern it needs is solved and proven.
+2. **PD *system* regen to source `clk2x` from the IOPLL** + **25 MHz IOPLL reparam + regenerated SDC +
+   board pinout** — the component is already two-clock; what remains is wiring `clk2x` through the
+   CoreDLA example system and a signed-off fit/STA (the stock example assumes a 100 MHz reference; the
+   AXC3000 has only 25 MHz).
 3. **CoreDLA CSR start/done handshake** — undocumented vendor-internal protocol
    (`sw/host/smoke_infer.py` leaves it `NotImplementedError`); needed to clock and count inferences.
-4. **HyperRAM bandwidth ceiling** — a 16-bit HyperBus (~500 MB/s) feeding a 256-bit port is ~16×
-   width-starved, so even once functional this system is HyperRAM-bandwidth-bound (not a fast path).
+4. **HyperRAM bandwidth ceiling** — the *measured* 342 MB/s feeding a 256-bit port is ~16× width-starved,
+   so even once functional this system is HyperRAM-bandwidth-bound (the ~522 fps ad-toycar estimate above
+   assumed 250 MB/s DDR; recompute at 342 MB/s — see the roadmap doc).
 
 ## Start here
 
@@ -134,6 +151,6 @@ results/              one JSON per result, conforming to results/schema/result.s
 
 ## Hardware
 
-- Arrow AXC3000 (Agilex 3 A3CY100BM16AE7S), Winbond W957D8NB 16 MB HyperRAM, 32 MB QSPI, USB-C FTDI JTAG
+- Arrow AXC3000 (Agilex 3 A3CY100BM16AE7S), Winbond W957D8NB 16 MB HyperRAM, 32 MB QSPI, on-board USB-Blaster III JTAG (`09fb:6022`)
 - Host tools: Quartus Prime Pro ≥25.3 + FPGA AI Suite (free Agilex 3 license), Python ≥3.10
 - Optional: inline USB-C power meter for µJ/inference numbers
