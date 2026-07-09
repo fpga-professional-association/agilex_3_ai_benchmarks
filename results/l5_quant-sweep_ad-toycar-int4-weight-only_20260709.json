@@ -1,0 +1,29 @@
+{
+  "kind": "reference",
+  "level": "L5",
+  "subject": "ad-toycar-int4-weight-only",
+  "date": "2026-07-09",
+  "config": {
+    "device": "A3CY100BM16AE7S",
+    "board": "Arrow AXC3000",
+    "model": "ad-toycar",
+    "quantization": "int4-weight-only",
+    "nncf_settings": {
+      "algorithm": "nncf.compress_weights (weight-only, data-free)",
+      "mode": "int4_sym",
+      "group_size": -1,
+      "all_layers": true
+    },
+    "tool_versions": {
+      "python": "3.12.3",
+      "openvino": "2024.6.0-17404-4c0f47d2335-releases/2024/6",
+      "nncf": "2.14.1"
+    }
+  },
+  "metrics": {
+    "auc": 0.7592625990361841,
+    "n_records": 2459
+  },
+  "plan_ref": "\u00a73 LV7 / \u00a77 L5",
+  "notes": "ToyCar dev-set test files, 4 machine IDs (2459 files total), per-ID AUC averaged (matches 01_test.py's metric). MLPerf Tiny reference ballpark: AUC >= 0.83; published runs vary ~0.80-0.85 depending on training-set composition and seed -- this uses the committed reference checkpoint as-is, no retraining. Weight-only NNCF compression (nncf.compress_weights) -- activations and the matmul itself still execute fp32/fp16 on OpenVINO CPU, so this is a real accuracy number but NOT a measured or achievable throughput point; scripts/make_pareto.py projects its x-axis compute multiplier from issue #10's L0b soft-logic MAC densities, not from this run."
+}
