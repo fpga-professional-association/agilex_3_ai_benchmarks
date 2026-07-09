@@ -69,3 +69,12 @@ venv/
 .idea/
 *.swp
 .DS_Store
+
+# PH3 CoreDLA example-design generation (AI-Suite output, regenerable via dla_build_example_design.py)
+_ph3_ed/
+_ph3_ed_hyperram/
+
+# Quartus/qsys build databases left at the repo root when tools are run from here
+# (regenerable; the quartus/**/ ignores above only catch them under a project dir).
+/qdb/
+/dni/

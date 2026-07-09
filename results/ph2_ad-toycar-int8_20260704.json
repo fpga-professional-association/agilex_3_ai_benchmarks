@@ -1,0 +1,23 @@
+{
+  "kind": "reference",
+  "level": "PH2",
+  "subject": "ad-toycar-int8",
+  "date": "2026-07-04",
+  "config": {
+    "device": "A3CY100BM16AE7S",
+    "board": "Arrow AXC3000",
+    "model": "ad-toycar",
+    "quantization": "int8-nncf-ptq",
+    "tool_versions": {
+      "python": "3.12.3",
+      "openvino": "2024.6.0-17404-4c0f47d2335-releases/2024/6",
+      "nncf": "2.14.1"
+    }
+  },
+  "metrics": {
+    "auc": 0.7811054378011925,
+    "n_records": 2459
+  },
+  "plan_ref": "\u00a75 table",
+  "notes": "ToyCar dev-set test files, 4 machine IDs (2459 files total), per-ID AUC averaged (matches 01_test.py's metric). MLPerf Tiny reference ballpark: AUC >= 0.83; published runs vary ~0.80-0.85 depending on training-set composition and seed -- this uses the committed reference checkpoint as-is, no retraining. fp32->int8 auc delta: -0.0949 (fp32=0.8760)."
+}

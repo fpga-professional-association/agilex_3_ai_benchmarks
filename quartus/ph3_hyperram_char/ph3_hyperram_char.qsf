@@ -1,0 +1,99 @@
+# Quartus settings for the PH3 HyperRAM standalone char/bring-up build (branch
+# ph3-hyperram-axi4-coredla, PH3_SUBMODULE_SPEC.md DELIVERABLE 5). Unlike ph3_bridge_char (the OLD
+# hbmc_core/stub datapath, HyperBus pins virtualized because there was no real PHY), this fits the
+# axc3000_hyperram_axi4 wrapper THROUGH the real submodule SDR PHY and the board-pads wrapper
+# (rtl/hyperbus/axc3000_hyperram_pads.sv), so the HyperRAM pins are REAL board pins (see
+# quartus/constraints/axc3000_board.tcl) — this is I/O + fabric characterization on
+# A3CY100BM16AE7S, NOT a board-programmed bandwidth test (no traffic generator here; see
+# third_party/hyperram/fpga/axc3000/ for that) and NOT proof the device talks to real HyperRAM
+# silicon (hardware-gated). Build: scripts/build.sh ph3_hyperram_char.
+
+set_global_assignment -name FAMILY "Agilex 3"
+set_global_assignment -name DEVICE A3CY100BM16AE7S
+set_global_assignment -name TOP_LEVEL_ENTITY char_top
+set_global_assignment -name LAST_QUARTUS_VERSION "26.1.0 Pro Edition"
+
+# ---- Design sources ----
+# Submodule package FIRST (hyperbus_ctrl / hyperram_avalon import it). DO NOT modify anything under
+# third_party/hyperram/ (pinned submodule, PH3_SUBMODULE_SPEC.md). SDR-only PHY fileset (no GENERIC,
+# no XILINX/ALTERA variants — this build always uses PHY_VARIANT="SDR").
+set_global_assignment -name SYSTEMVERILOG_FILE ../../third_party/hyperram/rtl/hyperbus_pkg.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../third_party/hyperram/rtl/hyperbus_ctrl.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../third_party/hyperram/rtl/if/hyperbus_avalon.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../third_party/hyperram/rtl/phy/hyperbus_phy_sdr.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../third_party/hyperram/rtl/phy/hyperbus_phy.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../third_party/hyperram/rtl/hyperram_avalon.sv
+
+# PH3 bridge (unchanged) + the new wrapper + the board-pads tristate wrapper (Deliverables 1/1b).
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/hyperbus/axi4_hbmc_bridge.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/hyperbus/axc3000_hyperram_axi4.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/hyperbus/axc3000_hyperram_pads.sv
+
+# Clock/reset backbone (Platform Designer system: IOPLL clk+clk2x + reset controller; NO JTAG
+# master — this build has no CSR traffic generator). Regenerate with:
+#   source scripts/env.sh
+#   cd quartus/ph3_hyperram_char/qsys && qsys-script --script=make_char_clkgen.tcl \
+#       --quartus-project=../ph3_hyperram_char.qpf
+#   qsys-generate char_clkgen.qsys --synthesis=VERILOG \
+#       --quartus-project=../ph3_hyperram_char.qpf --rev=ph3_hyperram_char
+# Passing --quartus-project to qsys-script (not just qsys-generate) is REQUIRED: without it,
+# save_system silently converts every sub-IP (IOPLL included) to an empty "Generic Component"
+# placeholder with no synthesizable content, and quartus_syn fails with "instantiates undefined
+# entity". With it, qsys-script also auto-appends the IP_FILE/QSYS_FILE assignments below to this
+# .qsf. Per Quartus (error 19021): include ONLY the per-component .ip files + the top .qsys here —
+# never also the generated .qip (that duplicates the "char_clkgen" IP file name and elaboration
+# fails).
+
+set_global_assignment -name SYSTEMVERILOG_FILE char_top.sv
+
+set_global_assignment -name SDC_FILE ../constraints/ph3_hyperram_char.sdc
+
+# Real AXC3000 pinout (clock, USER_BTN, LEDs, HyperRAM) — same vetted provenance file as
+# axc3000_blink and axc3000_board.sdc (issue #7).
+source ../constraints/axc3000_board.tcl
+
+# ---- Virtual pins on the CoreDLA-facing AXI4 slave ----
+# ~600 functional bits (256b wdata + 256b rdata alone) with no traffic generator to drive them —
+# far more than the device's real package pins and nothing to wire them to. VIRTUAL_PIN keeps them
+# off real IO so the Fitter can place+time the wrapper's fabric logic and the real HyperBus I/O
+# ring together. Same idiom as quartus/ph3_bridge_char.qsf.
+set_instance_assignment -name VIRTUAL_PIN ON -to awid[*]
+set_instance_assignment -name VIRTUAL_PIN ON -to awaddr[*]
+set_instance_assignment -name VIRTUAL_PIN ON -to awlen[*]
+set_instance_assignment -name VIRTUAL_PIN ON -to awsize[*]
+set_instance_assignment -name VIRTUAL_PIN ON -to awburst[*]
+set_instance_assignment -name VIRTUAL_PIN ON -to awvalid
+set_instance_assignment -name VIRTUAL_PIN ON -to awready
+set_instance_assignment -name VIRTUAL_PIN ON -to wdata[*]
+set_instance_assignment -name VIRTUAL_PIN ON -to wstrb[*]
+set_instance_assignment -name VIRTUAL_PIN ON -to wlast
+set_instance_assignment -name VIRTUAL_PIN ON -to wvalid
+set_instance_assignment -name VIRTUAL_PIN ON -to wready
+set_instance_assignment -name VIRTUAL_PIN ON -to bid[*]
+set_instance_assignment -name VIRTUAL_PIN ON -to bresp[*]
+set_instance_assignment -name VIRTUAL_PIN ON -to bvalid
+set_instance_assignment -name VIRTUAL_PIN ON -to bready
+set_instance_assignment -name VIRTUAL_PIN ON -to arid[*]
+set_instance_assignment -name VIRTUAL_PIN ON -to araddr[*]
+set_instance_assignment -name VIRTUAL_PIN ON -to arlen[*]
+set_instance_assignment -name VIRTUAL_PIN ON -to arsize[*]
+set_instance_assignment -name VIRTUAL_PIN ON -to arburst[*]
+set_instance_assignment -name VIRTUAL_PIN ON -to arvalid
+set_instance_assignment -name VIRTUAL_PIN ON -to arready
+set_instance_assignment -name VIRTUAL_PIN ON -to rid[*]
+set_instance_assignment -name VIRTUAL_PIN ON -to rdata[*]
+set_instance_assignment -name VIRTUAL_PIN ON -to rresp[*]
+set_instance_assignment -name VIRTUAL_PIN ON -to rlast
+set_instance_assignment -name VIRTUAL_PIN ON -to rvalid
+set_instance_assignment -name VIRTUAL_PIN ON -to rready
+# sticky status
+set_instance_assignment -name VIRTUAL_PIN ON -to wstrb_partial_seen
+set_instance_assignment -name VIRTUAL_PIN ON -to hi_addr_seen
+set_global_assignment -name IP_FILE qsys/ip/char_clkgen/char_clkgen_clk_in.ip
+set_global_assignment -name IP_FILE qsys/ip/char_clkgen/char_clkgen_iopll.ip
+set_global_assignment -name IP_FILE qsys/ip/char_clkgen/char_clkgen_clkbr0.ip
+set_global_assignment -name IP_FILE qsys/ip/char_clkgen/char_clkgen_clkbr1.ip
+set_global_assignment -name IP_FILE qsys/ip/char_clkgen/char_clkgen_reset_in.ip
+set_global_assignment -name IP_FILE qsys/ip/char_clkgen/char_clkgen_rst_ctrl.ip
+set_global_assignment -name IP_FILE qsys/ip/char_clkgen/char_clkgen_rst_out.ip
+set_global_assignment -name QSYS_FILE qsys/char_clkgen.qsys
