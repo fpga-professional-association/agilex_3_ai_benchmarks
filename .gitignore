@@ -78,6 +78,10 @@ _ph3_ed_hyperram/
 # (regenerable; the quartus/**/ ignores above only catch them under a project dir).
 /qdb/
 /dni/
+compiled_model_dir/
+scratch/
+models/scratch_*/
+models/scratch/
 sw/hls4ml/hls4ml_prj*/
 sw/hls4ml/*.onnx
 venv-hls4ml/
