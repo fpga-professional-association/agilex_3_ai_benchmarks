@@ -1,0 +1,27 @@
+{
+  "kind": "measured",
+  "level": "L2",
+  "subject": "l2-m20k-bw-banked-outreg0",
+  "date": "2026-07-09",
+  "plan_ref": "\u00a77 L2 / \u00a73 LV3",
+  "config": {
+    "device": "A3CY100BM16AE7S",
+    "board": "Arrow AXC3000",
+    "fclk_mhz": 300.0,
+    "tool_versions": {
+      "quartus": "26.1.0 Build 110"
+    },
+    "utilization": {
+      "m20k": 1,
+      "alm": 11981,
+      "dsp": 0
+    }
+  },
+  "metrics": {
+    "gbps_aggregate": 38.4,
+    "theoretical_gbps": 38.4,
+    "efficiency_pct": 100.0,
+    "fmax_mhz": 303.86
+  },
+  "notes": "MEASURED on the physical Arrow AXC3000 2026-07-09 via quartus/l2_m20k_bw/sysconsole/l2_read.tcl over JTAG (control-plane only; CYCLES time the on-chip M20K read datapath, not JTAG \u2014 PLAN \u00a78 method E). GEOMETRY=banked OUTPUT_REG=0, 32 independent M20K banks x 4B, K=1000000 reads/reader, CYCLES=1000001, f_clk=300.0 MHz. Achieved 38.400 GB/s = 100.0% of the 38.400 GB/s banks*bytes/port/cycle*fclk ceiling (PLAN \u00a73 LV3). Integrity: all 32 per-bank checksums + the aggregate (0xA0347796) + cycle count matched scripts/l2_golden.py exactly, verified live on board; this recorder re-checks the aggregate + cycles before emitting. CRITICAL: with OUTPUT_REG=0 the fitter could NOT map the 32 banks to M20K \u2014 RAM blocks dropped 33->1 and all storage moved to soft logic/MLAB (ALM 1692->11981, 7x). Bandwidth held at 38.4 GB/s but this is NO LONGER an M20K measurement: on Agilex 3 the M20K read output register is required to keep block RAM inference here. This is the real cost of getting the geometry wrong for config (c), not the Fmax drop the issue hypothesized (Fmax held ~304 MHz)."
+}

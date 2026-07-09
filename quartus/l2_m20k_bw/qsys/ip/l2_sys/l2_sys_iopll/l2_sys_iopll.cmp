@@ -1,0 +1,9 @@
+	component l2_sys_iopll is
+		port (
+			refclk   : in  std_logic := 'X'; -- clk
+			locked   : out std_logic;        -- export
+			rst      : in  std_logic := 'X'; -- reset
+			outclk_0 : out std_logic         -- clk
+		);
+	end component l2_sys_iopll;
+

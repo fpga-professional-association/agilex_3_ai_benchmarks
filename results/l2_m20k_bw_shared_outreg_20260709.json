@@ -1,0 +1,27 @@
+{
+  "kind": "measured",
+  "level": "L2",
+  "subject": "l2-m20k-bw-shared-outreg1",
+  "date": "2026-07-09",
+  "plan_ref": "\u00a77 L2 / \u00a73 LV3",
+  "config": {
+    "device": "A3CY100BM16AE7S",
+    "board": "Arrow AXC3000",
+    "fclk_mhz": 300.0,
+    "tool_versions": {
+      "quartus": "26.1.0 Build 110"
+    },
+    "utilization": {
+      "m20k": 33,
+      "alm": 1746,
+      "dsp": 0
+    }
+  },
+  "metrics": {
+    "gbps_aggregate": 1.2,
+    "theoretical_gbps": 38.4,
+    "efficiency_pct": 3.12,
+    "fmax_mhz": 300.75
+  },
+  "notes": "MEASURED on the physical Arrow AXC3000 2026-07-09 via quartus/l2_m20k_bw/sysconsole/l2_read.tcl over JTAG (control-plane only; CYCLES time the on-chip M20K read datapath, not JTAG \u2014 PLAN \u00a78 method E). GEOMETRY=shared OUTPUT_REG=1, 32 independent M20K banks x 4B, K=1000000 reads/reader, CYCLES=32000002, f_clk=300.0 MHz. Achieved 1.200 GB/s = 3.1% of the 38.400 GB/s banks*bytes/port/cycle*fclk ceiling (PLAN \u00a73 LV3). Integrity: all 32 per-bank checksums + the aggregate (0xA0347796) + cycle count matched scripts/l2_golden.py exactly, verified live on board; this recorder re-checks the aggregate + cycles before emitting."
+}
