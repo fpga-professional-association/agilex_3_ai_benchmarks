@@ -1,7 +1,13 @@
 // hbmc_core — HyperBus (HyperRAM) memory controller, protocol layer (issue #13).
 //
+// Test infrastructure only (moved here from rtl/hyperbus/ during the CoreDLA-HyperRAM rename
+// cleanup): the production PH3 datapath lives in rtl/coredla_hyperram/ and runs on
+// third_party/hyperram's hyperram_avalon controller + PHY, not this module. This model +
+// sim/replay/hbmc_pkg.sv + sim/replay/w957d8nb_bfm.sv survive solely as the golden HyperBus
+// controller/device pair instantiated by sim/replay/tb_replay_integ.sv's integration TB.
+//
 // Avalon-MM 16-bit data-path slave + CSR slave -> HyperBus beats (byte-per-beat model, see
-// hyperbus_pkg). PHY-agnostic: exposes raw dq/rwds/cs tristate signals for a thin Agilex DDR-IO PHY
+// hbmc_pkg). PHY-agnostic: exposes raw dq/rwds/cs tristate signals for a thin Agilex DDR-IO PHY
 // (synthesis only) so this module stays fully simulable (AGENTS.md / issue #13 "do not bury IO
 // primitives in protocol logic"). `cs_n` is driven combinationally and `beat` is derived from it, so
 // the controller and device BFM stay in exact lockstep.
@@ -11,7 +17,7 @@
 `ifndef HBMC_CORE_SV
 `define HBMC_CORE_SV
 module hbmc_core
-  import hyperbus_pkg::*;
+  import hbmc_pkg::*;
 #(
     parameter int LAT_BEATS_DEFAULT = 6
 ) (

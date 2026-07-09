@@ -1,6 +1,12 @@
 // w957d8nb_bfm — behavioral Winbond W957D8NB HyperRAM model (issue #13, sim only).
 //
-// Byte-per-beat protocol model (see hyperbus_pkg): CA=6 beats, latency counted in beats, read data
+// Test infrastructure only (moved here from sim/hyperbus/ during the CoreDLA-HyperRAM rename
+// cleanup): pairs with sim/replay/hbmc_core.sv as the golden HyperBus device model used by
+// sim/replay/tb_replay_integ.sv's integration TB; the production PH3 datapath
+// (rtl/coredla_hyperram/) is instead verified against third_party/hyperram's own golden device
+// model (third_party/hyperram/sim/model/hyperram_model.sv).
+//
+// Byte-per-beat protocol model (see hbmc_pkg): CA=6 beats, latency counted in beats, read data
 // RWDS-strobed, writes RWDS-masked. Protocol-accurate, not AC-timing-accurate (that's the .sdc).
 //
 // Alignment: `cs_n` is driven combinationally by the controller; both sides derive `beat` from it
@@ -12,7 +18,7 @@
 // by driving RWDS during CA), and a mid-burst latency gap when a linear read crosses a row boundary.
 `timescale 1ns/1ps
 module w957d8nb_bfm
-  import hyperbus_pkg::*;
+  import hbmc_pkg::*;
 #(
     parameter int MEM_BYTES   = 65536,
     parameter int LAT_BEATS   = 6,     // base latency in beats (host programs the controller to match)

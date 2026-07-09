@@ -1,13 +1,22 @@
-// hyperbus_pkg — HyperBus command/address encoding + controller CSR map (issue #13).
+// hbmc_pkg — HyperBus command/address encoding + controller CSR map (issue #13).
+//
+// Test infrastructure only (moved here from rtl/hyperbus/ during the CoreDLA-HyperRAM rename
+// cleanup): rtl/coredla_hyperram/ now owns the production PH3 datapath (axi4_hbmc_bridge ->
+// third_party/hyperram's hyperram_avalon); this package + sim/replay/hbmc_core.sv survive only as
+// the golden HyperBus controller model used by sim/replay/tb_replay_integ.sv's integration TB.
+// Renamed from `hyperbus_pkg` to `hbmc_pkg` specifically to kill the name collision with
+// third_party/hyperram/rtl/hyperbus_pkg.sv (see docs/ph3_submodule.md) — same short name, different
+// package, previously required careful filelist separation to avoid a double-`package` compile
+// error; now the names simply differ.
 //
 // Protocol model note: this project models the 8-bit DDR HyperBus at BYTE-PER-BEAT granularity
 // (one DQ byte per simulation clock — an SDR abstraction of the real DDR bus). CA is 6 beats, read
 // data is RWDS-gated, latency is counted in beats. This is protocol-accurate (CA fields, latency
 // handling, RWDS behavior) but NOT AC-timing-accurate — datasheet timing is closed by the PHY and
 // the .sdc (docs/hyperbus.md, PLAN §3 LV6), not the sim.
-`ifndef HYPERBUS_PKG_SV
-`define HYPERBUS_PKG_SV
-package hyperbus_pkg;
+`ifndef HBMC_PKG_SV
+`define HBMC_PKG_SV
+package hbmc_pkg;
 
   // ---- Command-Address (48 bits, sent MSB byte first over 6 beats) ----
   // CA[47]=R/W# (1=read), CA[46]=AddressSpace (0=memory,1=register), CA[45]=Burst (1=linear),

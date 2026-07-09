@@ -1,5 +1,9 @@
 // tb_replay_integ — integration sim: replay + real HyperBus controller + device + scoreboard (issue #16).
 //
+// hbmc_core/hbmc_pkg/w957d8nb_bfm here are test infrastructure (sim/replay/), not the production
+// PH3 datapath — that's rtl/coredla_hyperram/ over the third_party/hyperram submodule. See the
+// header comments on sim/replay/hbmc_core.sv for why this pair still exists.
+//
 // Wires the four real modules together and pushes 100 records end to end:
 //   w957d8nb_bfm  <-> hbmc_core (#13)  <-Avalon-  replay_top (#16)  -> fake engine -> scoreboard (#15)
 // The engine consumes each record's tensor and retires with res_class=0; the replay's label stream
@@ -8,7 +12,7 @@
 `timescale 1ns/1ps
 module tb_replay_integ;
   import bench_pkg::*;
-  import hyperbus_pkg::*;
+  import hbmc_pkg::*;
 
   localparam int N_REC   = 100;
   localparam int STRIDE_B = 512;      // bytes

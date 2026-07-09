@@ -6,7 +6,7 @@ set -euo pipefail
 cd "$(dirname "$0")/../.."
 
 RTL="rtl/common/sync_fifo.sv rtl/replay/pingpong_buf.sv rtl/replay/record_framer.sv rtl/replay/replay_top.sv"
-INC="-Irtl/common -Irtl/replay -Irtl/hyperbus -Irtl/scoreboard -Isim/replay/fixtures"
+INC="-Irtl/common -Irtl/replay -Isim/replay -Irtl/scoreboard -Isim/replay/fixtures"
 WAIV="-Wno-fatal -Wno-INITIALDLY -Wno-WIDTHEXPAND -Wno-UNUSEDSIGNAL -Wno-TIMESCALEMOD -Wno-VARHIDDEN -Wno-PINCONNECTEMPTY"
 
 echo "=== lint replay RTL (-Wall, strict) ==="
@@ -33,9 +33,11 @@ build_run tb_replay sim/replay/obj_pp -- \
 build_run tb_replay sim/replay/obj_ct -GCT=1 -- \
   ${RTL} sim/replay/avalon_mem_bfm.sv sim/replay/tb_replay.sv
 # 3) integration: replay + real HyperBus controller + device + scoreboard, 100 records
+#    hbmc_pkg/hbmc_core/w957d8nb_bfm are test infrastructure living in sim/replay/ (not the
+#    production PH3 datapath, which is rtl/coredla_hyperram/ over third_party/hyperram).
 build_run tb_replay_integ sim/replay/obj_integ -- \
   rtl/common/bench_pkg.sv rtl/common/cdc_bit_sync.sv rtl/common/async_fifo.sv rtl/common/sync_fifo.sv \
-  rtl/hyperbus/hyperbus_pkg.sv rtl/hyperbus/hbmc_core.sv sim/hyperbus/w957d8nb_bfm.sv \
+  sim/replay/hbmc_pkg.sv sim/replay/hbmc_core.sv sim/replay/w957d8nb_bfm.sv \
   rtl/scoreboard/sb_frontend.sv rtl/scoreboard/scoreboard.sv \
   rtl/replay/pingpong_buf.sv rtl/replay/record_framer.sv rtl/replay/replay_top.sv \
   sim/replay/tb_replay_integ.sv
