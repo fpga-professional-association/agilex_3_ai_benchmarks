@@ -1,9 +1,10 @@
 // char_top — PH3 HyperRAM standalone char/bring-up top (branch ph3-hyperram-axi4-coredla,
-// PH3_SUBMODULE_SPEC.md DELIVERABLE 5). Unlike quartus/ph3_bridge_char (which characterized the
-// OLD hbmc_core/stub datapath with the HyperBus pins virtualized because there was no real PHY),
-// this build targets the axc3000_hyperram_axi4 wrapper (rtl/hyperbus/axc3000_hyperram_axi4.sv) with
+// PH3_SUBMODULE_SPEC.md DELIVERABLE 5). Unlike the now-removed quartus/ph3_bridge_char (which
+// characterized the OLD hbmc_core/stub datapath with the HyperBus pins virtualized because there
+// was no real PHY; superseded by this project and deleted in the CoreDLA-HyperRAM rename cleanup),
+// this build targets the axc3000_hyperram_axi4 wrapper (rtl/coredla_hyperram/axc3000_hyperram_axi4.sv) with
 // the SUBMODULE'S real SDR PHY (PHY_VARIANT="SDR") through the board-pads wrapper
-// (rtl/hyperbus/axc3000_hyperram_pads.sv, DELIVERABLE 1b) — so hb_dq/hb_rwds/hb_cs_n/hb_ck/hb_rst_n
+// (rtl/coredla_hyperram/axc3000_hyperram_pads.sv, DELIVERABLE 1b) — so hb_dq/hb_rwds/hb_cs_n/hb_ck/hb_rst_n
 // are REAL inout balls at the vetted AXC3000 pinout (quartus/constraints/axc3000_board.tcl), giving
 // the Fitter something to actually place-and-route I/O timing against, not virtual pins.
 //

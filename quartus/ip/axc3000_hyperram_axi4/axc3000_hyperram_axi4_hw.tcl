@@ -1,19 +1,19 @@
 # axc3000_hyperram_axi4_hw.tcl — Platform Designer component for the PH3 HyperRAM memory subsystem.
 #
-# Declares rtl/hyperbus/axc3000_hyperram_pads.sv as a Qsys/Platform Designer IP: ONE AXI4 slave (the
+# Declares rtl/coredla_hyperram/axc3000_hyperram_pads.sv as a Qsys/Platform Designer IP: ONE AXI4 slave (the
 # byte-for-byte CoreDLA "DDR" master contract — DATA=256, ADDR=32, WRITE_ID=5, READ_ID=2), a
 # two-clock domain (word-rate `clk` + 2x byte-rate `clk2x`, both required by the submodule's SDR
 # PHY), an active-low reset, an `init_done` status output, and the HyperBus pin conduit exported to
 # the top level. This is the drop-in replacement for the LPDDR4 EMIF (emif_0) in
 # _ph3_ed/hw/qsys/ed_zero.tcl — see docs/ph3_integration.md for the exact swap recipe.
 #
-# COMPONENT-TOP CHOICE (documented, see rtl/hyperbus/axc3000_hyperram_axi4.sv header): the datapath
+# COMPONENT-TOP CHOICE (documented, see rtl/coredla_hyperram/axc3000_hyperram_axi4.sv header): the datapath
 # module (axc3000_hyperram_axi4.sv) exposes SPLIT HyperBus pins (hb_dq_o/oe/i, hb_rwds_o/oe/i,
 # `inout`-free) so it stays Verilator-clean and testable against a second bus driver. That is NOT
 # what a Platform Designer conduit should present at the top level, though: this component's
 # `hyperbus` interface is a real bidirectional (`Bidir`) conduit, matching an actual HyperRAM
 # package ball. So this component instantiates the SPLIT-to-`inout` board-pads wrapper,
-# rtl/hyperbus/axc3000_hyperram_pads.sv (TOP_LEVEL below), which is the one place the tristate is
+# rtl/coredla_hyperram/axc3000_hyperram_pads.sv (TOP_LEVEL below), which is the one place the tristate is
 # reintroduced for synthesis/board use — exactly what a board top.sv / the standalone
 # quartus/ph3_hyperram_char/ char build also instantiate at the pins.
 #
@@ -45,8 +45,9 @@ set_module_property ELABORATION_CALLBACK elaborate
 # Synthesis + simulation filesets. Paths are relative to THIS file
 # (quartus/ip/axc3000_hyperram_axi4/ -> repo root is ../../..). Submodule package FIRST (per
 # docs/ph3_submodule.md's package-name-collision note: this is the third_party/hyperram copy of
-# `package hyperbus_pkg`, NEVER rtl/hyperbus/hyperbus_pkg.sv, and hbmc_core.sv is retired — the
-# submodule's hyperram_avalon is the controller now). Top level is the `inout`-pin board-pads
+# `package hyperbus_pkg`, NEVER the retired in-repo package (now sim/replay/hbmc_pkg.sv, renamed
+# specifically to end the collision) or sim/replay/hbmc_core.sv — the submodule's hyperram_avalon is
+# the controller now). Top level is the `inout`-pin board-pads
 # wrapper (see COMPONENT-TOP CHOICE above), which instantiates axc3000_hyperram_axi4.sv, which in
 # turn instantiates axi4_hbmc_bridge.sv (unchanged) and the submodule's hyperram_avalon.
 # -----------------------------------------------------------------------------------------------
@@ -61,9 +62,9 @@ add_fileset_file hyperbus_phy_generic.sv  SYSTEM_VERILOG PATH ${HR_RTL}/phy/hype
 add_fileset_file hyperbus_phy_sdr.sv      SYSTEM_VERILOG PATH ${HR_RTL}/phy/hyperbus_phy_sdr.sv
 add_fileset_file hyperbus_phy.sv          SYSTEM_VERILOG PATH ${HR_RTL}/phy/hyperbus_phy.sv
 add_fileset_file hyperram_avalon.sv       SYSTEM_VERILOG PATH ${HR_RTL}/hyperram_avalon.sv
-add_fileset_file axi4_hbmc_bridge.sv      SYSTEM_VERILOG PATH ../../../rtl/hyperbus/axi4_hbmc_bridge.sv
-add_fileset_file axc3000_hyperram_axi4.sv SYSTEM_VERILOG PATH ../../../rtl/hyperbus/axc3000_hyperram_axi4.sv
-add_fileset_file axc3000_hyperram_pads.sv SYSTEM_VERILOG PATH ../../../rtl/hyperbus/axc3000_hyperram_pads.sv
+add_fileset_file axi4_hbmc_bridge.sv      SYSTEM_VERILOG PATH ../../../rtl/coredla_hyperram/axi4_hbmc_bridge.sv
+add_fileset_file axc3000_hyperram_axi4.sv SYSTEM_VERILOG PATH ../../../rtl/coredla_hyperram/axc3000_hyperram_axi4.sv
+add_fileset_file axc3000_hyperram_pads.sv SYSTEM_VERILOG PATH ../../../rtl/coredla_hyperram/axc3000_hyperram_pads.sv
 
 add_fileset SIM_VERILOG SIM_VERILOG "" ""
 set_fileset_property SIM_VERILOG TOP_LEVEL axc3000_hyperram_pads
@@ -74,9 +75,9 @@ add_fileset_file hyperbus_phy_generic.sv  SYSTEM_VERILOG PATH ${HR_RTL}/phy/hype
 add_fileset_file hyperbus_phy_sdr.sv      SYSTEM_VERILOG PATH ${HR_RTL}/phy/hyperbus_phy_sdr.sv
 add_fileset_file hyperbus_phy.sv          SYSTEM_VERILOG PATH ${HR_RTL}/phy/hyperbus_phy.sv
 add_fileset_file hyperram_avalon.sv       SYSTEM_VERILOG PATH ${HR_RTL}/hyperram_avalon.sv
-add_fileset_file axi4_hbmc_bridge.sv      SYSTEM_VERILOG PATH ../../../rtl/hyperbus/axi4_hbmc_bridge.sv
-add_fileset_file axc3000_hyperram_axi4.sv SYSTEM_VERILOG PATH ../../../rtl/hyperbus/axc3000_hyperram_axi4.sv
-add_fileset_file axc3000_hyperram_pads.sv SYSTEM_VERILOG PATH ../../../rtl/hyperbus/axc3000_hyperram_pads.sv
+add_fileset_file axi4_hbmc_bridge.sv      SYSTEM_VERILOG PATH ../../../rtl/coredla_hyperram/axi4_hbmc_bridge.sv
+add_fileset_file axc3000_hyperram_axi4.sv SYSTEM_VERILOG PATH ../../../rtl/coredla_hyperram/axc3000_hyperram_axi4.sv
+add_fileset_file axc3000_hyperram_pads.sv SYSTEM_VERILOG PATH ../../../rtl/coredla_hyperram/axc3000_hyperram_pads.sv
 
 # -----------------------------------------------------------------------------------------------
 # HDL parameters (passed through to the SV module; fixed to the CoreDLA DDR contract).

@@ -1,9 +1,10 @@
 # Quartus settings for the PH3 HyperRAM standalone char/bring-up build (branch
-# ph3-hyperram-axi4-coredla, PH3_SUBMODULE_SPEC.md DELIVERABLE 5). Unlike ph3_bridge_char (the OLD
-# hbmc_core/stub datapath, HyperBus pins virtualized because there was no real PHY), this fits the
-# axc3000_hyperram_axi4 wrapper THROUGH the real submodule SDR PHY and the board-pads wrapper
-# (rtl/hyperbus/axc3000_hyperram_pads.sv), so the HyperRAM pins are REAL board pins (see
-# quartus/constraints/axc3000_board.tcl) — this is I/O + fabric characterization on
+# ph3-hyperram-axi4-coredla, PH3_SUBMODULE_SPEC.md DELIVERABLE 5). Unlike the now-removed
+# ph3_bridge_char (the OLD hbmc_core/stub datapath, HyperBus pins virtualized because there was no
+# real PHY; superseded by this project and deleted in the CoreDLA-HyperRAM rename cleanup), this
+# fits the axc3000_hyperram_axi4 wrapper THROUGH the real submodule SDR PHY and the board-pads
+# wrapper (rtl/coredla_hyperram/axc3000_hyperram_pads.sv), so the HyperRAM pins are REAL board pins
+# (see quartus/constraints/axc3000_board.tcl) — this is I/O + fabric characterization on
 # A3CY100BM16AE7S, NOT a board-programmed bandwidth test (no traffic generator here; see
 # third_party/hyperram/fpga/axc3000/ for that) and NOT proof the device talks to real HyperRAM
 # silicon (hardware-gated). Build: scripts/build.sh ph3_hyperram_char.
@@ -25,9 +26,9 @@ set_global_assignment -name SYSTEMVERILOG_FILE ../../third_party/hyperram/rtl/ph
 set_global_assignment -name SYSTEMVERILOG_FILE ../../third_party/hyperram/rtl/hyperram_avalon.sv
 
 # PH3 bridge (unchanged) + the new wrapper + the board-pads tristate wrapper (Deliverables 1/1b).
-set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/hyperbus/axi4_hbmc_bridge.sv
-set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/hyperbus/axc3000_hyperram_axi4.sv
-set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/hyperbus/axc3000_hyperram_pads.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/coredla_hyperram/axi4_hbmc_bridge.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/coredla_hyperram/axc3000_hyperram_axi4.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/coredla_hyperram/axc3000_hyperram_pads.sv
 
 # Clock/reset backbone (Platform Designer system: IOPLL clk+clk2x + reset controller; NO JTAG
 # master — this build has no CSR traffic generator). Regenerate with:

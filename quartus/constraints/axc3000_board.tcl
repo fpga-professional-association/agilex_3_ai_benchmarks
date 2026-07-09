@@ -58,8 +58,10 @@ set_instance_assignment -name IO_STANDARD "3.3-V LVCMOS" -to LED1
 
 ########################################################################
 # HyperRAM (128 Mb Winbond, 1.2 V, x8 HyperBus DDR) -- User Guide SS3.6 / PLAN SS1, SS4.
-# Port names match rtl/hyperbus/hyperbus_top.sv exactly (issue #13) so hyperbus_smoke.qsf's
-# placeholder block can `source` this file directly once uncommented.
+# Port names (hb_dq/hb_rwds/hb_cs_n/hb_ck/hb_rst_n) match quartus/ph3_hyperram_char/char_top.sv's
+# top-level ports so that build's .qsf can `source` this file directly (issue #13's original
+# hyperbus_smoke.qsf placeholder used the same convention; that project has since been superseded
+# by ph3_hyperram_char and removed).
 #
 # DQ[0:7], HRESETn and RWDS agree byte-for-byte between both provenance sources above. CSn and
 # CLK do NOT -- flagged loudly per AGENTS.md rather than silently picking one:

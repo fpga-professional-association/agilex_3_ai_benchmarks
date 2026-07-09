@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
-# Lint the PH3 wrapper (rtl/hyperbus/axc3000_hyperram_axi4.sv) + build/run its self-checking TB
-# under Verilator, against the third_party/hyperram submodule's REAL hyperram_avalon (ctrl + PHY)
+# Lint the PH3 wrapper (rtl/coredla_hyperram/axc3000_hyperram_axi4.sv) + build/run its self-checking
+# TB under Verilator, against the third_party/hyperram submodule's REAL hyperram_avalon (ctrl + PHY)
 # and its golden device model. A PASS here proves the AXI4->Avalon bridge datapath through the real
 # HyperBus IP (PHY_VARIANT="GENERIC"), not a stub -- PH3 blocker #1 CLOSED. See
 # docs/ph3_submodule.md for the wiring and docs/ph3_status.md for what remains hardware-side.
 #
-# CRITICAL package-name collision (see docs/ph3_submodule.md): rtl/hyperbus/hyperbus_pkg.sv AND
-# third_party/hyperram/rtl/hyperbus_pkg.sv both declare `package hyperbus_pkg` -- DIFFERENT
-# packages, same name. This build compiles ONLY the submodule's copy and NEVER includes
-# rtl/hyperbus/hyperbus_pkg.sv or rtl/hyperbus/hbmc_core.sv (the old stub datapath) in the same
-# compilation unit as this TB.
+# Package-name note (see docs/ph3_submodule.md): third_party/hyperram/rtl/hyperbus_pkg.sv (the
+# submodule's package) used to collide by name with an in-repo rtl/hyperbus/hyperbus_pkg.sv; that
+# in-repo package has since been renamed to hbmc_pkg and relocated to sim/replay/ (test
+# infrastructure for the record-replay integration TB) precisely to remove the collision. This
+# build never includes sim/replay/hbmc_pkg.sv or sim/replay/hbmc_core.sv (the old stub datapath) in
+# the same compilation unit as this TB -- only the submodule's copy.
 #
 # Exits 0 only if the wrapper lints clean AND the TB prints ALL AXC3000-HYPERRAM-AXI4 TBS PASSED.
 set -euo pipefail
@@ -34,14 +35,14 @@ SUB_SRCS=(
 
 # ---- our RTL: bridge (unchanged) + the rewritten wrapper (split HyperBus pins) ----------------
 WRAPPER_SRCS=(
-  "rtl/hyperbus/axi4_hbmc_bridge.sv"
-  "rtl/hyperbus/axc3000_hyperram_axi4.sv"
+  "rtl/coredla_hyperram/axi4_hbmc_bridge.sv"
+  "rtl/coredla_hyperram/axc3000_hyperram_axi4.sv"
 )
 
 MODEL="${HR}/sim/model/hyperram_model.sv"
 TB="sim/hyperbus/tb_axc3000_hyperram_axi4.sv"
 
-INC="-I${HR}/rtl -I${HR}/rtl/if -I${HR}/rtl/phy -Irtl/hyperbus"
+INC="-I${HR}/rtl -I${HR}/rtl/if -I${HR}/rtl/phy -Irtl/coredla_hyperram"
 
 echo "=== lint wrapper RTL standalone (-Wall, strict; submodule sources on the command line so"
 echo "    hyperram_avalon/phy elaborate) ==="

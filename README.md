@@ -40,8 +40,8 @@ PH3 bridges that gap. Branch `ph3-hyperram-axi4-coredla`; design in
 
 | Result | Detail | Status |
 |---|---|---|
-| AXI4↔HyperRAM bridge datapath | `rtl/hyperbus/axi4_hbmc_bridge.sv` — AXI4-256 write/read round-trips correct through the **real** `hbmc_core` + W957D8NB device model (bursts len 0/1/3/15, `arid→rid` echo, partial-WSTRB detected not corrupted) | **sim-verified** |
-| Bridge fmax + P&R | **273.6 MHz** (slow corner; 250 MHz target met, +0.345 ns) · **1,014 ALM / 821 reg / 0 M20K / 0 DSP** on A3CY100 (`quartus/ph3_bridge_char`) | **synthesized** |
+| AXI4↔HyperRAM bridge datapath | `rtl/coredla_hyperram/axi4_hbmc_bridge.sv` — AXI4-256 write/read round-trips correct through the **real** `hyperram_avalon` (`third_party/hyperram` submodule) + golden device model, end to end via `rtl/coredla_hyperram/axc3000_hyperram_axi4.sv` (bursts AWLEN 0..15, `arid→rid` echo, partial-WSTRB detected not corrupted; `sim/hyperbus/run_hyperram_axi4.sh`) | **sim-verified** |
+| Bridge fmax + P&R | **273.6 MHz** (slow corner; 250 MHz target met, +0.345 ns) · **1,014 ALM / 821 reg / 0 M20K / 0 DSP** on A3CY100, standalone bridge-only build (superseded by `quartus/ph3_hyperram_char`, which characterizes the full submodule-backed wrapper: 977 ALM / 0 DSP / 1 M20K / 1 PLL, `clk` 237.4 MHz / `clk2x` 353.0 MHz, see `docs/ph3_submodule.md`) | **synthesized** |
 | LPDDR4 EMIF → HyperRAM swap | Platform Designer regenerates + `quartus_syn` **0 errors** on A3CY100, no unresolved black box; fitter enters (physical synthesis + clock promotion, 0 errors). Two integration bugs found + fixed. | **synthesized** (structural) |
 | Model classifying on-board | — | **blocked** |
 
@@ -117,7 +117,7 @@ docs/                 plan + canonical formats
 rtl/
   common/             CDC wrappers, counters, shared package
   scoreboard/         §6 benchmark scoreboard (Avalon-MM CSRs)
-  hyperbus/           HyperBus (HyperRAM) controller + PHY
+  coredla_hyperram/   CoreDLA AXI4 "DDR" <-> HyperRAM Avalon-MM glue (PH3)
   replay/             record-replay DMA + ping-pong buffering
   microbench/         L0 tensor chain · L0b soft MACs · L1 PE array · L2 M20K bandwidth
 sim/                  self-checking testbenches (Verilator where possible)

@@ -1,6 +1,10 @@
 // axc3000_hyperram_axi4 — PH3 HyperRAM memory subsystem: ONE reduced-AXI4 slave (the drop-in
 // replacement for CoreDLA's LPDDR4 EMIF) + a SPLIT HyperBus pin conduit. See docs/ph3_integration.md.
 //
+// Lives in rtl/coredla_hyperram/ (moved from rtl/hyperbus/ during the CoreDLA-HyperRAM rename
+// cleanup) alongside axi4_hbmc_bridge.sv/axc3000_hyperram_pads.sv, the CoreDLA-specific glue this
+// module is part of.
+//
 // Internally: axi4_hbmc_bridge (AXI4 slave <-> Avalon-MM master, UNCHANGED) -> hyperram_avalon (the
 // third_party/hyperram submodule's Avalon-MM slave + protocol engine + PHY). The AXI4 slave here is
 // byte-for-byte the CoreDLA "DDR" master contract from docs/ph3_interfaces.md (DATA=256, ADDR=32,
@@ -23,8 +27,8 @@
 // resolve the shared bus against a second driver (the golden device model) with two split drivers —
 // the old `inout` tristate stub could not be resolved against a second driver in Verilator, which is
 // exactly why this module switched away from it. The `inout` board balls live in a separate tiny
-// wrapper, rtl/hyperbus/axc3000_hyperram_pads.sv, which instantiates THIS module and is what the PD
-// component / board top.sv / the standalone Quartus char build put at the pins.
+// wrapper, rtl/coredla_hyperram/axc3000_hyperram_pads.sv, which instantiates THIS module and is what
+// the PD component / board top.sv / the standalone Quartus char build put at the pins.
 //
 // Remaining gaps (honest, PLAN §3 LV6 / docs/ph3_integration.md "What remains"): the PD clock plan
 // still needs to actually supply `clk2x` from the board IOPLL; the board pinout + 25 MHz IOPLL
@@ -163,8 +167,8 @@ module axc3000_hyperram_axi4
   logic [AVS_LEN_W-1:0]   avs_burstcount;
   logic                    avs_read, avs_write, avs_readdatavalid, avs_waitrequest;
 
-  // ---- AXI4 -> Avalon-MM bridge (UNCHANGED; datapath proven in sim/hyperbus/tb_axi4_hbmc_bridge.sv
-  //      and, through this wrapper, in sim/hyperbus/tb_axc3000_hyperram_axi4.sv) ----
+  // ---- AXI4 -> Avalon-MM bridge (UNCHANGED; datapath proven end to end through this wrapper in
+  //      sim/hyperbus/tb_axc3000_hyperram_axi4.sv, against the real hyperram_avalon submodule) ----
   axi4_hbmc_bridge #(
       .DATA_W(DATA_W), .ADDR_W(ADDR_W), .WID_W(WID_W), .RID_W(RID_W),
       .LEN_W(LEN_W), .HB_ADDR_W(HB_ADDR_W), .HB_BURST_W(HB_BURST_W)

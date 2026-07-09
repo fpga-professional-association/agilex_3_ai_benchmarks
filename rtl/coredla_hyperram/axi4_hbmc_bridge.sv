@@ -1,9 +1,15 @@
 // axi4_hbmc_bridge — CoreDLA AXI4 "DDR" master -> HyperRAM Avalon-MM adapter (PH3).
 //
+// Lives in rtl/coredla_hyperram/ (moved from rtl/hyperbus/ during the CoreDLA-HyperRAM rename
+// cleanup) alongside axc3000_hyperram_axi4.sv/axc3000_hyperram_pads.sv, the modules that wire it
+// into the production PH3 datapath onto the third_party/hyperram submodule's hyperram_avalon.
+//
 // Front-end: reduced AXI4 slave matching the FPGA AI Suite CoreDLA DDR port (DATA=256, ADDR=32,
-// WRITE_ID=5, READ_ID=2; AxSIZE const 3'd5, AxBURST const INCR, AxLEN<=15). Back-end: Avalon-MM
-// master driving rtl/hyperbus/hbmc_core.sv (16-bit words, word address, linear bursts). See
-// docs/ph3_bridge_design.md for the full contract and FSM; docs/ph3_interfaces.md for provenance.
+// WRITE_ID=5, READ_ID=2; AxSIZE const 3'd5, AxBURST const INCR, AxLEN<=15). Back-end: a generic
+// 16-bit-word, word-addressed, linear-burst Avalon-MM master — driving hyperram_avalon in
+// production (axc3000_hyperram_axi4.sv), and driving the golden sim/replay/hbmc_core.sv model in
+// this module's own standalone regression history. See docs/ph3_bridge_design.md for the full
+// contract and FSM; docs/ph3_interfaces.md for provenance.
 //
 // v1 (documented in the design doc): single clock (no CDC), full-width writes only (partial WSTRB is
 // DETECTED via wstrb_partial_seen, not read-modify-written), serialized/one-outstanding, one 16-word

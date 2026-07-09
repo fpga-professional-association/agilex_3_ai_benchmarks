@@ -9,7 +9,8 @@
 // RTT delay on the DUT's read path proves it recovers data source-synchronously to RWDS, not by
 // round-trip coincidence -- same rationale as tb_avalon).
 //
-// A compact AXI4 master BFM (tasks below, adapted from sim/hyperbus/tb_axi4_hbmc_bridge.sv) issues
+// A compact AXI4 master BFM (tasks below, originally adapted from the now-retired
+// tb_axi4_hbmc_bridge.sv bridge-vs-hbmc_core TB, superseded by this file) issues
 // INCR write bursts across the full AWLEN range (0..15, i.e. 1..16 beats of 256b = 16..256 HyperBus
 // words each) at distinct 4 KB-spaced addresses, then reads each burst back and checks every word
 // byte-exact against an address-derived pattern (independent of the model's power-on fill). BRESP

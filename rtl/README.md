@@ -7,7 +7,7 @@ state, CDC only via `rtl/common/`, Avalon-MM CSRs).
 |---|---|---|
 | `common/` | `bench_pkg.sv`, async-FIFO / pulse-sync CDC wrappers, free-running counter | created on first use |
 | `scoreboard/` | benchmark scoreboard | `docs/register_map.md` |
-| `hyperbus/` | HyperBus controller + PHY, capture training | PLAN §4 |
+| `coredla_hyperram/` | CoreDLA AXI4 "DDR" <-> HyperRAM Avalon-MM glue (bridge + PD-component wrapper + board-pads) | PH3, `docs/ph3_integration.md` |
 | `replay/` | mSGDMA glue, ping-pong record buffer, record framer | PLAN §6, `docs/record_format.md` |
 | `microbench/l0_tensor_chain/` | tensor-mode DSP dot-product chain | PLAN §7 L0 |
 | `microbench/l0b_soft_mac/` | INT4/2/1 ALM multiplier arrays | PLAN §7 L0b |
