@@ -22,6 +22,9 @@ import json
 import sys
 from pathlib import Path
 
+# scripts/ holds l2_golden.py (the independent cycle-accurate model); make it importable whether this
+# CLI is run from the repo root, sw/host/, or a board Docker mount.
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
 import l2_golden
 
 # ---- m20k_bw CSR map (m20k_bw_pkg::L2_ADDR_*, byte offsets -- the CSR slave is ALREADY
