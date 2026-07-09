@@ -23,3 +23,10 @@ torchvision>=0.17
 scikit-learn>=1.3
 librosa>=0.10
 pyarrow>=14  # resnet8: read CIFAR-10 test set from a Parquet mirror (lossless PNG rows)
+
+# Quantization pipeline (issue #3). Pinned to OpenVINO 2024.6 (AI Suite 25.x's tracked version,
+# PLAN §9 PH2 — do not float this) + the NNCF release contemporaneous with it. Do not upgrade
+# either "because newer is better" (AGENTS.md/issue #3: the IR must match what dla_compiler
+# in AI Suite 25.x consumes).
+openvino==2024.6.0
+nncf==2.14.1

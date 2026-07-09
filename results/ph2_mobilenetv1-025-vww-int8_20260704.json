@@ -1,0 +1,23 @@
+{
+  "kind": "reference",
+  "level": "PH2",
+  "subject": "mobilenetv1-025-vww-int8",
+  "date": "2026-07-04",
+  "config": {
+    "device": "A3CY100BM16AE7S",
+    "board": "Arrow AXC3000",
+    "model": "mobilenetv1-025-vww",
+    "quantization": "int8-nncf-ptq",
+    "tool_versions": {
+      "python": "3.12.3",
+      "openvino": "2024.6.0-17404-4c0f47d2335-releases/2024/6",
+      "nncf": "2.14.1"
+    }
+  },
+  "metrics": {
+    "accuracy_top1": 0.8584199963510308,
+    "n_records": 10962
+  },
+  "plan_ref": "\u00a75 table",
+  "notes": "Eval set = last 10% of each class dir (sorted filenames), 10962 images total (10962 across 2 classes) -- the reference pipeline has no separately-labeled held-out test set (see module docstring). MLPerf Tiny reference ballpark: 80%+ top-1. fp32->int8 accuracy_top1 delta: -0.0019 (fp32=0.8603)."
+}

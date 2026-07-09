@@ -105,13 +105,48 @@ def _file_to_vector_array(path: str) -> np.ndarray:
     return frame_vectors(log_mel)
 
 
-def eval_fp32(onnx_path: Path, dataset_dir: Path) -> dict:
-    import onnxruntime as ort
+CALIBRATION_SEED = 1234
+CALIBRATION_SIZE = 300
+
+
+CALIBRATION_FILES = 60
+CALIBRATION_VECTORS_PER_FILE = 5  # 60 x 5 = 300; see docstring for why so few per file
+
+
+def calibration_samples(dataset_dir: Path) -> list:
+    """~300 vectors spread across 60 ToyCar *train* files (normal-only clips, fixed seed).
+
+    Physically disjoint files from the eval set (dev_data/ToyCar/train vs .../test). Deliberately
+    spread thin across *many* files rather than deep into a few: consecutive frame-vectors within
+    one file overlap 4/5 (stride-1 sliding window over 5-frame windows), so they're highly
+    correlated -- an earlier version took ~300 consecutive vectors from just the first 1-2 of 10
+    sampled files (each file yields up to 196 vectors) and never touched the rest. That produced a
+    real INT8 accuracy bug: AUC dropped from 0.876 (fp32) to 0.757, ~12 points versus the ≤1-2
+    point drop this issue expects -- the calibration set was capturing one or two acoustic
+    conditions, not the range NNCF needs to size the quantization range correctly. Spreading the
+    same 300-sample budget across 60 files (evenly-spaced vectors per file, not the first N) fixes
+    this by construction.
+    """
+    toycar_dir = dataset_dir / "toycar" / "dev_data" / "ToyCar"
+    train_files = sorted(glob.glob(str(toycar_dir / "train" / "*.wav")))
+    rng = np.random.default_rng(CALIBRATION_SEED)
+    chosen = sorted(rng.choice(len(train_files), size=min(CALIBRATION_FILES, len(train_files)), replace=False))
+
+    samples = []
+    for i in chosen:
+        vectors = _file_to_vector_array(train_files[i]).astype(np.float32)
+        if len(vectors) == 0:
+            continue
+        idx = np.linspace(0, len(vectors) - 1, num=min(CALIBRATION_VECTORS_PER_FILE, len(vectors)), dtype=int)
+        for row in vectors[idx]:
+            samples.append(row[np.newaxis, :])
+    return samples
+
+
+def eval_with_predictor(predict_fn, dataset_dir: Path) -> dict:
     from sklearn import metrics as skmetrics
 
     toycar_dir = dataset_dir / "toycar" / "dev_data" / "ToyCar"
-    sess = ort.InferenceSession(str(onnx_path), providers=["CPUExecutionProvider"])
-    input_name = sess.get_inputs()[0].name
 
     test_files = sorted(glob.glob(str(toycar_dir / "test" / "*.wav")))
     machine_ids = sorted(set(re.findall(r"id_[0-9][0-9]", " ".join(test_files))))
@@ -127,7 +162,7 @@ def eval_fp32(onnx_path: Path, dataset_dir: Path) -> dict:
         y_pred = np.zeros(len(files))
         for i, path in enumerate(files):
             vectors = _file_to_vector_array(path).astype(np.float32)
-            recon = sess.run(None, {input_name: vectors})[0]
+            recon = predict_fn(vectors)
             errors = np.mean(np.square(vectors - recon), axis=1)
             y_pred[i] = np.mean(errors)
 
@@ -145,3 +180,7 @@ def eval_fp32(onnx_path: Path, dataset_dir: Path) -> dict:
             "as-is, no retraining."
         ),
     }
+
+
+def eval_fp32(onnx_path: Path, dataset_dir: Path) -> dict:
+    return eval_with_predictor(common.make_onnxruntime_predictor(onnx_path), dataset_dir)

@@ -30,7 +30,14 @@ _DATASET_URL = (
     "https://huggingface.co/datasets/vaishaal/ImageNetV2/resolve/main/"
     "imagenetv2-matched-frequency.tar.gz"
 )
+# A *different* ImageNetV2 variant, used only for calibration -- never overlaps the eval images.
+_CALIBRATION_DATASET_URL = (
+    "https://huggingface.co/datasets/vaishaal/ImageNetV2/resolve/main/"
+    "imagenetv2-threshold0.7.tar.gz"
+)
 IMAGE_SIZE = 224
+CALIBRATION_SEED = 1234
+CALIBRATION_SIZE = 300
 
 ARCHES = {
     "mobilenetv2": {
@@ -92,7 +99,7 @@ def fetch_checkpoint(dest_dir: Path, arch: str) -> Path:
 
 
 def fetch_dataset(dest_dir: Path) -> Path:
-    """Download+extract ImageNetV2 matched-frequency into ``dest_dir/imagenetv2``."""
+    """Download+extract ImageNetV2 matched-frequency (eval set) into ``dest_dir/imagenetv2``."""
     root = dest_dir / "imagenetv2"
     extracted = root / "imagenetv2-matched-frequency-format-val"
     if not extracted.exists():
@@ -105,6 +112,19 @@ def fetch_dataset(dest_dir: Path) -> Path:
             candidates = [p for p in root.iterdir() if p.is_dir()]
             if len(candidates) == 1:
                 candidates[0].rename(extracted)
+    return extracted
+
+
+def _fetch_calibration_dataset(dest_dir: Path) -> Path:
+    """Download+extract the ImageNetV2 threshold0.7 variant -- calibration only, distinct images
+    from the matched-frequency eval set ``fetch_dataset`` returns."""
+    root = dest_dir / "imagenetv2" / "imagenetv2-threshold0.7"
+    extracted = root / "imagenetv2-threshold0.7-format-val"
+    if not extracted.exists():
+        tar_path = root / "imagenetv2-threshold0.7.tar.gz"
+        common.download(_CALIBRATION_DATASET_URL, tar_path)
+        with tarfile.open(tar_path) as tf:
+            tf.extractall(root)
     return extracted
 
 
@@ -136,21 +156,34 @@ def export_onnx(checkpoint_path: Path, onnx_dir: Path, arch: str) -> tuple[Path,
     return onnx_path, manifest
 
 
-def eval_fp32(onnx_path: Path, dataset_dir: Path, arch: str) -> dict:
-    import onnxruntime as ort
-    import torch
+def calibration_samples(dataset_dir: Path, arch: str) -> list:
+    """300 random images from the ImageNetV2 threshold0.7 variant -- distinct from the eval set."""
     from PIL import Image
 
     _model, weights = _build_model(arch)
     transform = weights.transforms()
-    dataset_root = dataset_dir / "imagenetv2"
-    root_candidates = [p for p in dataset_root.iterdir() if p.is_dir()] if dataset_root.exists() else []
-    if not root_candidates:
-        raise FileNotFoundError(f"no extracted ImageNetV2 dir under {dataset_root}")
-    val_root = root_candidates[0]
+    calib_root = _fetch_calibration_dataset(dataset_dir)
 
-    sess = ort.InferenceSession(str(onnx_path), providers=["CPUExecutionProvider"])
-    input_name = sess.get_inputs()[0].name
+    paths = []
+    for class_dir in sorted(calib_root.iterdir(), key=lambda p: int(p.name)):
+        paths.extend(sorted(class_dir.glob("*")))
+    rng = np.random.default_rng(CALIBRATION_SEED)
+    idx = sorted(rng.choice(len(paths), size=CALIBRATION_SIZE, replace=False))
+
+    samples = []
+    for i in idx:
+        with Image.open(paths[i]) as im:
+            tensor = transform(im.convert("RGB")).unsqueeze(0).numpy().astype(np.float32)
+        samples.append(tensor)
+    return samples
+
+
+def eval_with_predictor(predict_fn, dataset_dir: Path, arch: str) -> dict:
+    from PIL import Image
+
+    _model, weights = _build_model(arch)
+    transform = weights.transforms()
+    val_root = fetch_dataset(dataset_dir)
 
     correct = 0
     n = 0
@@ -161,7 +194,7 @@ def eval_fp32(onnx_path: Path, dataset_dir: Path, arch: str) -> dict:
             with Image.open(img_path) as im:
                 im = im.convert("RGB")
                 tensor = transform(im).unsqueeze(0).numpy().astype(np.float32)
-            logits = sess.run(None, {input_name: tensor})[0]
+            logits = predict_fn(tensor)
             pred = int(np.argmax(logits[0]))
             correct += int(pred == label)
             n += 1
@@ -178,3 +211,7 @@ def eval_fp32(onnx_path: Path, dataset_dir: Path, arch: str) -> dict:
             "to distribution shift (Recht et al. 2019) -- expected, not an export bug."
         ),
     }
+
+
+def eval_fp32(onnx_path: Path, dataset_dir: Path, arch: str) -> dict:
+    return eval_with_predictor(common.make_onnxruntime_predictor(onnx_path), dataset_dir, arch)

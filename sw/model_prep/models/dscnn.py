@@ -96,20 +96,32 @@ def _mfcc_features(wav_int16: "np.ndarray", tf) -> "np.ndarray":
     return tf.reshape(mfccs, [SPECTROGRAM_LENGTH, DCT_COEFFICIENT_COUNT, 1]).numpy()
 
 
-def eval_fp32(onnx_path: Path, dataset_dir: Path) -> dict:
-    import onnxruntime as ort
+CALIBRATION_SEED = 1234
+CALIBRATION_SIZE = 300
+
+
+def calibration_samples(dataset_dir: Path) -> list:
+    """300 random 'train'-split clips (fixed seed) -- never drawn from the eval/test split."""
+    import tensorflow as tf
+    import tensorflow_datasets as tfds
+
+    ds = tfds.load("speech_commands", split="train", data_dir=str(dataset_dir / "speech_commands"))
+    # 85,511 train examples (fixed by the tfds split) -- buffer covers the whole split for a true shuffle.
+    examples = list(ds.shuffle(100_000, seed=CALIBRATION_SEED).take(CALIBRATION_SIZE))
+    return [_mfcc_features(ex["audio"], tf)[np.newaxis, ...].astype(np.float32) for ex in examples]
+
+
+def eval_with_predictor(predict_fn, dataset_dir: Path) -> dict:
     import tensorflow as tf
     import tensorflow_datasets as tfds
 
     ds = tfds.load("speech_commands", split="test", data_dir=str(dataset_dir / "speech_commands"))
-    sess = ort.InferenceSession(str(onnx_path), providers=["CPUExecutionProvider"])
-    input_name = sess.get_inputs()[0].name
 
     correct = 0
     n = 0
     for example in ds:
         features = _mfcc_features(example["audio"], tf)[np.newaxis, ...]
-        logits = sess.run(None, {input_name: features.astype(np.float32)})[0]
+        logits = predict_fn(features.astype(np.float32))
         pred = int(np.argmax(logits[0]))
         label = int(example["label"].numpy())
         correct += int(pred == label)
@@ -123,3 +135,7 @@ def eval_fp32(onnx_path: Path, dataset_dir: Path) -> dict:
             "docs/record_format.md's 4,890-record count. MLPerf Tiny quality target: 90%+ top-1."
         ),
     }
+
+
+def eval_fp32(onnx_path: Path, dataset_dir: Path) -> dict:
+    return eval_with_predictor(common.make_onnxruntime_predictor(onnx_path), dataset_dir)
