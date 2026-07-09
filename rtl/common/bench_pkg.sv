@@ -57,5 +57,19 @@ package bench_pkg;
   localparam logic [7:0] L0_ADDR_N_BLOCKS   = 8'h1C;
   /* verilator lint_on UNUSEDPARAM */
 
+  // ---- L1 PE-array microbench CSR byte offsets (issue #11; rtl/microbench/l1_pe_array/). Same
+  // CTRL/STATUS bit conventions as the scoreboard/L0 above. lint_off for the same shared-package
+  // reason as the L0 block. ----
+  /* verilator lint_off UNUSEDPARAM */
+  localparam logic [7:0] L1_ADDR_CTRL      = 8'h00;  // bit0 START (self-clearing)
+  localparam logic [7:0] L1_ADDR_N_VECTORS = 8'h04;
+  localparam logic [7:0] L1_ADDR_CYCLES_LO = 8'h08;  // read latches the atomic snapshot
+  localparam logic [7:0] L1_ADDR_CYCLES_HI = 8'h0C;
+  localparam logic [7:0] L1_ADDR_DONE      = 8'h10;  // vectors retired
+  localparam logic [7:0] L1_ADDR_CHECKSUM  = 8'h14;
+  localparam logic [7:0] L1_ADDR_STATUS    = 8'h18;  // bit0 RUNNING, bit1 DONE
+  localparam logic [7:0] L1_ADDR_DIMS      = 8'h1C;  // {16'NUM_COLS, 16'NUM_ROWS}, compile-time
+  /* verilator lint_on UNUSEDPARAM */
+
 endpackage
 `endif
