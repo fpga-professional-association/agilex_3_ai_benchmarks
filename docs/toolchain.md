@@ -140,6 +140,61 @@ them directly (not assumed):
   (The directory also holds architectures for A10/AGX5/AGX7/AGX9/S10 and a `README.txt` — not
   reproduced here; only the AGX3 files are relevant to this project's device.)
 
+## Performance estimator invocation (issue #6)
+
+PLAN §9 PH0: the estimator is a mode of `dla_compiler` itself (not a separate binary), read from
+`dla_compiler --help` in the installed 2026.1.1 image (not guessed from memory or older-version
+docs):
+
+```
+dla_compiler --fanalyze-performance \
+  --march <path/to/AGX3_*.arch> \
+  --network-file <path/to/model.xml> \
+  --foutput-format open_vino_hetero \
+  --fplugin HETERO:FPGA \
+  --o out.aot \
+  --dumpdir <scratch-dir> \
+  --overwrite-output-files \
+  --fdump-performance-report perf.txt \
+  --fassumed-memory-bandwidth <MB/s>
+```
+
+Confirmed since 25.1 the estimator does take external memory bandwidth as an input, exactly as
+PLAN §9 PH0 says: `--fassumed-memory-bandwidth <MB/s>` (help text: *"Sets the available external
+memory bandwidth for each DLA IP in MB/s ... Do not set this option for architectures that do not
+use external memory"*). `scripts/estimate.py` (issue #6) wraps this invocation.
+
+Three things learned only by actually running it against this project's 7 IR models (`ds-cnn-kws`
+first, per issue #6 step 2, then the rest), not documented anywhere in `--help`:
+
+1. **`--network-file` takes the OpenVINO IR `.xml` directly** (with the matching `.bin` alongside
+   it) — the `--help` text's own worked example references a `model.yml` (an Open Model Zoo
+   downloader convention), which doesn't exist anywhere in this image; the vendor's own
+   `example_graphs/*/common_functions.sh` confirms the real call is
+   `dla_compiler --network-file ./output/$MODEL.xml --march ...`.
+2. **`--fplugin` must be exactly `HETERO:FPGA` (or exactly `HETERO:CPU`) for any INT8/NNCF
+   (FakeQuantize) graph** — the default `HETERO:FPGA,CPU` errors immediately with *"Quantized
+   graphs only supported through HETERO:FPGA or CPU"*. This matters because it means a quantized
+   graph **cannot** fall back an unsupported single op to the CPU host the way an fp32 graph can
+   (verified directly: the same graph that fails outright as INT8 under `HETERO:FPGA` compiles fine
+   as fp32 under the default `HETERO:FPGA,CPU`, with the unsupported op offloaded to CPU and a
+   merged heterogeneous throughput reported instead). Four of this project's seven models hit this
+   exact wall — see `results/reports/ph0_estimator.md` for which, and the precise
+   compiler-reported reason for each (an oversized global-average-pool window/stride, a
+   "Transpose does not precede an FC layer" placement rule, and — for Tiny-YOLOv3 — a bundled
+   dynamic-control-flow NMS subgraph that no static-dataflow accelerator, FPGA or otherwise, can
+   run).
+3. **The performance report lands at `<dumpdir>/<network-name>/reports/perf_0.txt`** (or
+   `.../reports/perf-merged_subgraph_estimates.txt` for a heterogeneous multi-subgraph compile),
+   not at the `--fdump-performance-report` filename directly — that flag only sets the report's
+   *basename* inside the `reports/` subdirectory the tool creates under `--dumpdir`. The number to
+   read is the last `FINAL THROUGHPUT = ... fps` line in that file.
+
+`--dumpdir`/`--network-file`/`--march` must all be paths **inside** the Docker bind mount
+(`$_ENVSH_ROOT`, i.e. under the repo root) — an absolute host path outside the repo (e.g. `/tmp/...`)
+resolves to a location inside the ephemeral container instead and vanishes when `docker run --rm`
+exits. `scripts/estimate.py` always resolves paths relative to the repo root for this reason.
+
 ## Unlicensed IP generation cap
 
 **Verified against the live public repo**, not taken on faith: fetched
@@ -208,3 +263,59 @@ to exercise it, only locate where it's documented.
   successful. 0 errors, 4 warnings`; license line in the log: `Info (24849): Successfully acquired
   license for quartus_agilex3.`; no license errors anywhere in the log.
 - `quartus/smoke/smoke.sof` exists after that compile (533644 bytes) — gitignored, not committed.
+
+## Fractal synthesis on Agilex 3 (issue #10, PLAN §3 LV5 / §7 L0b)
+
+PLAN §3 LV5 flags this as unverified: "Past 138 DSPs, sub-8-bit MACs go into ALMs via fractal
+synthesis (confirm Agilex 3 support in current synthesis handbook)." Answered two ways: a doc
+citation, and an empirical compile against this repo's actual device.
+
+**Doc citation.** Fetched the Quartus Prime Pro Edition User Guide: Design Compilation's "Fractal
+Synthesis Optimization" section directly (`docs.altera.com`, doc 683236, **version 25.3, dated
+2025-09-29** — this is what the `.../683236/current` alias resolves to right now; the public web
+handbook lags the installed 26.1.0 toolchain here, same situation already noted above for the FPGA
+AI Suite's `100'000`-inference doc). Its device-family line names **"Arria 10, Cyclone 10 GX,
+Stratix 10, and Agilex family devices"** — generic "Agilex family," not itemized per sub-family
+(Agilex 3 vs 5 vs 7 vs 9). So the handbook text alone does **not** explicitly single out Agilex 3
+either way — it's covered only by the generic "Agilex family" wording. Not papering over that
+ambiguity, which is why the second check below matters more for this specific device.
+
+The doc also states the optimization targets low-precision multiplication ("implement high-
+precision multipliers, where every operand's width exceeds 11 bits, using DSP blocks instead" —
+comfortably covers this sweep's W ∈ {4,2,1}), claims 20-45% area reduction for such designs, and
+gives two enabling mechanisms:
+- **Per-instance** (used by this issue's RTL): a Verilog attribute on the signal being packed,
+  `(* altera_attribute = "-name FRACTAL_SYNTHESIS ON" *)` — see
+  `rtl/microbench/l0b_soft_mac/soft_mac_array.sv`'s `product_q` declaration.
+- **Project-wide**: `set_global_assignment -name FRACTAL_SYNTHESIS ON` in the QSF. The doc itself
+  warns enabling it globally "can cause unnecessary bloat on modules that are not suitable for
+  fractal optimizations," which is why this issue's sweep uses the per-instance form instead,
+  applied only to the one multiplier register meant to be characterized.
+
+**Empirical check against A3CY100BM16AE7S.** Compiled `soft_mac_array` (W=4, M=64) with the
+per-instance attribute in place and grepped the resulting Analysis & Synthesis report
+(`quartus/l0b_soft_mac/output_files/w4_m64.syn.rpt`). Its "Source Assignments for Top-Level Entity"
+table echoes back, for every one of the 64 lanes:
+```
+; FRACTAL_SYNTHESIS ; ON    ; -    ; g_lane[0].product_q  ; soft_mac_array.sv:76 ;
+```
+(and so on for `g_lane[1]` through `g_lane[63]`). Quartus 26.1.0 Build 110 recognized and applied
+the attribute cleanly for every instance, on this exact device — no "unknown attribute"/unsupported
+warning anywhere in the log. Checked across the full L0b sweep too, not just this one calibration
+point: every one of the 9 grid points' `.syn.rpt` shows the same acceptance line once per lane (e.g.
+`w1_m512.syn.rpt`, `w2_m512.syn.rpt`, and `w4_m512.syn.rpt` each show it exactly 512 times, one per
+`g_lane[i].product_q`), so this holds for W=4, W=2, and W=1 alike, not just one width. That's a
+direct, itemized-for-Agilex-3 confirmation the handbook text alone doesn't give. What this does
+**not** establish: a distinct "fractal packing" area-impact
+report/table beyond that acceptance line was not found in the synthesis or fitter reports for this
+project (no dedicated breakout section appears in `.syn.rpt`/`.fit.rpt`), and no controlled
+ablation (same design compiled with the attribute removed) was run to isolate fractal synthesis's
+own area contribution from this device's baseline soft-multiplier mapping — that would be a
+reasonable follow-up if a future issue needs the effect quantified in isolation, rather than only
+confirmed-present. For this issue's purposes (characterize the achieved MACs/kALM curve, whatever
+mapping produced it), the curve in `results/reports/l0b_soft_mac_curve.md` is the deliverable
+either way, per the issue's own fallback instruction ("If unsupported, measure the default
+soft-multiplier mapping instead and say so — the curve is still the deliverable").
+
+Sources:
+- https://docs.altera.com/r/docs/683236/25.3/quartus-prime-pro-edition-user-guide/fractal-synthesis-optimization (v25.3, 2025-09-29)

@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<deploy
+ date="2026.07.09.14:43:03"
+ outputDirectory="/workspace/quartus/ph3_hyperram_char/qsys/ip/char_clkgen/char_clkgen_rst_ctrl/">
+ <perimeter>
+  <parameter
+     name="AUTO_GENERATION_ID"
+     type="Integer"
+     defaultValue="0"
+     onHdl="0"
+     affectsHdl="1" />
+  <parameter
+     name="AUTO_UNIQUE_ID"
+     type="String"
+     defaultValue=""
+     onHdl="0"
+     affectsHdl="1" />
+  <parameter
+     name="AUTO_DEVICE_FAMILY"
+     type="String"
+     defaultValue="Agilex 3"
+     onHdl="0"
+     affectsHdl="1" />
+  <parameter
+     name="AUTO_DEVICE"
+     type="String"
+     defaultValue="A3CY100BM16AE7S"
+     onHdl="0"
+     affectsHdl="1" />
+  <parameter
+     name="AUTO_DEVICE_SPEEDGRADE"
+     type="String"
+     defaultValue="7"
+     onHdl="0"
+     affectsHdl="1" />
+  <parameter
+     name="AUTO_BOARD"
+     type="String"
+     defaultValue="default"
+     onHdl="0"
+     affectsHdl="1" />
+  <parameter
+     name="AUTO_CLK_CLOCK_RATE"
+     type="Long"
+     defaultValue="-1"
+     onHdl="0"
+     affectsHdl="1" />
+  <parameter
+     name="AUTO_CLK_CLOCK_DOMAIN"
+     type="Integer"
+     defaultValue="-1"
+     onHdl="0"
+     affectsHdl="1" />
+  <parameter
+     name="AUTO_CLK_RESET_DOMAIN"
+     type="Integer"
+     defaultValue="-1"
+     onHdl="0"
+     affectsHdl="1" />
+  <interface name="reset_in0" kind="reset" start="0">
+   <property name="associatedClock" value="" />
+   <property name="synchronousEdges" value="NONE" />
+   <port name="reset_in0" direction="input" role="reset" width="1" />
+  </interface>
+  <interface name="clk" kind="clock" start="0">
+   <property name="clockRate" value="0" />
+   <property name="externallyDriven" value="false" />
+   <property name="ptfSchematicName" value="" />
+   <port name="clk" direction="input" role="clk" width="1" />
+  </interface>
+  <interface name="reset_out" kind="reset" start="1">
+   <property name="associatedClock" value="clk" />
+   <property name="associatedDirectReset" value="" />
+   <property name="associatedResetSinks" value="reset_in0" />
+   <property name="synchronousEdges" value="DEASSERT" />
+   <port name="reset_out" direction="output" role="reset" width="1" />
+  </interface>
+ </perimeter>
+ <entity kind="char_clkgen_rst_ctrl" version="1.0" name="char_clkgen_rst_ctrl">
+  <parameter name="AUTO_CLK_CLOCK_RATE" value="-1" />
+  <parameter name="AUTO_GENERATION_ID" value="0" />
+  <parameter name="AUTO_DEVICE" value="A3CY100BM16AE7S" />
+  <parameter name="AUTO_DEVICE_FAMILY" value="Agilex 3" />
+  <parameter name="AUTO_BOARD" value="default" />
+  <parameter name="AUTO_CLK_RESET_DOMAIN" value="-1" />
+  <parameter name="AUTO_CLK_CLOCK_DOMAIN" value="-1" />
+  <parameter name="AUTO_UNIQUE_ID" value="" />
+  <parameter name="AUTO_DEVICE_SPEEDGRADE" value="7" />
+  <generatedFiles>
+   <file
+       path="/workspace/quartus/ph3_hyperram_char/qsys/ip/char_clkgen/char_clkgen_rst_ctrl/synth/char_clkgen_rst_ctrl.v"
+       attributes="CONTAINS_INLINE_CONFIGURATION" />
+  </generatedFiles>
+  <childGeneratedFiles>
+   <file
+       path="/workspace/quartus/ph3_hyperram_char/qsys/ip/char_clkgen/char_clkgen_rst_ctrl/synth/char_clkgen_rst_ctrl.v"
+       attributes="CONTAINS_INLINE_CONFIGURATION" />
+  </childGeneratedFiles>
+  <sourceFiles>
+   <file
+       path="/workspace/quartus/ph3_hyperram_char/qsys/ip/char_clkgen/char_clkgen_rst_ctrl.ip" />
+  </sourceFiles>
+  <childSourceFiles>
+   <file
+       path="/opt/altera/ip/altera/merlin/altera_reset_controller/altera_reset_controller_hw.tcl" />
+  </childSourceFiles>
+  <messages>
+   <message level="Info" culprit="char_clkgen_rst_ctrl">"Generating: char_clkgen_rst_ctrl"</message>
+   <message level="Info" culprit="char_clkgen_rst_ctrl">"Generating: altera_reset_controller"</message>
+  </messages>
+ </entity>
+ <entity
+   kind="altera_reset_controller"
+   version="19.2.4"
+   name="altera_reset_controller">
+  <generatedFiles>
+   <file
+       path="/workspace/quartus/ph3_hyperram_char/qsys/ip/char_clkgen/char_clkgen_rst_ctrl/altera_reset_controller_1924/synth/altera_reset_controller.v"
+       attributes="" />
+   <file
+       path="/workspace/quartus/ph3_hyperram_char/qsys/ip/char_clkgen/char_clkgen_rst_ctrl/altera_reset_controller_1924/synth/altera_reset_synchronizer.v"
+       attributes="" />
+   <file
+       path="/workspace/quartus/ph3_hyperram_char/qsys/ip/char_clkgen/char_clkgen_rst_ctrl/altera_reset_controller_1924/synth/altera_reset_controller.sdc"
+       attributes="NO_SDC_PROMOTION" />
+  </generatedFiles>
+  <childGeneratedFiles>
+   <file
+       path="/workspace/quartus/ph3_hyperram_char/qsys/ip/char_clkgen/char_clkgen_rst_ctrl/altera_reset_controller_1924/synth/altera_reset_controller.v"
+       attributes="" />
+   <file
+       path="/workspace/quartus/ph3_hyperram_char/qsys/ip/char_clkgen/char_clkgen_rst_ctrl/altera_reset_controller_1924/synth/altera_reset_synchronizer.v"
+       attributes="" />
+   <file
+       path="/workspace/quartus/ph3_hyperram_char/qsys/ip/char_clkgen/char_clkgen_rst_ctrl/altera_reset_controller_1924/synth/altera_reset_controller.sdc"
+       attributes="NO_SDC_PROMOTION" />
+  </childGeneratedFiles>
+  <sourceFiles>
+   <file
+       path="/opt/altera/ip/altera/merlin/altera_reset_controller/altera_reset_controller_hw.tcl" />
+  </sourceFiles>
+  <childSourceFiles/>
+  <instantiator instantiator="char_clkgen_rst_ctrl" as="rst_ctrl" />
+  <messages>
+   <message level="Info" culprit="char_clkgen_rst_ctrl">"Generating: altera_reset_controller"</message>
+  </messages>
+ </entity>
+</deploy>

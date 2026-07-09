@@ -1,0 +1,26 @@
+{
+  "kind": "reference",
+  "level": "PH2",
+  "subject": "ad-toycar-fp32",
+  "date": "2026-07-04",
+  "config": {
+    "device": "A3CY100BM16AE7S",
+    "board": "Arrow AXC3000",
+    "model": "ad-toycar",
+    "quantization": "fp32",
+    "tool_versions": {
+      "python": "3.12.3",
+      "tensorflow": "2.16.1",
+      "torch": "2.12.1+cu130",
+      "torchvision": "0.27.1+cu130",
+      "onnx": "1.16.1",
+      "onnxruntime": "1.27.0"
+    }
+  },
+  "metrics": {
+    "auc": 0.876000867842849,
+    "n_records": 2459
+  },
+  "plan_ref": "\u00a75 table",
+  "notes": "ToyCar dev-set test files, 4 machine IDs (2459 files total), per-ID AUC averaged (matches 01_test.py's metric). MLPerf Tiny reference ballpark: AUC >= 0.83; published runs vary ~0.80-0.85 depending on training-set composition and seed -- this uses the committed reference checkpoint as-is, no retraining."
+}

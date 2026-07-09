@@ -1,0 +1,39 @@
+{
+  "kind": "estimate",
+  "level": "PH0",
+  "subject": "ad-toycar-agx3-performance-estimator-400mbps",
+  "date": "2026-07-04",
+  "plan_ref": "\u00a75 table",
+  "config": {
+    "device": "A3CY100BM16AE7S",
+    "board": "Arrow AXC3000",
+    "arch_file": "models/arch/AGX3_Performance.arch",
+    "model": "ad-toycar",
+    "quantization": "int8-nncf-ptq",
+    "tool_versions": {
+      "python": "3.12.3",
+      "openvino": "2024.6.0-17404-4c0f47d2335-releases/2024/6",
+      "nncf": "2.14.1",
+      "ai_suite": "2026.1.1+b17"
+    },
+    "memory_bandwidth_mbps": 400.0,
+    "ir_sha256": {
+      "xml": "96e60ad260cf2f8fe3629119630f48c0f67268a14cd429eab230d3a8787250da",
+      "bin": "52a48045b249f78b3c562335eb1bcd34c9d5ac70c527bf5280be2575226e2f8a"
+    },
+    "estimator_invocation": "source scripts/env.sh >/dev/null 2>&1 && dla_compiler --fanalyze-performance --march models/arch/AGX3_Performance.arch --network-file models/ir/ad-toycar/int8/ad-toycar.xml --foutput-format open_vino_hetero --fplugin HETERO:FPGA --o out.aot --dumpdir models/compiled/_ph0_scratch/ad-toycar_lliw7odi --overwrite-output-files --fdump-performance-report perf.txt --fassumed-memory-bandwidth 400",
+    "estimator_report_path": "models/compiled/_ph0_scratch/ad-toycar_lliw7odi/tf2onnx/reports/perf_0.txt",
+    "estimator_fplugin": "HETERO:FPGA",
+    "quant_manifest_hash_mismatch": true
+  },
+  "metrics": {
+    "fps": 884.28,
+    "ddr_bandwidth_required_mbps": 855.06,
+    "ddr_transfers_required_mb": 0.54,
+    "ddr_filter_reads_mb": 0.53,
+    "ddr_feature_reads_mb": 0.0,
+    "ddr_feature_writes_mb": 0.0,
+    "memory_bound": true
+  },
+  "notes": "FPGA AI Suite performance-estimator (HETERO:FPGA) output for ad-toycar (int8). Memory-bandwidth bottleneck reported: throughput was scaled down from the compute-only rate to match the assumed external memory bandwidth. DDR filter (weight) reads per inference: 0.530 MB vs 0.262 MB of on-disk INT8 weights -> 2.03x re-read factor. Weights are being streamed from external memory on every inference, not folded into on-chip M20K -- this arch is not a DDR-free/MIF-resident configuration regardless of model size. Activation-spill traffic (DDR feature reads + writes) per inference: 0.000 + 0.000 = 0.000 MB -- refines PLAN \u00a75's flat 2.5 MB spill constant (below it by 2.50 MB). WARNING: on-disk IR (ad-toycar.xml, ad-toycar.bin) does not match the sha256 recorded in models/ir/ad-toycar/quant_manifest.json (mtimes show the IR was regenerated after that manifest was written -- issue #2/#3's model_prep pipeline is still an open, unmerged, not-independently-verified PR as of this issue). config.ir_sha256 above is freshly computed from the exact bytes just compiled, so this result is still self-traceable; it just may not match that manifest snapshot."
+}

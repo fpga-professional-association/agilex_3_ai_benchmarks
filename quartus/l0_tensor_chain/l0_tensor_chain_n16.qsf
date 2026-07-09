@@ -1,0 +1,32 @@
+# Quartus settings for the L0 tensor-chain microbench, N_BLOCKS=16 (issue #9). Build:
+#   quartus_sh --flow compile l0_tensor_chain -c l0_tensor_chain_n16   (after source scripts/env.sh)
+# or scripts/build.sh l0_tensor_chain l0_tensor_chain_n16
+#
+# See rtl/microbench/l0_tensor_chain/README.md for the toolchain-gap finding (tensor-mode WYSIWYG
+# instantiation is rejected for FAMILY "Agilex 3" in this Quartus version) and for what this
+# revision's fitter report actually shows.
+
+set_global_assignment -name FAMILY "Agilex 3"
+set_global_assignment -name DEVICE A3CY100BM16AE7S
+set_global_assignment -name TOP_LEVEL_ENTITY l0_tensor_chain_top
+
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/common/bench_pkg.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/microbench/l0_tensor_chain/l0_lfsr.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/microbench/l0_tensor_chain/l0_mac_block.sv
+set_global_assignment -name SYSTEMVERILOG_FILE ../../rtl/microbench/l0_tensor_chain/l0_tensor_chain.sv
+set_global_assignment -name SYSTEMVERILOG_FILE l0_tensor_chain_top.sv
+set_global_assignment -name SDC_FILE ../constraints/l0_tensor_chain.sdc
+
+set_parameter -name N_BLOCKS 16
+
+# Pin assignments: this is a fitter-report/DSP-audit smoke compile (issue #9), not a board bring-up
+# (that's #7/#8) — no attempt is made to match real AXC3000 pinout, and (unlike quartus/smoke's own
+# qsf) no PIN_ location is asserted for any port, only IO_STANDARD: this revision is used only for
+# its Fitter/Timing-Analyzer reports (DSP-mode audit + fmax), never for a .sof, so the Assembler's
+# missing-pin-location Critical Warning (25196) is expected and left unresolved on purpose (a real
+# board bring-up needs #7/#8's actual AXC3000 pinout, not placeholder pin picks from this project).
+set_instance_assignment -name IO_STANDARD "1.2 V" -to clk
+set_instance_assignment -name IO_STANDARD "1.2 V" -to rst_n
+set_instance_assignment -name IO_STANDARD "1.2 V" -to checksum_byte[*]
+set_instance_assignment -name IO_STANDARD "1.2 V" -to cycles_byte[*]
+set_global_assignment -name LAST_QUARTUS_VERSION "26.1.0 Pro Edition"
