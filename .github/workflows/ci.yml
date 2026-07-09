@@ -52,5 +52,14 @@ jobs:
       - name: Record-replay datapath lint + testbenches (issue #16)
         run: bash sim/replay/run.sh
 
+      - name: L0 tensor-chain lint + testbench (issue #9)
+        run: bash sim/l0_tensor_chain/run.sh
+
+      - name: L0b soft-MAC array lint + testbenches (issue #10)
+        run: bash sim/microbench/l0b_soft_mac/run.sh
+
+      - name: L1 PE-array lint + variant-equivalence testbench (issue #11)
+        run: bash sim/l1_pe_array/run.sh
+
       - name: L3 HyperBus memtest/bandwidth engines lint + testbenches (issue #14)
         run: bash sim/microbench/l3_memtest/run.sh

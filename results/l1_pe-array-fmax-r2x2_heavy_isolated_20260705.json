@@ -1,0 +1,50 @@
+{
+  "kind": "estimate",
+  "level": "L1",
+  "subject": "pe-array-fmax-r2x2_heavy_isolated",
+  "date": "2026-07-05",
+  "plan_ref": "\u00a77 L1",
+  "config": {
+    "device": "A3CY100BM16AE7S",
+    "board": "Arrow AXC3000",
+    "fclk_mhz": 300,
+    "tool_versions": {
+      "quartus": "26.1.0 Build 110",
+      "python": "3.12.3"
+    },
+    "pe_grid": {
+      "rows": 2,
+      "cols": 2,
+      "pe_count": 4,
+      "n_taps": 10
+    },
+    "variant": {
+      "reset_style": "reset_heavy",
+      "clock_domain": "isolated"
+    },
+    "target_clock": "clk_hot",
+    "utilization": {
+      "dsp": 20,
+      "dsp_tensor_mode": 0,
+      "alm": 556,
+      "m20k": 6
+    },
+    "fmax_all_clocks_mhz": {
+      "clk_hot": 51.46,
+      "clk": 352.98
+    },
+    "fast_forward_limit": [
+      "clk_hot: Insufficient Registers",
+      "clk: Meets timing requirements: No further analysis performed."
+    ],
+    "report_paths": [
+      "quartus/l1_sweep/l1_r2x2_heavy_isolated.sta.rpt",
+      "quartus/l1_sweep/l1_r2x2_heavy_isolated.fit.rpt",
+      "quartus/l1_sweep/l1_r2x2_heavy_isolated.fit.retime.rpt"
+    ]
+  },
+  "metrics": {
+    "fmax_mhz": 51.46
+  },
+  "notes": "Quartus Timing-Analyzer static-timing estimate (kind=estimate per issue #11: fmax from the timing report until a hardware run), worst corner, restricted fmax of the hot (clk_hot) clock at the 300 MHz aggressive SDC target. CLASSIC-mode datapath (dsp_tensor_mode=0, 0 expected \u2014 Agilex 3 tensor mode is unreachable from hand RTL on Quartus 26.1, PLAN \u00a73 LV2 caveat / #9). reset_style=reset_heavy (LV1), clock_domain=isolated (LV4). Emitted by scripts/sweep_l1.py."
+}

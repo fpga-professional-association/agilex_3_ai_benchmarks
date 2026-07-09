@@ -1,0 +1,23 @@
+{
+  "kind": "reference",
+  "level": "PH2",
+  "subject": "resnet18-imagenet-int8",
+  "date": "2026-07-04",
+  "config": {
+    "device": "A3CY100BM16AE7S",
+    "board": "Arrow AXC3000",
+    "model": "resnet18-imagenet",
+    "quantization": "int8-nncf-ptq",
+    "tool_versions": {
+      "python": "3.12.3",
+      "openvino": "2024.6.0-17404-4c0f47d2335-releases/2024/6",
+      "nncf": "2.14.1"
+    }
+  },
+  "metrics": {
+    "accuracy_top1": 0.5703,
+    "n_records": 10000
+  },
+  "plan_ref": "\u00a75 table",
+  "notes": "ImageNetV2 'matched-frequency' (10000 images, 1000 classes, class-balanced) -- NOT the original ILSVRC val set (gated behind an image-net.org account approval this pipeline can't clear non-interactively). torchvision reports 69.758% clean-val top-1 for this checkpoint; ImageNetV2 numbers run several points lower due to distribution shift (Recht et al. 2019) -- expected, not an export bug. fp32->int8 accuracy_top1 delta: -0.0025 (fp32=0.5728)."
+}
