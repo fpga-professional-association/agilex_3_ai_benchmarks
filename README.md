@@ -8,6 +8,40 @@ Agilex 3 silicon shipped in 2025 and the third-party performance literature is e
 no tensor-capture audits, no fmax-vs-array-size curves, no HyperBus shmoos, no MLPerf-Tiny-class
 numbers. This repo produces that dataset on vendor-public silicon.
 
+## 🎯 MLPerf Tiny performance benchmark — status
+
+The north-star deliverable: **run the four MLPerf Tiny v1.4 workloads on the $129 AXC3000 and report
+latency / throughput / accuracy / energy** per the benchmark's rules ([`docs/mlperf_tiny_v14_plan.md`](docs/mlperf_tiny_v14_plan.md)).
+
+| Stage | Where it stands |
+|---|---|
+| **Models compile to the FPGA** | ✅ **all four core MLPerf Tiny models place 100% on the Agilex-3 CoreDLA IP** — `dla_compiler`-verified, via equivalence-preserving graph surgery (MLPerf **Closed-Division-legal**) |
+| **Memory-subsystem benchmarks** | ✅ measured on the physical board (HyperRAM + on-chip M20K bandwidth) |
+| **On-hardware inference numbers** | 🔶 in progress — needs the CoreDLA-on-AXC3000 integration (a DDR-free build + the CSR start/done handshake); the board program→readback loop itself is already proven |
+
+### Models → CoreDLA (compile-verified, accuracy-preserved)
+
+| Task | Model | Compiles 100% FPGA | Throughput (est.) | INT8 accuracy | MLPerf target |
+|---|---|:---:|---:|---:|---:|
+| Anomaly Detection | `ad-toycar` | ✅ | 522 fps (memory-bound) | AUC 0.78 | — |
+| Keyword Spotting | `ds-cnn-kws` | ✅ | 1,578 fps | 90.75% | 90% |
+| Image Classification | `resnet8-cifar10` | ✅ | 4,557 fps | 86.64% | 85% |
+| Visual Wake Words | `mobilenetv1-025-vww` | ✅ | 2,191 fps | 85.84% | 80% |
+
+fps are `dla_compiler` performance **estimates** on `AGX3_Performance.arch`; the graph rewrites that
+unblocked ds-cnn / resnet8 / vww are proven bit-equivalent to the reference
+([`sw/model_prep/graph_ops/`](sw/model_prep/graph_ops/), 42 tests). Plan to get all four *running* on
+the board: [`docs/tinyml_all_models_plan.md`](docs/tinyml_all_models_plan.md).
+
+### Measured on the physical AXC3000 (the memory subsystem CoreDLA feeds from)
+
+| Benchmark | Result | Status |
+|---|---|---|
+| HyperRAM sustained bandwidth | **342 MB/s** write / 337 read (175 MHz SDR PHY) | **measured** |
+| L2 aggregate M20K bandwidth | **38.4 GB/s** banked (100% of theoretical); **32×** penalty for wrong banking geometry | **measured** |
+
+> Multiple agents share one board — any on-board work must hold the [`scripts/devkit_lock.sh`](scripts/devkit_lock.sh) devkit lock.
+
 ## Results
 
 **Status legend** — how much each row is worth, so no estimate is mistaken for a measurement:
