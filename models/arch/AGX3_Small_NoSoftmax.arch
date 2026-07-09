@@ -1,0 +1,49 @@
+family : 'AGX3'
+k_vector : 16
+c_vector : 16
+arch_precision : FP12AGX
+
+stream_buffer_depth : 8192
+
+output_channels_max : 14320
+
+filter_size_width_max : 28
+filter_size_height_max : 28
+
+pe_array {
+  num_interleaved_features : 12
+  num_interleaved_filters : 1
+  exit_fifo_depth : 1024
+}
+
+filter_scratchpad {
+  filter_depth : 512
+  bias_scale_depth : 512
+}
+
+dma {
+  csr_addr_width : 11
+  csr_data_bytes : 4
+  ddr_addr_width : 32
+  ddr_burst_width : 4
+  ddr_data_bytes : 32
+  ddr_read_id_width : 2
+  ddr_write_id_width : 5
+}
+
+activation {
+  k_vector : 16
+  enable_clamp : true
+  enable_leaky_relu : false
+  enable_sigmoid : false
+  enable_prelu : false
+}
+
+pool {
+  k_vector : 1
+  max_window_height : 3
+  max_window_width : 3
+  max_stride_vertical : 4
+  max_stride_horizontal : 4
+}
+

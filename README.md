@@ -8,6 +8,54 @@ Agilex 3 silicon shipped in 2025 and the third-party performance literature is e
 no tensor-capture audits, no fmax-vs-array-size curves, no HyperBus shmoos, no MLPerf-Tiny-class
 numbers. This repo produces that dataset on vendor-public silicon.
 
+## Results
+
+**Status legend** — how much each row is worth, so no estimate is mistaken for a measurement:
+`measured` = observed on the real AXC3000 · `synthesized` = Quartus place-and-route on
+`A3CY100BM16AE7S`, no hardware · `sim-verified` = self-checking Verilator testbench ·
+`estimate` = FPGA AI Suite performance estimator, no hardware · `blocked` = not attainable yet,
+reason stated.
+
+### Board bring-up
+
+| Result | Detail | Status |
+|---|---|---|
+| LED blink on real hardware | `quartus/axc3000_blink` — real board pins (25 MHz `CLK_25M_C`@A7, LEDs @ AG21/AH22/AK21/AK20), flashed over JTAG, LEDs confirmed blinking | **measured** |
+| JTAG data path | on-board USB-Blaster III (`09fb:6022`) → `usbipd` → Docker `quartus_pgm` → "Configuration succeeded" | **measured** |
+
+### AI model through the FPGA AI Suite
+
+| Result | Detail | Status |
+|---|---|---|
+| Model compile coverage | 3 of 7 compile to Agilex-3 IP: **ad-toycar, MobileNetV2, ResNet-18**. `resnet8-cifar10` / `ds-cnn-kws` / `mobilenetv1-vww` / `tiny-yolov3` do **not** (op-placement limits) | **measured** (tool fact) |
+| ad-toycar INT8 → CoreDLA IP | compiles 100 % to FPGA, 350 MHz IP target, `out.aot` produced | **measured** compile |
+| ad-toycar throughput | 521.6 fps @ 250 MB/s assumed DDR BW; **memory-bound** (needs 519.8 MB/s; weights re-streamed ~2×/inference) — `results/ph0_ad-toycar-*.json` | **estimate** |
+
+### PH3 — running a model on the AXC3000 (HyperRAM ↔ CoreDLA)
+
+The AXC3000 has no LPDDR4 (only 16 MB HyperRAM), but CoreDLA requires a 256-bit AXI4 DDR memory.
+PH3 bridges that gap. Branch `ph3-hyperram-axi4-coredla`; design in
+[`docs/ph3_interfaces.md`](docs/ph3_interfaces.md), [`docs/ph3_bridge_design.md`](docs/ph3_bridge_design.md),
+[`docs/ph3_integration.md`](docs/ph3_integration.md).
+
+| Result | Detail | Status |
+|---|---|---|
+| AXI4↔HyperRAM bridge datapath | `rtl/hyperbus/axi4_hbmc_bridge.sv` — AXI4-256 write/read round-trips correct through the **real** `hbmc_core` + W957D8NB device model (bursts len 0/1/3/15, `arid→rid` echo, partial-WSTRB detected not corrupted) | **sim-verified** |
+| Bridge fmax + P&R | **273.6 MHz** (slow corner; 250 MHz target met, +0.345 ns) · **1,014 ALM / 821 reg / 0 M20K / 0 DSP** on A3CY100 (`quartus/ph3_bridge_char`) | **synthesized** |
+| LPDDR4 EMIF → HyperRAM swap | Platform Designer regenerates + `quartus_syn` **0 errors** on A3CY100, no unresolved black box; fitter enters (physical synthesis + clock promotion, 0 errors). Two integration bugs found + fixed. | **synthesized** (structural) |
+| Model classifying on-board | — | **blocked** |
+
+**Why on-board inference is still blocked** (honest handoff — full detail in `docs/ph3_integration.md`):
+
+1. **Real DDR-IO HyperBus PHY** — the wrapper's PHY is a synthesizable tristate *stub*, not a
+   datasheet-timed DDR PHY; it will not clock a real W957D8NB. This is the #1 remaining piece.
+2. **25 MHz IOPLL reparam + regenerated SDC + board pinout** — required before a fit/STA number
+   means anything (the stock example assumes a 100 MHz reference; the AXC3000 has only 25 MHz).
+3. **CoreDLA CSR start/done handshake** — undocumented vendor-internal protocol
+   (`sw/host/smoke_infer.py` leaves it `NotImplementedError`); needed to clock and count inferences.
+4. **HyperRAM bandwidth ceiling** — a 16-bit HyperBus (~500 MB/s) feeding a 256-bit port is ~16×
+   width-starved, so even once functional this system is HyperRAM-bandwidth-bound (not a fast path).
+
 ## Start here
 
 | Doc | What it is |
