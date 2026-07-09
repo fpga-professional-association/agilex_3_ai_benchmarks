@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 460" width="720" height="460"
+     font-family="sans-serif" color="#222">
+  <style>
+    @media (prefers-color-scheme: dark) { svg { color: #ddd; } }
+  </style>
+  <rect x="0" y="0" width="720" height="460" fill="none"/>
+  <line x1="70" y1="400.0" x2="690" y2="400.0" stroke="currentColor" stroke-opacity="0.15" stroke-width="1"/><line x1="70" y1="341.7" x2="690" y2="341.7" stroke="currentColor" stroke-opacity="0.15" stroke-width="1"/><line x1="70" y1="283.3" x2="690" y2="283.3" stroke="currentColor" stroke-opacity="0.15" stroke-width="1"/><line x1="70" y1="225.0" x2="690" y2="225.0" stroke="currentColor" stroke-opacity="0.15" stroke-width="1"/><line x1="70" y1="166.7" x2="690" y2="166.7" stroke="currentColor" stroke-opacity="0.15" stroke-width="1"/><line x1="70" y1="108.3" x2="690" y2="108.3" stroke="currentColor" stroke-opacity="0.15" stroke-width="1"/><line x1="70" y1="50.0" x2="690" y2="50.0" stroke="currentColor" stroke-opacity="0.15" stroke-width="1"/>
+  <line x1="70" y1="50" x2="70" y2="400" stroke="currentColor"/>
+  <line x1="70" y1="400" x2="690" y2="400" stroke="currentColor"/>
+  <text x="60" y="404.0" text-anchor="end" font-size="12" fill="currentColor">0</text><text x="60" y="345.7" text-anchor="end" font-size="12" fill="currentColor">63</text><text x="60" y="287.3" text-anchor="end" font-size="12" fill="currentColor">126</text><text x="60" y="229.0" text-anchor="end" font-size="12" fill="currentColor">188</text><text x="60" y="170.7" text-anchor="end" font-size="12" fill="currentColor">251</text><text x="60" y="112.3" text-anchor="end" font-size="12" fill="currentColor">314</text><text x="60" y="54.0" text-anchor="end" font-size="12" fill="currentColor">377</text>
+  <text x="70.0" y="422" text-anchor="middle" font-size="12" fill="currentColor">16</text><text x="194.0" y="422" text-anchor="middle" font-size="12" fill="currentColor">64</text><text x="318.0" y="422" text-anchor="middle" font-size="12" fill="currentColor">128</text><text x="442.0" y="422" text-anchor="middle" font-size="12" fill="currentColor">256</text><text x="566.0" y="422" text-anchor="middle" font-size="12" fill="currentColor">512</text><text x="690.0" y="422" text-anchor="middle" font-size="12" fill="currentColor">768</text>
+  <line x1="70.0" y1="400" x2="70.0" y2="405" stroke="currentColor"/><line x1="194.0" y1="400" x2="194.0" y2="405" stroke="currentColor"/><line x1="318.0" y1="400" x2="318.0" y2="405" stroke="currentColor"/><line x1="442.0" y1="400" x2="442.0" y2="405" stroke="currentColor"/><line x1="566.0" y1="400" x2="566.0" y2="405" stroke="currentColor"/><line x1="690.0" y1="400" x2="690.0" y2="405" stroke="currentColor"/>
+  <polyline points="70.0,242.3 194.0,143.0 318.0,112.9 442.0,95.0 566.0,85.2 690.0,81.8" fill="none" stroke="#1f77b4" stroke-width="2"/>
+  <polyline points="70.0,284.4 194.0,176.2 318.0,134.8 442.0,107.9 566.0,92.2 690.0,86.6" fill="none" stroke="#d62728" stroke-width="2"/>
+  <circle cx="70.0" cy="242.3" r="3.5" fill="#1f77b4"/><circle cx="194.0" cy="143.0" r="3.5" fill="#1f77b4"/><circle cx="318.0" cy="112.9" r="3.5" fill="#1f77b4"/><circle cx="442.0" cy="95.0" r="3.5" fill="#1f77b4"/><circle cx="566.0" cy="85.2" r="3.5" fill="#1f77b4"/><circle cx="690.0" cy="81.8" r="3.5" fill="#1f77b4"/>
+  <circle cx="70.0" cy="284.4" r="3.5" fill="#d62728"/><circle cx="194.0" cy="176.2" r="3.5" fill="#d62728"/><circle cx="318.0" cy="134.8" r="3.5" fill="#d62728"/><circle cx="442.0" cy="107.9" r="3.5" fill="#d62728"/><circle cx="566.0" cy="92.2" r="3.5" fill="#d62728"/><circle cx="690.0" cy="86.6" r="3.5" fill="#d62728"/>
+  <text x="360.0" y="24" text-anchor="middle" font-size="15" font-weight="bold" fill="currentColor">
+    HyperBus sustained bandwidth vs burst length
+  </text>
+  <text x="360.0" y="446" text-anchor="middle" font-size="12" fill="currentColor">
+    burst length (words) -- AXC3000, CK=175 MHz SDR PHY (measured)
+  </text>
+  <text x="18" y="225.0" text-anchor="middle" font-size="12" fill="currentColor"
+        transform="rotate(-90 18 225.0)">sustained MB/s</text>
+  <rect x="530" y="50" width="14" height="14" fill="#1f77b4"/>
+  <text x="550" y="61" font-size="12" fill="currentColor">write MB/s</text>
+  <rect x="530" y="70" width="14" height="14" fill="#d62728"/>
+  <text x="550" y="81" font-size="12" fill="currentColor">read MB/s</text>
+</svg>

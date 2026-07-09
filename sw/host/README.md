@@ -3,7 +3,17 @@
 Host-side control plane (JTAG System Console — control/readback ONLY, never the timed data path,
 PLAN §8). Loads record images into HyperRAM, configures the scoreboard (`docs/register_map.md`),
 starts runs, polls DONE_COUNT, reads back counters, and emits `results/` JSON. Includes the
-10,000-inference unlicensed-IP-cap check (DONE_COUNT vs intent, PLAN §10).
+unlicensed-IP-cap check (DONE_COUNT vs intent, PLAN §10) — `run_bench.py`'s `UNLICENSED_CAP` is
+currently `10_000` (issue #17, matching PLAN §9 PH1's stated figure at the time). Note found while
+working issue #7: `docs/toolchain.md` (issue #1) since verified the live upstream cap is actually
+**100,000**, not 10,000 (fetched fresh from `altera-fpga/agilex-ed-ai-suite`'s README). Flagging
+here rather than silently patching `run_bench.py` — that's issue #17's already-merged code and a
+behavior change belongs in its own PR, not a drive-by inside #7.
+
+`smoke_infer.py` (issue #7) is a separate, smaller tool targeting the FPGA AI Suite hostless-JTAG
+example design's own JTAG-Avalon memory map (DDR global-memory window + CoreDLA CSR) — a different
+platform than the scoreboard/HyperRAM record-replay path the rest of this directory drives. See its
+module docstring and `docs/board_bringup.md`.
 
 ## Accuracy parity gate (issue #21)
 
@@ -22,3 +32,20 @@ reference sees bit-identical inputs to hardware) and requires a **100% per-recor
 resnet8-cifar10 IR + a synthetic recimg (8 records, self-consistent mock hw-log) but the actual
 gate — a real hardware log compared against real hardware predictions — needs #18 (board bring-up)
 and is not runnable in this sandbox. See the issue #21 PR's "Hardware handoff" section.
+
+## L4 overlay fixed-cost fit (issue #20)
+
+```
+python fit_l4.py --points results/l4_sweep_d*.json --out results/l4_overlay_fixed_cost_fit.json \
+    --overhead-fraction-for results/l5_ds-cnn-kws_methodA.json results/l5_ad-toycar_methodA.json
+```
+
+Least-squares fit of `latency_us_p50 = overhead_us + macs / rate` over a `sw/model_prep/make_sweep_graphs.py`
+sweep's per-point `results/` JSONs (`kind: "measured"`, `level: "L4"`, method A only — PLAN §7 L4).
+Reports the intercept (the fixed overlay cost, µs) with a 95% CI (Student's t, no scipy dependency)
+and refuses to write anything if R² < 0.98 or the fit slope is non-positive — "bad fit is bad data,
+not a smaller font" (issue #20 deliverable). `--overhead-fraction-for` reports what fraction of a
+given model's own p50 latency the fixed overhead accounts for (the DS-CNN/AD numbers the issue's
+report section wants). The fit math is pure (stdlib only) and pytest-covered against synthetic
+latency data with a known intercept/rate; the actual silicon sweep is the issue #20 PR's
+"## Hardware handoff".

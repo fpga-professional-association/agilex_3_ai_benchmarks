@@ -1,0 +1,39 @@
+{
+  "kind": "estimate",
+  "level": "PH0",
+  "subject": "resnet18-imagenet-agx3-performance-estimator-250mbps",
+  "date": "2026-07-04",
+  "plan_ref": "\u00a75 table",
+  "config": {
+    "device": "A3CY100BM16AE7S",
+    "board": "Arrow AXC3000",
+    "arch_file": "models/arch/AGX3_Performance.arch",
+    "model": "resnet18-imagenet",
+    "quantization": "int8-nncf-ptq",
+    "tool_versions": {
+      "python": "3.12.3",
+      "openvino": "2024.6.0-17404-4c0f47d2335-releases/2024/6",
+      "nncf": "2.14.1",
+      "ai_suite": "2026.1.1+b17"
+    },
+    "memory_bandwidth_mbps": 250.0,
+    "ir_sha256": {
+      "xml": "4dcd3e6fa64dbeccc0dd355d2f197e80776c2a5462e68e0d2bc5d1d9fc9fc449",
+      "bin": "4b9ffc7d3d443921778d74070e38a443b94cb7f4a19e56ba6749d72bbc4dead8"
+    },
+    "estimator_invocation": "source scripts/env.sh >/dev/null 2>&1 && dla_compiler --fanalyze-performance --march models/arch/AGX3_Performance.arch --network-file models/ir/resnet18-imagenet/int8/resnet18-imagenet.xml --foutput-format open_vino_hetero --fplugin HETERO:FPGA --o out.aot --dumpdir models/compiled/_ph0_scratch/resnet18-imagenet_sphp0ps2 --overwrite-output-files --fdump-performance-report perf.txt --fassumed-memory-bandwidth 250",
+    "estimator_report_path": "models/compiled/_ph0_scratch/resnet18-imagenet_sphp0ps2/main_graph/reports/perf_0.txt",
+    "estimator_fplugin": "HETERO:FPGA",
+    "quant_manifest_hash_mismatch": false
+  },
+  "metrics": {
+    "fps": 5.24,
+    "ddr_bandwidth_required_mbps": 472.64,
+    "ddr_transfers_required_mb": 47.67,
+    "ddr_filter_reads_mb": 38.37,
+    "ddr_feature_reads_mb": 5.81,
+    "ddr_feature_writes_mb": 3.26,
+    "memory_bound": true
+  },
+  "notes": "FPGA AI Suite performance-estimator (HETERO:FPGA) output for resnet18-imagenet (int8). Memory-bandwidth bottleneck reported: throughput was scaled down from the compute-only rate to match the assumed external memory bandwidth. DDR filter (weight) reads per inference: 38.370 MB vs 11.171 MB of on-disk INT8 weights -> 3.43x re-read factor. Weights are being streamed from external memory on every inference, not folded into on-chip M20K -- this arch is not a DDR-free/MIF-resident configuration regardless of model size. Activation-spill traffic (DDR feature reads + writes) per inference: 5.810 + 3.260 = 9.070 MB -- refines PLAN \u00a75's flat 2.5 MB spill constant (above it by 6.57 MB)."
+}

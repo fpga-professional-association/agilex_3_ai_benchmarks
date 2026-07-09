@@ -1,0 +1,85 @@
+model,arch,membw_mbps,precision,status,detail
+ad-toycar,AGX3_Performance,200,int8,ok,fps=417.21
+ad-toycar,AGX3_Performance,250,int8,ok,fps=521.58
+ad-toycar,AGX3_Performance,333,int8,ok,fps=730.22
+ad-toycar,AGX3_Performance,400,int8,ok,fps=884.28
+ad-toycar,AGX3_Small_NoSoftmax,200,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+ad-toycar,AGX3_Small_NoSoftmax,250,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+ad-toycar,AGX3_Small_NoSoftmax,333,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+ad-toycar,AGX3_Small_NoSoftmax,400,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+ad-toycar,AGX3_Small_Softmax,200,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+ad-toycar,AGX3_Small_Softmax,250,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+ad-toycar,AGX3_Small_Softmax,333,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+ad-toycar,AGX3_Small_Softmax,400,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+ds-cnn-kws,AGX3_Performance,200,int8,fail,HETERO plugin attempted to fallback unsupported FPGA node (Name: functional_1/average_pooling2d/AvgPool; Type: AvgPool) to the default device. However; none of the other HETERO device(s) can support this node either.
+ds-cnn-kws,AGX3_Performance,250,int8,fail,HETERO plugin attempted to fallback unsupported FPGA node (Name: functional_1/average_pooling2d/AvgPool; Type: AvgPool) to the default device. However; none of the other HETERO device(s) can support this node either.
+ds-cnn-kws,AGX3_Performance,333,int8,fail,HETERO plugin attempted to fallback unsupported FPGA node (Name: functional_1/average_pooling2d/AvgPool; Type: AvgPool) to the default device. However; none of the other HETERO device(s) can support this node either.
+ds-cnn-kws,AGX3_Performance,400,int8,fail,HETERO plugin attempted to fallback unsupported FPGA node (Name: functional_1/average_pooling2d/AvgPool; Type: AvgPool) to the default device. However; none of the other HETERO device(s) can support this node either.
+ds-cnn-kws,AGX3_Small_NoSoftmax,200,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+ds-cnn-kws,AGX3_Small_NoSoftmax,250,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+ds-cnn-kws,AGX3_Small_NoSoftmax,333,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+ds-cnn-kws,AGX3_Small_NoSoftmax,400,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+ds-cnn-kws,AGX3_Small_Softmax,200,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+ds-cnn-kws,AGX3_Small_Softmax,250,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+ds-cnn-kws,AGX3_Small_Softmax,333,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+ds-cnn-kws,AGX3_Small_Softmax,400,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+mobilenetv1-025-vww,AGX3_Performance,200,int8,fail,HETERO plugin attempted to fallback unsupported FPGA node (Name: Constant_4649; Type: Constant) to the default device. However; none of the other HETERO device(s) can support this node either.
+mobilenetv1-025-vww,AGX3_Performance,250,int8,fail,HETERO plugin attempted to fallback unsupported FPGA node (Name: Constant_4649; Type: Constant) to the default device. However; none of the other HETERO device(s) can support this node either.
+mobilenetv1-025-vww,AGX3_Performance,333,int8,fail,HETERO plugin attempted to fallback unsupported FPGA node (Name: Constant_4649; Type: Constant) to the default device. However; none of the other HETERO device(s) can support this node either.
+mobilenetv1-025-vww,AGX3_Performance,400,int8,fail,HETERO plugin attempted to fallback unsupported FPGA node (Name: Constant_4649; Type: Constant) to the default device. However; none of the other HETERO device(s) can support this node either.
+mobilenetv1-025-vww,AGX3_Small_NoSoftmax,200,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+mobilenetv1-025-vww,AGX3_Small_NoSoftmax,250,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+mobilenetv1-025-vww,AGX3_Small_NoSoftmax,333,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+mobilenetv1-025-vww,AGX3_Small_NoSoftmax,400,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+mobilenetv1-025-vww,AGX3_Small_Softmax,200,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+mobilenetv1-025-vww,AGX3_Small_Softmax,250,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+mobilenetv1-025-vww,AGX3_Small_Softmax,333,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+mobilenetv1-025-vww,AGX3_Small_Softmax,400,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+mobilenetv2-1.0-imagenet,AGX3_Performance,200,int8,ok,fps=5.13
+mobilenetv2-1.0-imagenet,AGX3_Performance,250,int8,ok,fps=6.4
+mobilenetv2-1.0-imagenet,AGX3_Performance,333,int8,ok,fps=8.5
+mobilenetv2-1.0-imagenet,AGX3_Performance,400,int8,ok,fps=10.27
+mobilenetv2-1.0-imagenet,AGX3_Small_NoSoftmax,200,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+mobilenetv2-1.0-imagenet,AGX3_Small_NoSoftmax,250,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+mobilenetv2-1.0-imagenet,AGX3_Small_NoSoftmax,333,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+mobilenetv2-1.0-imagenet,AGX3_Small_NoSoftmax,400,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+mobilenetv2-1.0-imagenet,AGX3_Small_Softmax,200,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+mobilenetv2-1.0-imagenet,AGX3_Small_Softmax,250,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+mobilenetv2-1.0-imagenet,AGX3_Small_Softmax,333,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+mobilenetv2-1.0-imagenet,AGX3_Small_Softmax,400,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+resnet18-imagenet,AGX3_Performance,200,int8,ok,fps=4.2
+resnet18-imagenet,AGX3_Performance,250,int8,ok,fps=5.24
+resnet18-imagenet,AGX3_Performance,333,int8,ok,fps=7.07
+resnet18-imagenet,AGX3_Performance,400,int8,ok,fps=8.57
+resnet18-imagenet,AGX3_Small_NoSoftmax,200,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+resnet18-imagenet,AGX3_Small_NoSoftmax,250,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+resnet18-imagenet,AGX3_Small_NoSoftmax,333,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+resnet18-imagenet,AGX3_Small_NoSoftmax,400,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+resnet18-imagenet,AGX3_Small_Softmax,200,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+resnet18-imagenet,AGX3_Small_Softmax,250,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+resnet18-imagenet,AGX3_Small_Softmax,333,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+resnet18-imagenet,AGX3_Small_Softmax,400,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+resnet8-cifar10,AGX3_Performance,200,int8,fail,HETERO plugin attempted to fallback unsupported FPGA node (Name: Constant_16879; Type: Constant) to the default device. However; none of the other HETERO device(s) can support this node either.
+resnet8-cifar10,AGX3_Performance,250,int8,fail,HETERO plugin attempted to fallback unsupported FPGA node (Name: Constant_16879; Type: Constant) to the default device. However; none of the other HETERO device(s) can support this node either.
+resnet8-cifar10,AGX3_Performance,333,int8,fail,HETERO plugin attempted to fallback unsupported FPGA node (Name: Constant_16879; Type: Constant) to the default device. However; none of the other HETERO device(s) can support this node either.
+resnet8-cifar10,AGX3_Performance,400,int8,fail,HETERO plugin attempted to fallback unsupported FPGA node (Name: Constant_16879; Type: Constant) to the default device. However; none of the other HETERO device(s) can support this node either.
+resnet8-cifar10,AGX3_Small_NoSoftmax,200,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+resnet8-cifar10,AGX3_Small_NoSoftmax,250,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+resnet8-cifar10,AGX3_Small_NoSoftmax,333,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+resnet8-cifar10,AGX3_Small_NoSoftmax,400,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+resnet8-cifar10,AGX3_Small_Softmax,200,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+resnet8-cifar10,AGX3_Small_Softmax,250,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+resnet8-cifar10,AGX3_Small_Softmax,333,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+resnet8-cifar10,AGX3_Small_Softmax,400,int8,fail,Quantized graphs with FakeQuantize require Scale enabled and Round Clamp activation in the architecture
+tiny-yolov3,AGX3_Performance,200,int8,fail,HETERO plugin attempted to fallback unsupported FPGA node (Name: image_shape; Type: Parameter) to the default device. However; none of the other HETERO device(s) can support this node either.
+tiny-yolov3,AGX3_Performance,250,int8,fail,HETERO plugin attempted to fallback unsupported FPGA node (Name: image_shape; Type: Parameter) to the default device. However; none of the other HETERO device(s) can support this node either.
+tiny-yolov3,AGX3_Performance,333,int8,fail,HETERO plugin attempted to fallback unsupported FPGA node (Name: image_shape; Type: Parameter) to the default device. However; none of the other HETERO device(s) can support this node either.
+tiny-yolov3,AGX3_Performance,400,int8,fail,HETERO plugin attempted to fallback unsupported FPGA node (Name: image_shape; Type: Parameter) to the default device. However; none of the other HETERO device(s) can support this node either.
+tiny-yolov3,AGX3_Small_NoSoftmax,200,int8,fail,HETERO plugin attempted to fallback unsupported FPGA node (Name: image_shape; Type: Parameter) to the default device. However; none of the other HETERO device(s) can support this node either.
+tiny-yolov3,AGX3_Small_NoSoftmax,250,int8,fail,HETERO plugin attempted to fallback unsupported FPGA node (Name: image_shape; Type: Parameter) to the default device. However; none of the other HETERO device(s) can support this node either.
+tiny-yolov3,AGX3_Small_NoSoftmax,333,int8,fail,HETERO plugin attempted to fallback unsupported FPGA node (Name: image_shape; Type: Parameter) to the default device. However; none of the other HETERO device(s) can support this node either.
+tiny-yolov3,AGX3_Small_NoSoftmax,400,int8,fail,HETERO plugin attempted to fallback unsupported FPGA node (Name: image_shape; Type: Parameter) to the default device. However; none of the other HETERO device(s) can support this node either.
+tiny-yolov3,AGX3_Small_Softmax,200,int8,fail,HETERO plugin attempted to fallback unsupported FPGA node (Name: image_shape; Type: Parameter) to the default device. However; none of the other HETERO device(s) can support this node either.
+tiny-yolov3,AGX3_Small_Softmax,250,int8,fail,HETERO plugin attempted to fallback unsupported FPGA node (Name: image_shape; Type: Parameter) to the default device. However; none of the other HETERO device(s) can support this node either.
+tiny-yolov3,AGX3_Small_Softmax,333,int8,fail,HETERO plugin attempted to fallback unsupported FPGA node (Name: image_shape; Type: Parameter) to the default device. However; none of the other HETERO device(s) can support this node either.
+tiny-yolov3,AGX3_Small_Softmax,400,int8,fail,HETERO plugin attempted to fallback unsupported FPGA node (Name: image_shape; Type: Parameter) to the default device. However; none of the other HETERO device(s) can support this node either.
