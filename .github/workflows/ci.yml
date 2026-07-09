@@ -28,6 +28,9 @@ jobs:
       - name: Check results summary is up to date
         run: python scripts/make_report.py --check
 
+      - name: Check L3 shmoo report is up to date (issue #14)
+        run: python scripts/make_l3_shmoo_report.py --check
+
       - name: Run pytest (scripts/ + sw/)
         run: python -m pytest
 
@@ -43,7 +46,7 @@ jobs:
       - name: Scoreboard lint + testbenches (issue #15)
         run: bash sim/scoreboard/run.sh
 
-      - name: HyperBus controller lint + testbench (issue #13)
+      - name: HyperBus controller + capture trainer lint + testbenches (issues #13/#14)
         run: bash sim/hyperbus/run.sh
 
       - name: Record-replay datapath lint + testbenches (issue #16)
@@ -57,3 +60,6 @@ jobs:
 
       - name: L1 PE-array lint + variant-equivalence testbench (issue #11)
         run: bash sim/l1_pe_array/run.sh
+
+      - name: L3 HyperBus memtest/bandwidth engines lint + testbenches (issue #14)
+        run: bash sim/microbench/l3_memtest/run.sh
