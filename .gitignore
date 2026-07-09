@@ -1,3 +1,10 @@
+# CoreDLA AGX3 DDR-free build (Track A): the generated IP (dla_create_ip output: RTL + on-chip
+# weight MIF ROMs) and the standalone Quartus QoR project are heavy and fully regenerable by
+# quartus/coredla_agx3_ddrfree/scripts/build.sh. Only arch/, scripts/, docs/ are committed.
+quartus/coredla_agx3_ddrfree/coredla_ip/
+quartus/coredla_agx3_ddrfree/build/
+quartus/coredla_agx3_ddrfree/_compile_ddrfree/
+
 # Quartus build outputs
 quartus/**/db/
 quartus/**/incremental_db/

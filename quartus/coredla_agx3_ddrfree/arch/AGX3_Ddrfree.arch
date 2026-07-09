@@ -1,0 +1,112 @@
+# AGX3 DDR-free (on-chip parameter / streaming) architecture — EXPERIMENTAL.
+#
+# Purpose: empirically determine whether the FPGA AI Suite 2026.1.1 toolchain accepts a
+# family:'AGX3' DDR-free architecture. NO AGX3 DDR-free arch or example design ships in the
+# suite (only AGX5/AGX7). This file is hand-authored by combining:
+#   * AGX3_Performance.arch          -> the AGX3 datapath sizing + int8 features
+#                                       (enable_scale, enable_round_clamp, softmax kernel)
+#   * AGX7_Streaming_ocp_Ddrfree.arch -> the DDR-free keys:
+#         enable_on_chip_parameters, disable_external_memory,
+#         input_stream_interface / output_stream_interface, layout_transform_params,
+#         config_network.config_cache_depth
+#
+# Cache depths (filter/bias_scale/config) are sized to the largest tiny model tried
+# (ad-toycar needs filter_depth 1062; resnet8 needs 396). 1088 covers both.
+family : 'AGX3'
+k_vector : 16
+c_vector : 16
+arch_precision : FP12AGX
+
+stream_buffer_depth : 8192
+
+# ---- DDR-free: weights/params resident on-chip, no external memory datapath ----
+enable_on_chip_parameters : true
+disable_external_memory : true
+
+output_channels_max : 16384
+
+# required for models that use eltwise mult
+enable_eltwise_mult : true
+filter_size_width_max : 28
+filter_size_height_max : 28
+
+# ---- Streaming interfaces replace the DDR feature-map path ----
+input_stream_interface {
+  enable: true
+  data_width: 128
+  fifo_depth: 4096
+}
+
+output_stream_interface {
+  enable : true
+  data_width : 128
+  fifo_depth : 3072
+}
+
+# Input Parameter node is consumed on-FPGA via the hardware layout transform (sized for the
+# resnet8-cifar10 1x3x32x32 input). Without this block the input node has no on-FPGA home and
+# the HETERO:FPGA plugin cannot place it.
+layout_transform_params {
+  max_channels : 4
+  max_feature_height : 32
+  max_feature_width : 32
+  max_feature_depth : 1
+  max_stride_height : 1
+  max_stride_width : 1
+  max_stride_depth : 1
+  max_pad_front : 0
+  max_pad_left : 1
+  max_pad_top : 1
+  input_type : F16
+}
+
+pe_array {
+  num_interleaved_features : 12
+  num_interleaved_filters : 1
+  exit_fifo_depth : 1024
+  enable_scale : true
+}
+
+filter_scratchpad {
+  filter_depth : 1088
+  bias_scale_depth : 512
+}
+
+dma {
+  csr_addr_width : 11
+  csr_data_bytes : 4
+  ddr_addr_width : 32
+  ddr_burst_width : 4
+  ddr_data_bytes : 32
+  ddr_read_id_width : 2
+  ddr_write_id_width : 5
+}
+
+activation {
+  k_vector : 16
+  enable_clamp : false
+  enable_round_clamp : true
+  enable_leaky_relu : false
+  enable_sigmoid : true
+  enable_prelu : true
+}
+
+pool {
+  k_vector : 4
+  max_window_height : 3
+  max_window_width : 3
+  max_stride_vertical : 4
+  max_stride_horizontal : 4
+}
+
+config_network {
+  config_cache_depth : 19201
+}
+
+custom_aux_primitive {
+  k_vector : 1
+  layer_type : 'softmax'
+  name       : 'softmax'
+  type       : ELTWISE_WITH_MEMORY
+  max_num_channels : 2048
+}
