@@ -3,8 +3,8 @@
 This is the third PH3 document. `docs/ph3_interfaces.md` reverse-engineered CoreDLA's AXI4 "DDR"
 master; `docs/ph3_bridge_design.md` specified the sim-proven `axi4_hbmc_bridge`. This one **packages
 that bridge as a Platform Designer memory subsystem and drops it into the FPGA AI Suite example
-design in place of the LPDDR4 EMIF** — the exact swap `git show issue-7-hostless-jtag:docs/board_bringup.md`
-§2f identified as the real blocker to an AXC3000 build.
+design in place of the LPDDR4 EMIF** — the exact swap `docs/board_bringup.md` §2f identified as the
+real blocker to an AXC3000 build (issue #7, merged to `main`).
 
 It records three artifacts and one bounded compile attempt. Read the honest scope box first.
 

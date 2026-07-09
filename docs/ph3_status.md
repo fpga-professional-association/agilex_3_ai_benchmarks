@@ -1,8 +1,8 @@
 # PH3 status — on-board AI enablement (HyperRAM ↔ CoreDLA)
 
 Entry point for the PH3 effort: replace CoreDLA's LPDDR4 EMIF (which the AXC3000 lacks) with a
-HyperRAM-backed AXI4 memory so an FPGA-AI-Suite model can eventually run on the board. Branch
-`ph3-hyperram-axi4-coredla`.
+HyperRAM-backed AXI4 memory so an FPGA-AI-Suite model can eventually run on the board. Landed via
+PR #41 (`ph3-hyperram-axi4-coredla`, merged to `main`).
 
 ## Documents (read in order)
 1. [`ph3_interfaces.md`](ph3_interfaces.md) — reverse-engineered CoreDLA AXI4 "DDR" master (256-bit,
@@ -94,13 +94,12 @@ not controller RTL:
 - The swap attempt (prior session, old stub-PHY wrapper): see `ph3_integration.md` → "Reproduce".
 
 ## Bottom line
-The memory-subsystem gap that prior work (`issue-7-hostless-jtag`, `docs/board_bringup.md` §2f)
+The memory-subsystem gap that prior work (issue #7, `docs/board_bringup.md` §2f, merged to `main`)
 flagged as *the* blocker to any AXC3000 CoreDLA build was already **structurally closed** (generates
 + synthesizes clean) in the prior session, and this session closes the PHY gap on top of that: the
 datapath now terminates in a **real, silicon-proven HyperBus PHY** (the `third_party/hyperram`
 submodule, measured on this exact board) rather than a tristate stub. A *functional* on-board
 CoreDLA inference is still gated on the five items above — principally the PD clock-plan
 regeneration to actually deliver `clk2x` and a board fit against the new wrapper. Surrounding
-context: model-compile coverage in `results/reports/ph0_estimator.md` (branch
-`issue-6-ph0-estimator`); the original memory-subsystem analysis in `docs/board_bringup.md` §2f
-(branch `issue-7-hostless-jtag`).
+context: model-compile coverage in `results/reports/ph0_estimator.md` (issue #6, merged to `main`);
+the original memory-subsystem analysis in `docs/board_bringup.md` §2f (issue #7, merged to `main`).
