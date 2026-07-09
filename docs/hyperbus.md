@@ -1,8 +1,10 @@
 # HyperBus / HyperRAM controller (issue #13)
 
 Controller + behavioral device model for the Winbond **W957D8NB** (128 Mb = 16 MB, ×8 HyperBus DDR,
-1.8 V) on the AXC3000. PLAN §4 flags this as the single biggest infrastructure gap: Quartus ships no
-HyperBus controller and the stock Nios V example runs from internal RAM only.
+1.2 V per the Arrow AXC3000 User Guide — see `docs/PLAN.md` §1's corrected value and
+`docs/board_bringup.md`'s "HyperRAM voltage discrepancy" note) on the AXC3000. PLAN §4 flags this as
+the single biggest infrastructure gap: Quartus ships no HyperBus controller and the stock Nios V
+example runs from internal RAM only.
 
 ## Provenance / decision record
 
@@ -65,14 +67,22 @@ device signals a refresh collision by driving RWDS during CA; the controller sam
 and doubles accordingly. (Simplification of the full spec — fixed mode here means "no doubling",
 documented so the controller and device agree.)
 
-## Hardware handoff (needs Quartus; no board until #14)
+## Hardware handoff (needs Quartus; the board has since arrived, but not for *this* controller)
 
 - `quartus/hyperbus_smoke/` + `quartus/constraints/hyperbus.sdc` are written but **not compiled here**
-  (no Quartus in CI). Closing 100 MHz timing with the RWDS-referenced `.sdc` and recording the result
-  is the remaining hardware/Quartus step, feeding PLAN's "closes at 166+ in GPIO?" risk item.
+  (no Quartus in CI at the time this was written). Closing 100 MHz timing with the RWDS-referenced
+  `.sdc` and recording the result is the remaining hardware/Quartus step, feeding PLAN's "closes at
+  166+ in GPIO?" risk item.
 - The Agilex DDR-IO PHY (mapping `hb_dq_o/oe/i`, `hb_rwds_*`, `hb_capture_delay` to bidirectional IO
   with delay taps) is the Agilex-specific piece to add during bring-up; the smoke top uses plain
   behavioral tri-states as a placeholder so the controller can be fitted.
+- **Status update:** the physical AXC3000 board is now in hand and HyperRAM sustained bandwidth
+  **has** been measured on it (342.4 MB/s write / 337.3 MB/s read @175 MHz CK,
+  `results/ph3_hyperbus_bw_len*.json`) — but that measurement is through the `third_party/hyperram`
+  submodule's own SDR PHY + example design (PH3, see `docs/ph3_submodule.md`), **not** through this
+  repo's own `hbmc_core`/`hb_trainer`/`l3_memtest_engine`/`l3_bw_engine` (issue #13/#14) datapath
+  described in this file. Those modules still have never been fitted or run on real hardware; the
+  acceptance criteria below remain genuinely hardware-gated for *this* controller specifically.
 
 ## Issue #14 addendum: capture trainer + memtest/bandwidth engines
 

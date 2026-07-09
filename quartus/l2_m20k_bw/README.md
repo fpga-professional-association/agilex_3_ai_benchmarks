@@ -128,6 +128,15 @@ python3 sw/host/run_l2.py --k 100000 --fclk-mhz 300.0 --verify-golden \
 
 ## Build status
 
-See the PR description for what has been verified without hardware (Verilator TB, pytest,
-qsys-generate, quartus_syn) vs. what remains hardware-gated (full fit/timing closure, RAM-summary
-audit, program, and the 3-config GB/s measurement).
+**Measured on the physical AXC3000** (2026-07-09, all three configs) — `results/l2_m20k_bw_banked_outreg_20260709.json`,
+`results/l2_m20k_bw_banked_noreg_20260709.json`, `results/l2_m20k_bw_shared_outreg_20260709.json`:
+
+| Config | Aggregate GB/s | Efficiency vs. theoretical (38.4 GB/s) |
+|---|---:|---:|
+| a — banked, output-reg ON | 38.4 | 100% |
+| b — shared round-robin, output-reg ON | 1.2 | 3.1% (a 32x penalty vs. config a) |
+| c — banked, output-reg OFF | 38.4 | 100% (fmax ~303.9 MHz vs. ~300.4 MHz; see the JSON's `config.utilization` for the ALM/M20K cost of dropping the output register) |
+
+All three checksum-verified against `scripts/l2_golden.py` before the bandwidth number was trusted
+(issue #12 do-not: never report bandwidth from a run whose checksum failed). See each result JSON's
+`config`/`notes` fields for the exact bitstream, Fitter utilization, and achieved fmax.

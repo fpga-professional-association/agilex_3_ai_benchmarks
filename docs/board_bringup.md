@@ -221,6 +221,11 @@ PLAN.md's number. This also means issue #13's `hyperbus_smoke.qsf` placeholder c
 is 1.8 V") was carrying the same stale assumption — not fixed here since #13 is a different,
 already-merged issue's file, but worth the same maintainer follow-up.
 
+**Update (doc review pass):** `docs/PLAN.md` §1 has since been corrected to **1.2 V**, citing this
+section. `quartus/hyperbus_smoke/hyperbus_smoke.qsf`'s placeholder comment still says 1.8 V and has
+not been touched (out of scope for a docs-only pass) — flagged again here for whoever next edits
+that file.
+
 ## Clock I/O-standard discrepancy (same two sources)
 
 `CLK_25M_C` @ pin A7: Arrow User Guide v1.2.1 §3.1.1 table says I/O standard **"1.2V"**;
@@ -264,7 +269,9 @@ accepts for this device. Scratch project deleted after the check, not committed.
 - This document.
 
 Not added, and why: `quartus/hl_jtag_axc3000/` as a compiling project (blocked on §2f above); a
-`results/` JSON for this issue (needs both a working AXC3000 bitstream — blocked on §2f — and the
-DS-CNN INT8 IR + OpenVINO CPU-INT8 reference from issue #3, whose PR (#32) is open,
-not-yet-merged/independently-verified — see the PR description for why this session judged it unsafe
-to build on directly).
+`results/` JSON for this issue (needs a working AXC3000 bitstream, still blocked on §2f — see
+`docs/ph3_status.md`/`docs/ph3_coredla_nextsteps.md` for how far that gap has since been closed).
+(At the time this was written, issue #3's DS-CNN INT8 IR + OpenVINO CPU-INT8 reference was on an
+open, not-yet-merged PR and this session judged it unsafe to build on directly; issue #3 has since
+been merged to `main`, so that specific caveat no longer applies — the remaining blocker is purely
+the §2f memory-subsystem gap.)

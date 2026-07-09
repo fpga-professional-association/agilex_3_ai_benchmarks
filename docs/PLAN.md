@@ -19,7 +19,7 @@ The dividing line is **~350–400 KB of INT8 weights** — where a model stops f
 | INT8 MACs / DSP / cycle | 20 | Tensor mode, two-column structure, INT32/FP32 accumulate |
 | 18×19 multipliers | 276 | Classic DSP mode (2 per block) |
 | On-chip M20K SRAM | 4.47 Mb ≈ **559 KB** | Weights + activations + FIFOs all compete here |
-| HyperRAM | 128 Mb = **16 MB** | Winbond W957D8NB, ×8 HyperBus DDR, 1.8 V |
+| HyperRAM | 128 Mb = **16 MB** | Winbond W957D8NB, ×8 HyperBus DDR, **1.2 V** (corrected from an earlier "1.8 V" — see note below) |
 | QSPI flash | 256 Mb = **32 MB** | Bitstream + dataset cold storage |
 | Fabric fmax | up to 345 MHz (family headline) | Assume less for a packed design; verify per speed grade in Quartus |
 | Host link | USB-C (FTDI JTAG) | **Control plane only, never the data plane** |
@@ -27,6 +27,14 @@ The dividing line is **~350–400 KB of INT8 weights** — where a model stops f
 
 No HPS means no Linux/OpenVINO runtime on-chip. Control paths: (a) JTAG System Console from a
 workstation, (b) Nios V/g bare-metal or RTOS. Both are supported by FPGA AI Suite example designs.
+
+> **Correction flagged loudly per AGENTS.md:** the HyperRAM row above previously read "1.8 V". Issue
+> #7's `docs/board_bringup.md` (§"HyperRAM voltage discrepancy against PLAN §1") found Arrow's
+> versioned/dated AXC3000 User Guide v1.2.1 (§2.3.3.2, §3.6, bank-voltage table) states the
+> AXC3000's HyperRAM bank is **1.2 V**, and `quartus/constraints/axc3000_board.tcl` was already
+> written against 1.2 V for every HyperRAM pin. This doc is corrected to match that
+> already-cited-in-repo, versioned source; the underlying discrepancy report and its provenance are
+> preserved in `docs/board_bringup.md` for anyone who wants to re-derive it from the schematic.
 
 ## §2 Compute ceiling
 

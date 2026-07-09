@@ -18,7 +18,7 @@ dla_build_example_design.py build -o _ph3_ed -f agx3c_jtag \
 Ran clean (exit 0, `AGX3_Performance` + `agx3c_jtag` accepted — no fallback needed). The generated
 tree `_ph3_ed/` is pure AI-Suite output, regenerable by the command above, and is **gitignored**
 (added `_ph3_ed/` to `.gitignore`). Paths below are relative to that tree. Confirms the earlier
-board-bringup finding (`git show issue-7-hostless-jtag:docs/board_bringup.md` §2f): the CoreDLA DDR
+board-bringup finding (`docs/board_bringup.md` §2f, issue #7, merged to `main`): the CoreDLA DDR
 AXI4 port is architecture-independent; here it is read directly off the generated RTL/Tcl.
 
 Key generated files:

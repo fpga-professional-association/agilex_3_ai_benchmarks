@@ -27,7 +27,7 @@ reason stated.
 
 | Result | Detail | Status |
 |---|---|---|
-| Model compile coverage | 3 of 7 compile to Agilex-3 IP: **ad-toycar, MobileNetV2, ResNet-18**. `resnet8-cifar10` / `ds-cnn-kws` / `mobilenetv1-vww` / `tiny-yolov3` do **not** (op-placement limits) | **measured** (tool fact) |
+| Model compile coverage | 3 of 7 compile to Agilex-3 IP: **ad-toycar, MobileNetV2, ResNet-18**. `resnet8-cifar10` / `ds-cnn-kws` / `mobilenetv1-vww` / `tiny-yolov3` do **not** (op-placement limits, not resource limits — see [`results/reports/ph0_estimator.md`](results/reports/ph0_estimator.md)). Per-model fixes tracked in issues #48–#51 (Closed-equivalent re-export vs Open-Division re-arch; tiny-yolov3 is impossible-as-is). MLPerf Tiny **v1.4** adoption plan: [`docs/mlperf_tiny_v14_plan.md`](docs/mlperf_tiny_v14_plan.md) | **measured** (tool fact) |
 | ad-toycar INT8 → CoreDLA IP | compiles 100 % to FPGA, 350 MHz IP target, `out.aot` produced | **measured** compile |
 | ad-toycar throughput | 521.6 fps @ 250 MB/s assumed DDR BW; **memory-bound** (needs 519.8 MB/s; weights re-streamed ~2×/inference) — `results/ph0_ad-toycar-*.json` | **estimate** |
 
@@ -79,6 +79,10 @@ PH3 bridges that gap (merged to `main`); design in
 |---|---|
 | [`docs/PLAN.md`](docs/PLAN.md) | Canonical plan: silicon budget, rooflines, characterization ladder, tool flow. **Every number cites this.** |
 | [`docs/axc3000_ai_capacity.html`](docs/axc3000_ai_capacity.html) | Original interactive plan document (sliders recompute the capacity tables) |
+| [`docs/mlperf_tiny_v14_plan.md`](docs/mlperf_tiny_v14_plan.md) | Plan to adopt the latest **MLPerf Tiny v1.4** (Jul 2026): checkpoint provenance, streaming DS-CNN, Closed vs Open Division framing |
+| [`docs/ph3_coredla_nextsteps.md`](docs/ph3_coredla_nextsteps.md) | Ordered roadmap to get a CoreDLA model classifying on the AXC3000 (PH3) |
+| [`docs/board_bringup.md`](docs/board_bringup.md) | Board pinout / voltage / JTAG bring-up notes (Arrow User Guide provenance) |
+| [`docs/toolchain.md`](docs/toolchain.md) | Quartus / FPGA AI Suite Docker flow, `dla_compiler` invocation, HETERO plugin constraint |
 | [`docs/register_map.md`](docs/register_map.md) | Benchmark scoreboard CSR map |
 | [`docs/record_format.md`](docs/record_format.md) | HyperRAM record-store binary format |
 | [`AGENTS.md`](AGENTS.md) | Conventions for (AI) implementers — read before touching code |
@@ -87,6 +91,12 @@ PH3 bridges that gap (merged to `main`); design in
 
 Work is organized as GitHub issues grouped into milestones. Each issue is a self-contained spec:
 context, exact deliverables, step-by-step instructions, acceptance criteria.
+
+> **Status (2026-07):** M0 and most of M2 have landed — issues #1–#7, #9–#11, #13–#17, #21 are merged
+> to `main`; the physical AXC3000 arrived and two benchmarks are **measured** (see Results above).
+> Open follow-ups from a repo review + the MLPerf Tiny v1.4 pass: **#47** (v1.4 provenance),
+> **#48–#51** (enable the four non-compiling models), **#52–#60** (RTL/Python/CI/reproducibility fixes).
+> The original milestone table below is the initial v1 spec, preserved for reference.
 
 | Milestone | Theme | Hardware needed? |
 |---|---|---|

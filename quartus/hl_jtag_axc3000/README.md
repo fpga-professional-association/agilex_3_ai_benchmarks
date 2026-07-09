@@ -1,11 +1,19 @@
 # hl_jtag_axc3000 — AXC3000 adaptation of the FPGA AI Suite hostless-JTAG example (issue #7)
 
-**Status: not a compiling project yet.** This directory documents the adaptation as an overlay on
-top of AI-Suite-generated files (per the issue's own "whichever keeps the diff smallest" option),
-rather than committing a full vendor-generated project tree, because the adaptation cannot complete
-without first solving the memory-subsystem gap in `docs/board_bringup.md` §2f (PLAN §9 PH3 scope,
-not this issue's). Read `docs/board_bringup.md` in full before touching this directory — it has the
-evidence and reasoning behind every line below.
+**Status: not a compiling project yet in this directory.** This directory documents the adaptation
+as an overlay on top of AI-Suite-generated files (per the issue's own "whichever keeps the diff
+smallest" option), rather than committing a full vendor-generated project tree, because the
+adaptation cannot complete without first solving the memory-subsystem gap in `docs/board_bringup.md`
+§2f (PLAN §9 PH3 scope, not this issue's). Read `docs/board_bringup.md` in full before touching this
+directory — it has the evidence and reasoning behind every line below.
+
+**PH3 status (see `docs/ph3_status.md` / `docs/ph3_coredla_nextsteps.md`):** the §2f memory-subsystem
+gap this directory is blocked on is now **structurally closed** — a real, silicon-proven HyperRAM
+AXI4 bridge (`rtl/hyperbus/axc3000_hyperram_axi4.sv`, measured 342.4 MB/s write / 337.3 MB/s read on
+this exact board) exists and generates/synthesizes clean against the CoreDLA example system in a
+separate, uncommitted working tree (`_ph3_ed_hyperram/`) — not in this directory. Committing a
+compiling project *here* still needs the remaining PH3 items (clk2x IOPLL wiring, board pinout/SDC,
+CoreDLA CSR handshake — see `docs/ph3_coredla_nextsteps.md` for the ordered list).
 
 ## How to regenerate the stock baseline (verified this session)
 
