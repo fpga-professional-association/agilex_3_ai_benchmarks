@@ -1,0 +1,37 @@
+{
+  "kind": "measured",
+  "level": "PH3",
+  "subject": "hyperbus-sustained-bw-len768",
+  "date": "2026-07-09",
+  "plan_ref": "\u00a75 table",
+  "config": {
+    "device": "A3CY100BM16AE7S",
+    "board": "Arrow AXC3000",
+    "fclk_mhz": 175.0,
+    "hyperbus_mhz": 175.0,
+    "tool_versions": {
+      "quartus": "26.1.0 Build 110"
+    },
+    "utilization": {
+      "alm": 1423,
+      "dsp": 0,
+      "m20k": 2
+    },
+    "bitstream_sha256": "8328e85b4e4e88121bab3fd3a91c7f550029a3f31ddc31fe436e3e452a99aa7d",
+    "report_paths": [
+      "third_party/hyperram/fpga/axc3000/output_files/bw.fit.summary",
+      "third_party/hyperram/fpga/axc3000/output_files/bw.sta.summary"
+    ]
+  },
+  "metrics": {
+    "sustained_mbps": 342.42,
+    "write_mbps": 342.42,
+    "read_mbps": 337.26,
+    "wr_cycles": 785,
+    "rd_cycles": 797,
+    "burst_words": 768,
+    "byte_clock_mhz": 350.0,
+    "cold_pass": false
+  },
+  "notes": "MEASURED on the physical Arrow AXC3000 (A3CY100BM16AE7S + Winbond W957D8NB HyperRAM) 2026-07-09 over USB-Blaster III. Single HyperBus burst of 768 words at CK=175 MHz (SDR PHY, byte clock 350 MHz), integrity ERR_COUNT=0 / RESULT=PASS. WRITE 342.42 MB/s (785 clk cycles), READ 337.26 MB/s (797 cycles). JTAG is control-plane only: the counters time the on-chip Avalon datapath, not JTAG access, so MB/s is the true HyperBus throughput (PLAN \u00a78 method E respected). Bandwidth scales with burst length as the fixed CA+latency overhead (~17 clk WR / ~29 clk RD) amortizes. Bandwidth engine + SDR PHY from third_party/hyperram @ c6f5d2b; bitstream bw.sof sha256 8328e85b4e4e\u2026; Quartus 26.1.0 Build 110. Peak of this sweep (len=768): 342.42 W / 337.26 R MB/s = the SDR PHY ceiling on this board; the 200 MHz/400 MB/s device max needs the DDIO PHY (blocked, see submodule README)."
+}
