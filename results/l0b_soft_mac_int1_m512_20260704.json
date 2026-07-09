@@ -1,0 +1,30 @@
+{
+  "kind": "estimate",
+  "level": "L0b",
+  "subject": "soft-mac-int1-m512",
+  "date": "2026-07-04",
+  "plan_ref": "\u00a77 L0b",
+  "config": {
+    "device": "A3CY100BM16AE7S",
+    "board": "Arrow AXC3000",
+    "tool_versions": {
+      "quartus": "26.1.0",
+      "python": "3.12.3"
+    },
+    "quantization": "int1",
+    "utilization": {
+      "alm": 12835,
+      "dsp": 0,
+      "m20k": 0
+    },
+    "report_paths": [
+      "quartus/l0b_soft_mac/output_files/w1_m512.fit.summary",
+      "quartus/l0b_soft_mac/output_files/w1_m512.sta.rpt"
+    ]
+  },
+  "metrics": {
+    "macs_per_kalm": 39.891,
+    "fmax_mhz": 546.75
+  },
+  "notes": "Report-derived (no hardware/bitstream \u2014 Assembler intentionally not run for this project; see quartus/l0b_soft_mac/README.md). Fitter status: Successful - Sun Jul  5 03:25:54 2026. dsp_used=0 m20k_used=0 (expected 0/0 for a pure-ALM soft-logic design). Synthesis report confirms a Fractal Synthesis mention: ; Fractal Synthesis                                                                            ; Off                     ; Off                     ; | ; FRACTAL_SYNTHESIS ; ON    ; -    ; g_lane[0].product_q   ; soft_mac_array.sv:76 ; | ; FRACTAL_SYNTHESIS ; ON    ; -    ; g_lane[1].product_q   ; soft_mac_array.sv:76 ;"
+}
