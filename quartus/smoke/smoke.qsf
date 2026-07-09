@@ -1,0 +1,33 @@
+# Quartus settings for the toolchain smoke compile (issue #1). Proves the Agilex 3 license path
+# is clean, headless. Build: quartus_sh --flow compile smoke -c smoke (after `source scripts/env.sh`),
+# or scripts/build.sh smoke.
+
+set_global_assignment -name FAMILY "Agilex 3"
+set_global_assignment -name DEVICE A3CY100BM16AE7S
+set_global_assignment -name TOP_LEVEL_ENTITY smoke
+
+set_global_assignment -name SYSTEMVERILOG_FILE smoke.sv
+set_global_assignment -name SDC_FILE ../constraints/smoke.sdc
+
+# This is a license-and-flow smoke test, not a board bring-up (that's #7/#8): no attempt is made to
+# match real AXC3000 pinout, drive strength, slew rate, or termination.
+set_global_assignment -name LAST_QUARTUS_VERSION "26.1.0 Pro Edition"
+
+# The Assembler refuses to emit a .sof while any user pin has an unresolved I/O standard (Critical
+# Warning 25207) or no location assignment (Critical Warning 25196) — both are safety checks so
+# Quartus never guesses a bank voltage or a physical pin for you. Leaving pins fully unassigned (as
+# this project originally did) lets the Fitter auto-place them for reporting purposes, but the
+# Assembler still won't turn that auto-placement into a bitstream on its own.
+#
+# 1.2 V and the pin locations below are exactly what the Fitter auto-selects for this design on
+# A3CY100BM16AE7S when nothing is asserted (confirmed in smoke.pin after a compile) — asserting them
+# explicitly here doesn't invent or target any real board pinout, it just satisfies the Assembler's
+# safety gate with the Fitter's own answer so a real .sof gets produced, per issue #1's acceptance
+# criteria. If this project's device or netlist ever changes, re-run once without these assignments,
+# read the new auto-placement out of smoke.pin, and update these to match.
+set_instance_assignment -name IO_STANDARD "1.2 V" -to clk
+set_instance_assignment -name IO_STANDARD "1.2 V" -to rst_n
+set_instance_assignment -name IO_STANDARD "1.2 V" -to led
+set_location_assignment PIN_F2 -to clk
+set_location_assignment PIN_D14 -to rst_n
+set_location_assignment PIN_A13 -to led
