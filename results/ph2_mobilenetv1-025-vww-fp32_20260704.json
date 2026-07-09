@@ -1,0 +1,26 @@
+{
+  "kind": "reference",
+  "level": "PH2",
+  "subject": "mobilenetv1-025-vww-fp32",
+  "date": "2026-07-04",
+  "config": {
+    "device": "A3CY100BM16AE7S",
+    "board": "Arrow AXC3000",
+    "model": "mobilenetv1-025-vww",
+    "quantization": "fp32",
+    "tool_versions": {
+      "python": "3.12.3",
+      "tensorflow": "2.16.1",
+      "torch": "2.12.1+cu130",
+      "torchvision": "0.27.1+cu130",
+      "onnx": "1.16.1",
+      "onnxruntime": "1.27.0"
+    }
+  },
+  "metrics": {
+    "accuracy_top1": 0.8603357051632914,
+    "n_records": 10962
+  },
+  "plan_ref": "\u00a75 table",
+  "notes": "Eval set = last 10% of each class dir (sorted filenames), 10962 images total (10962 across 2 classes) -- the reference pipeline has no separately-labeled held-out test set (see module docstring). MLPerf Tiny reference ballpark: 80%+ top-1."
+}
