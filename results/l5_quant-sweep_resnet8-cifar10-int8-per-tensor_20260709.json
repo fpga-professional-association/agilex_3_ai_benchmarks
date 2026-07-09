@@ -1,0 +1,29 @@
+{
+  "kind": "reference",
+  "level": "L5",
+  "subject": "resnet8-cifar10-int8-per-tensor",
+  "date": "2026-07-09",
+  "config": {
+    "device": "A3CY100BM16AE7S",
+    "board": "Arrow AXC3000",
+    "model": "resnet8-cifar10",
+    "quantization": "int8-per-tensor",
+    "nncf_settings": {
+      "algorithm": "nncf.quantize (post-training, min-max + fast bias correction)",
+      "subset_size": 300,
+      "weights_per_channel": false,
+      "calibration_size": 300
+    },
+    "tool_versions": {
+      "python": "3.12.3",
+      "openvino": "2024.6.0-17404-4c0f47d2335-releases/2024/6",
+      "nncf": "2.14.1"
+    }
+  },
+  "metrics": {
+    "accuracy_top1": 0.8662,
+    "n_records": 10000
+  },
+  "plan_ref": "\u00a73 LV7 / \u00a77 L5",
+  "notes": "Full CIFAR-10 test set (10000 images, 1000/class), matches docs/record_format.md's 10,000-record count. Images from the uoft-cs/cifar10 HF Parquet mirror (lossless PNG bytes) -- see module docstring for why a JPEG mirror was rejected (measured ~13-point accuracy hit from lossy re-compression on this 32x32-input model). MLPerf Tiny reference reports ~87.0% top-1 on its own 200-sample perf subset; quality target 85%+ top-1 on the full test set."
+}

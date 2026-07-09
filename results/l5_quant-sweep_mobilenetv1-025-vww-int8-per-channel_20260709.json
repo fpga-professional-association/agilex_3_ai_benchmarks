@@ -1,0 +1,29 @@
+{
+  "kind": "reference",
+  "level": "L5",
+  "subject": "mobilenetv1-025-vww-int8-per-channel",
+  "date": "2026-07-09",
+  "config": {
+    "device": "A3CY100BM16AE7S",
+    "board": "Arrow AXC3000",
+    "model": "mobilenetv1-025-vww",
+    "quantization": "int8-per-channel",
+    "nncf_settings": {
+      "algorithm": "nncf.quantize (post-training, min-max + fast bias correction)",
+      "subset_size": 300,
+      "weights_per_channel": true,
+      "calibration_size": 300
+    },
+    "tool_versions": {
+      "python": "3.12.3",
+      "openvino": "2024.6.0-17404-4c0f47d2335-releases/2024/6",
+      "nncf": "2.14.1"
+    }
+  },
+  "metrics": {
+    "accuracy_top1": 0.8584199963510308,
+    "n_records": 10962
+  },
+  "plan_ref": "\u00a73 LV7 / \u00a77 L5",
+  "notes": "Eval set = last 10% of each class dir (sorted filenames), 10962 images total (10962 across 2 classes) -- the reference pipeline has no separately-labeled held-out test set (see module docstring). MLPerf Tiny reference ballpark: 80%+ top-1."
+}
