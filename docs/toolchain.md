@@ -140,6 +140,61 @@ them directly (not assumed):
   (The directory also holds architectures for A10/AGX5/AGX7/AGX9/S10 and a `README.txt` — not
   reproduced here; only the AGX3 files are relevant to this project's device.)
 
+## Performance estimator invocation (issue #6)
+
+PLAN §9 PH0: the estimator is a mode of `dla_compiler` itself (not a separate binary), read from
+`dla_compiler --help` in the installed 2026.1.1 image (not guessed from memory or older-version
+docs):
+
+```
+dla_compiler --fanalyze-performance \
+  --march <path/to/AGX3_*.arch> \
+  --network-file <path/to/model.xml> \
+  --foutput-format open_vino_hetero \
+  --fplugin HETERO:FPGA \
+  --o out.aot \
+  --dumpdir <scratch-dir> \
+  --overwrite-output-files \
+  --fdump-performance-report perf.txt \
+  --fassumed-memory-bandwidth <MB/s>
+```
+
+Confirmed since 25.1 the estimator does take external memory bandwidth as an input, exactly as
+PLAN §9 PH0 says: `--fassumed-memory-bandwidth <MB/s>` (help text: *"Sets the available external
+memory bandwidth for each DLA IP in MB/s ... Do not set this option for architectures that do not
+use external memory"*). `scripts/estimate.py` (issue #6) wraps this invocation.
+
+Three things learned only by actually running it against this project's 7 IR models (`ds-cnn-kws`
+first, per issue #6 step 2, then the rest), not documented anywhere in `--help`:
+
+1. **`--network-file` takes the OpenVINO IR `.xml` directly** (with the matching `.bin` alongside
+   it) — the `--help` text's own worked example references a `model.yml` (an Open Model Zoo
+   downloader convention), which doesn't exist anywhere in this image; the vendor's own
+   `example_graphs/*/common_functions.sh` confirms the real call is
+   `dla_compiler --network-file ./output/$MODEL.xml --march ...`.
+2. **`--fplugin` must be exactly `HETERO:FPGA` (or exactly `HETERO:CPU`) for any INT8/NNCF
+   (FakeQuantize) graph** — the default `HETERO:FPGA,CPU` errors immediately with *"Quantized
+   graphs only supported through HETERO:FPGA or CPU"*. This matters because it means a quantized
+   graph **cannot** fall back an unsupported single op to the CPU host the way an fp32 graph can
+   (verified directly: the same graph that fails outright as INT8 under `HETERO:FPGA` compiles fine
+   as fp32 under the default `HETERO:FPGA,CPU`, with the unsupported op offloaded to CPU and a
+   merged heterogeneous throughput reported instead). Four of this project's seven models hit this
+   exact wall — see `results/reports/ph0_estimator.md` for which, and the precise
+   compiler-reported reason for each (an oversized global-average-pool window/stride, a
+   "Transpose does not precede an FC layer" placement rule, and — for Tiny-YOLOv3 — a bundled
+   dynamic-control-flow NMS subgraph that no static-dataflow accelerator, FPGA or otherwise, can
+   run).
+3. **The performance report lands at `<dumpdir>/<network-name>/reports/perf_0.txt`** (or
+   `.../reports/perf-merged_subgraph_estimates.txt` for a heterogeneous multi-subgraph compile),
+   not at the `--fdump-performance-report` filename directly — that flag only sets the report's
+   *basename* inside the `reports/` subdirectory the tool creates under `--dumpdir`. The number to
+   read is the last `FINAL THROUGHPUT = ... fps` line in that file.
+
+`--dumpdir`/`--network-file`/`--march` must all be paths **inside** the Docker bind mount
+(`$_ENVSH_ROOT`, i.e. under the repo root) — an absolute host path outside the repo (e.g. `/tmp/...`)
+resolves to a location inside the ephemeral container instead and vanishes when `docker run --rm`
+exits. `scripts/estimate.py` always resolves paths relative to the repo root for this reason.
+
 ## Unlicensed IP generation cap
 
 **Verified against the live public repo**, not taken on faith: fetched

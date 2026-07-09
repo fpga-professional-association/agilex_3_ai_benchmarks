@@ -10,6 +10,12 @@ Build & report automation. Everything a human or CI runs lives here as a documen
 - `sweep_l0b.py` — L0b soft-MAC grid (W x M): generates `quartus/l0b_soft_mac/` revisions, compiles
   each, writes `results/*.json` + `results/reports/l0b_soft_mac_curve.md` (issue #10)
 - sweep drivers for other levels (e.g. L1) follow the same pattern
+- `estimate.py` — drive the FPGA AI Suite performance estimator (`dla_compiler
+  --fanalyze-performance`) for one (model IR, arch file, memory-BW) tuple → `results/ph0_*.json`
+  (issue #6, PLAN §9 PH0)
+- `sweep_estimates.sh` — full PH0 sweep: 7 models x committed `models/arch/*.arch` files x memory
+  BW in {200, 250, 333, 400} MB/s, via `estimate.py`; logs every attempt (pass or fail) to
+  `results/reports/ph0_sweep_attempts.csv` (issue #6)
 
 Scripts parse report files; they must fail loudly (nonzero exit, clear message) when a report is
 missing rather than emitting partial JSON.
