@@ -76,3 +76,22 @@ metric explain it — AUC on reconstruction-error anomaly detection is measuring
 between normal and anomalous inputs, and INT8 quantization noise is added directly into that same
 residual, unlike classification accuracy which only needs the correct logit to stay the argmax.
 Reported as a measured finding in the result JSON's `notes`, not smoothed over.
+
+## Issue #20: L4 graph-size sweep (overlay fixed-cost generator)
+
+```
+python make_sweep_graphs.py --dry-run                    # print the manifest, no onnx package needed
+python make_sweep_graphs.py --out-dir models/onnx/l4_sweep  # write the .onnx family + manifest.json
+```
+
+Builds a synthetic family of conv-stack ONNX graphs (same layer type — 3x3 Conv2D + ReLU — repeated
+`depth` times over a fixed 16x16 input, `depth` in {1,2,4,8,16}) whose analytic MACs/inference span
+≥3 decades, for `sw/host/fit_l4.py` to fit the L4 overlay fixed-cost intercept against (PLAN §7 L4).
+Depth alone only spans ~1.2 decades (16x), so channel width is solved per depth (`solve_channels_for_macs`)
+to hit the target span — see the module docstring. The MACs/params math is pure and CI-tested without
+`onnx` installed; `.onnx` construction needs it (pinned in `requirements.txt`, skipped in CI like the
+rest of the heavy model_prep stack) and was verified locally (`onnx.checker.check_model` passes for
+every point, `common.param_count_from_onnx` round-trips against the analytic param count).
+
+Quantizing this sweep (the #3 pipeline) and compiling + running it under method A on silicon (#18)
+is the issue #20 PR's "## Hardware handoff", along with the actual least-squares fit.

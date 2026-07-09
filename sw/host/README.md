@@ -32,3 +32,20 @@ reference sees bit-identical inputs to hardware) and requires a **100% per-recor
 resnet8-cifar10 IR + a synthetic recimg (8 records, self-consistent mock hw-log) but the actual
 gate — a real hardware log compared against real hardware predictions — needs #18 (board bring-up)
 and is not runnable in this sandbox. See the issue #21 PR's "Hardware handoff" section.
+
+## L4 overlay fixed-cost fit (issue #20)
+
+```
+python fit_l4.py --points results/l4_sweep_d*.json --out results/l4_overlay_fixed_cost_fit.json \
+    --overhead-fraction-for results/l5_ds-cnn-kws_methodA.json results/l5_ad-toycar_methodA.json
+```
+
+Least-squares fit of `latency_us_p50 = overhead_us + macs / rate` over a `sw/model_prep/make_sweep_graphs.py`
+sweep's per-point `results/` JSONs (`kind: "measured"`, `level: "L4"`, method A only — PLAN §7 L4).
+Reports the intercept (the fixed overlay cost, µs) with a 95% CI (Student's t, no scipy dependency)
+and refuses to write anything if R² < 0.98 or the fit slope is non-positive — "bad fit is bad data,
+not a smaller font" (issue #20 deliverable). `--overhead-fraction-for` reports what fraction of a
+given model's own p50 latency the fixed overhead accounts for (the DS-CNN/AD numbers the issue's
+report section wants). The fit math is pure (stdlib only) and pytest-covered against synthetic
+latency data with a known intercept/rate; the actual silicon sweep is the issue #20 PR's
+"## Hardware handoff".
