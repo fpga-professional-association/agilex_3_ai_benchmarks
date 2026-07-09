@@ -3,19 +3,23 @@
 Implements the adapter identified in `docs/ph3_interfaces.md` §c: it presents the *reduced AXI4*
 slave that the FPGA AI Suite CoreDLA "DDR" master expects, and drives a 16-bit Avalon-MM slave as an
 Avalon master. This document is the canonical description of the RTL in
-`rtl/hyperbus/axi4_hbmc_bridge.sv`; it is proven in simulation by
+`rtl/coredla_hyperram/axi4_hbmc_bridge.sv`. Originally proven in simulation standalone by
 `sim/hyperbus/tb_axi4_hbmc_bridge.sv` (real `hbmc_core` + `w957d8nb_bfm`, no abstraction of the
-controller). It is a **datapath proof**, not a hardware or CoreDLA-integration result.
+controller); that TB has since been removed as redundant (`sim/hyperbus/tb_axc3000_hyperram_axi4.sv`
+covers the bridge end-to-end via the real submodule instead — see the callout below). It is a
+**datapath proof**, not a hardware or CoreDLA-integration result.
 
 > **Bridge is unchanged; its downstream target changed (see `docs/ph3_submodule.md`).** Everything
 > below — the FSM, the address/data mapping, the WSTRB handling, the v1 limitations — describes
 > `axi4_hbmc_bridge.sv` exactly as built, and none of it changed when the wrapper adopted the
 > `third_party/hyperram` submodule. What changed is what sits *behind* the bridge's Avalon master
-> port: `rtl/hyperbus/axc3000_hyperram_axi4.sv` now wires the bridge's `av_*` ports 1:1 onto the
-> submodule's `hyperram_avalon` (`avs_*`) instead of `hbmc_core`. The bridge's own TB
-> (`tb_axi4_hbmc_bridge.sv`, this doc's subject) still targets `hbmc_core` directly and still
-> passes — it remains valid as a bridge-FSM regression test — while the new
-> `sim/hyperbus/tb_axc3000_hyperram_axi4.sv` proves the same bridge against the submodule.
+> port: `rtl/coredla_hyperram/axc3000_hyperram_axi4.sv` now wires the bridge's `av_*` ports 1:1 onto
+> the submodule's `hyperram_avalon` (`avs_*`) instead of `hbmc_core`. The bridge's original
+> standalone TB (`tb_axi4_hbmc_bridge.sv`, targeting `hbmc_core` directly) has been removed during
+> the CoreDLA-HyperRAM rename cleanup as redundant coverage; `hbmc_core` itself survives only as
+> test infrastructure at `sim/replay/hbmc_core.sv` (used by the unrelated record-replay integration
+> TB). `sim/hyperbus/tb_axc3000_hyperram_axi4.sv` now proves this same bridge against the real
+> submodule and is the sole bridge regression.
 
 ## The contract (from `docs/ph3_interfaces.md`, treated as given)
 
@@ -26,7 +30,8 @@ bridge must **echo `arid → rid`** so read data routes to the correct CoreDLA r
 standard valid/ready handshakes on B and R. The master is multi-outstanding (up to 64) but the bridge
 **serializes** — one AXI transaction at a time — because `hbmc_core` is single-outstanding.
 
-`hbmc_core` Avalon-MM data slave (driven as master): `av_address[22:0]` = HyperRAM **word** address,
+`hbmc_core` Avalon-MM data slave contract (driven as master; also honored by the production target,
+`hyperram_avalon`, per `docs/ph3_submodule.md`'s wiring): `av_address[22:0]` = HyperRAM **word** address,
 `av_burstcount[7:0]` = words, `av_read`/`av_write`, `av_writedata[15:0]`/`av_readdata[15:0]`,
 `av_readdatavalid`, `av_waitrequest`. Handshake (verified from `hbmc_core.sv`): a command fires the
 cycle `av_waitrequest` is low while `av_read|av_write` is asserted; the **first write word is consumed

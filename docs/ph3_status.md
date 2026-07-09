@@ -4,6 +4,16 @@ Entry point for the PH3 effort: replace CoreDLA's LPDDR4 EMIF (which the AXC3000
 HyperRAM-backed AXI4 memory so an FPGA-AI-Suite model can eventually run on the board. Branch
 `ph3-hyperram-axi4-coredla`.
 
+> **Post-session cleanup note (CoreDLA-HyperRAM rename):** the production glue below
+> (`axi4_hbmc_bridge.sv`, `axc3000_hyperram_axi4.sv`, `axc3000_hyperram_pads.sv`) moved from
+> `rtl/hyperbus/` to `rtl/coredla_hyperram/`. The old `hbmc_core`/`hyperbus_pkg` datapath (retired by
+> the submodule adoption below) was relocated to `sim/replay/` as test infrastructure and its
+> package renamed `hbmc_pkg` — resolving the name-collision caveat this doc describes below by
+> construction. Its now-redundant standalone TB/build (`sim/hyperbus/tb_hyperbus.sv`,
+> `tb_axi4_hbmc_bridge.sv`, `run.sh`, `run_bridge.sh`) and the superseded
+> `quartus/hyperbus_smoke/`/`quartus/ph3_bridge_char/` Quartus projects were deleted. Paths below are
+> updated to match; bullets that cite a removed command/file are annotated inline.
+
 ## Documents (read in order)
 1. [`ph3_interfaces.md`](ph3_interfaces.md) — reverse-engineered CoreDLA AXI4 "DDR" master (256-bit,
    const 32 B/beat INCR, reduced AXI4, `arid→rid`) + the adaptation gap + the bandwidth reality.
@@ -18,28 +28,35 @@ HyperRAM-backed AXI4 memory so an FPGA-AI-Suite model can eventually run on the 
 
 ## Done this session
 - **Adopted the `third_party/hyperram` submodule** (pinned commit `c6f5d2b`) as the HyperBus
-  controller + PHY, replacing `rtl/hyperbus/hbmc_core.sv` and the old tristate-stub PHY. This closes
+  controller + PHY, replacing `hbmc_core.sv` (now `sim/replay/hbmc_core.sv`, test infrastructure —
+  see the rename note above) and the old tristate-stub PHY. This closes
   PH3 blocker #1 below: the submodule's SDR PHY is a **real, silicon-proven DDR-IO PHY**, not a
   stub — see `docs/ph3_submodule.md` for the measured-bandwidth table (the submodule's own
   silicon measurement, cited not re-measured here).
-- **`rtl/hyperbus/axc3000_hyperram_axi4.sv`** — rewritten: `axi4_hbmc_bridge` (unchanged) →
+- **`rtl/coredla_hyperram/axc3000_hyperram_axi4.sv`** — rewritten: `axi4_hbmc_bridge` (unchanged) →
   submodule `hyperram_avalon` (ctrl + PHY), **split** HyperBus pins (`hb_dq_o/oe/i`,
   `hb_rwds_o/oe/i`, no `inout`), `clk`/`clk2x`/`reset_n` clocking (see `ph3_integration.md`).
   **sim-verified** (Verilator PASS, see below); CoreDLA-facing AXI4 slave port list unchanged.
-- **`rtl/hyperbus/axc3000_hyperram_pads.sv`** — new tiny board-pads wrapper that turns the split
-  `hb_dq`/`hb_rwds` pins into real `inout` balls for synthesis/board use; pure wiring, not
+- **`rtl/coredla_hyperram/axc3000_hyperram_pads.sv`** — new tiny board-pads wrapper that turns the
+  split `hb_dq`/`hb_rwds` pins into real `inout` balls for synthesis/board use; pure wiring, not
   Verilator-exercised itself (the split-pin wrapper is what the TB drives).
 - **`sim/hyperbus/tb_axc3000_hyperram_axi4.sv`** + **`sim/hyperbus/run_hyperram_axi4.sh`** — new
   self-checking TB against the submodule's golden `hyperram_model.sv` (PHY_VARIANT="GENERIC"):
   multiple AXI4 INCR write bursts (AWLEN 0..15) + byte-exact read-back + a WSTRB-partial trip-wire
   check. **`bash sim/hyperbus/run_hyperram_axi4.sh` → PASS** (`ALL AXC3000-HYPERRAM-AXI4 TBS
-  PASSED`, re-run this session, exit 0). The old bridge TB and the submodule's own sim still pass
-  unmodified (`sim/hyperbus/run_bridge.sh`, `third_party/hyperram/sim/run.sh`) — no regression.
-- **`rtl/hyperbus/axi4_hbmc_bridge.sv`** — unchanged from the prior session. **sim-verified**
-  against the real `hbmc_core` + W957D8NB BFM (`sim/hyperbus/tb_axi4_hbmc_bridge.sv`,
-  `sim/hyperbus/run_bridge.sh`) and, through the new wrapper, against the submodule.
-- **Bridge fmax/P&R on A3CY100** — 273.6 MHz, 1,014 ALM / 0 M20K / 0 DSP (`quartus/ph3_bridge_char`,
-  prior session). **synthesized**. Not re-run this session; the bridge RTL did not change.
+  PASSED`, re-run this session, exit 0). The submodule's own sim still passes unmodified
+  (`third_party/hyperram/sim/run.sh`) — no regression. The old bridge-vs-`hbmc_core` standalone TB
+  (`sim/hyperbus/tb_axi4_hbmc_bridge.sv`/`run_bridge.sh`) that also passed unmodified at the time has
+  since been **removed** as redundant coverage (CoreDLA-HyperRAM rename cleanup) — this TB is now
+  the sole bridge regression.
+- **`rtl/coredla_hyperram/axi4_hbmc_bridge.sv`** — unchanged from the prior session. Originally
+  **sim-verified** against the real `hbmc_core` + W957D8NB BFM via a standalone TB
+  (`tb_axi4_hbmc_bridge.sv`/`run_bridge.sh`, since removed as redundant) and, through the new
+  wrapper, against the submodule (still verified, see above).
+- **Bridge fmax/P&R on A3CY100** — 273.6 MHz, 1,014 ALM / 0 M20K / 0 DSP, prior session, in the
+  now-removed `quartus/ph3_bridge_char` project (superseded by `quartus/ph3_hyperram_char`, see
+  below). **synthesized**, historical result — the bridge RTL has not changed since, and
+  `quartus/ph3_hyperram_char` now covers the full submodule-backed wrapper's fmax/P&R instead.
 - **PD component updated** — `quartus/ip/axc3000_hyperram_axi4/axc3000_hyperram_axi4_hw.tcl`
   regenerated for the split-pin/pads wrapper: filesets now list the submodule sources (not
   `hbmc_core.sv`), a second `clk2x` clock sink and an `init_done` status port were added, `hb_ck_n`
@@ -84,14 +101,18 @@ not controller RTL:
    it is not yet measured through the full CoreDLA→bridge→hyperram_avalon path end-to-end.
 
 ## Reproduce
-- New wrapper sim (submodule-backed): `bash sim/hyperbus/run_hyperram_axi4.sh`
-- Bridge sim (old datapath, still passes, no regression): `bash sim/hyperbus/run_bridge.sh`
+- New wrapper sim (submodule-backed, sole bridge regression): `bash sim/hyperbus/run_hyperram_axi4.sh`
+- Record-replay integration sim (exercises the retired `hbmc_core`/`hbmc_pkg` test infrastructure,
+  now at `sim/replay/`): `bash sim/replay/run.sh`
 - Submodule sanity (untouched): `bash third_party/hyperram/sim/run.sh`
-- Bridge fmax/P&R (prior session, bridge RTL unchanged): `bash scripts/build.sh ph3_bridge_char`
-- New submodule-backed wrapper structural build (SDR PHY): `bash scripts/build.sh ph3_hyperram_char`
-  (or the qsys-regen sequence in `quartus/ph3_hyperram_char/RESULTS.md` → "Regenerating").
+- New submodule-backed wrapper structural build (SDR PHY, supersedes the removed `ph3_bridge_char`):
+  `bash scripts/build.sh ph3_hyperram_char` (or the qsys-regen sequence in
+  `quartus/ph3_hyperram_char/RESULTS.md` → "Regenerating").
 - PD component parse-check: `source scripts/env.sh && ip-make-ipx --source-directory=quartus/ip/axc3000_hyperram_axi4`
 - The swap attempt (prior session, old stub-PHY wrapper): see `ph3_integration.md` → "Reproduce".
+- The old bridge-vs-`hbmc_core` standalone sim (`sim/hyperbus/run_bridge.sh`) and the old
+  `quartus/ph3_bridge_char` fmax/P&R build have been **removed** as redundant (CoreDLA-HyperRAM
+  rename cleanup) — their historical results are cited above, not reproducible commands anymore.
 
 ## Bottom line
 The memory-subsystem gap that prior work (`issue-7-hostless-jtag`, `docs/board_bringup.md` §2f)

@@ -9,13 +9,16 @@ design in place of the LPDDR4 EMIF** — the exact swap `git show issue-7-hostle
 It records three artifacts and one bounded compile attempt. Read the honest scope box first.
 
 > ### Scope / honesty box (read this)
-> - The AXI4↔Avalon **datapath** is proven in simulation (`sim/hyperbus/tb_axi4_hbmc_bridge.sv`,
->   real `hbmc_core` + W957D8NB BFM). The bridge+controller **logic** closes timing at 250 MHz
->   standalone (`quartus/ph3_bridge_char`, setup slack +0.345 ns).
+> - The AXI4↔Avalon **datapath** was originally proven in simulation by a since-removed standalone TB
+>   (`tb_axi4_hbmc_bridge.sv`, real `hbmc_core` + W957D8NB BFM; removed as redundant in the
+>   CoreDLA-HyperRAM rename cleanup — `sim/hyperbus/tb_axc3000_hyperram_axi4.sv` covers the same
+>   datapath end to end via the real submodule instead, see below). The bridge+controller **logic**
+>   closed timing at 250 MHz standalone in a since-removed project (`quartus/ph3_bridge_char`, setup
+>   slack +0.345 ns; superseded by `quartus/ph3_hyperram_char`, see `docs/ph3_submodule.md`).
 > - **This document (and the qsys/quartus attempt log below) describes an EARLIER session's Qsys
 >   swap, done against the OLD tristate-stub-PHY wrapper.** A later session (see
 >   `docs/ph3_submodule.md`) replaced that stub with the `third_party/hyperram` submodule's real,
->   silicon-proven SDR PHY inside `rtl/hyperbus/axc3000_hyperram_axi4.sv`, and re-verified the
+>   silicon-proven SDR PHY inside `rtl/coredla_hyperram/axc3000_hyperram_axi4.sv`, and re-verified the
 >   AXI4↔Avalon datapath in simulation against it (`sim/hyperbus/run_hyperram_axi4.sh` → PASS). The
 >   Qsys/`quartus_syn` swap narrated below has **not** been re-run against that new wrapper — the PD
 >   component `.tcl`, `ed_zero.tcl`, and this synthesis attempt still reflect the pre-submodule stub.
@@ -40,7 +43,7 @@ It records three artifacts and one bounded compile attempt. Read the honest scop
 
 | Artifact | Path | State |
 |---|---|---|
-| Integration wrapper (AXI4 slave + HyperBus conduit + tristate PHY stub) | `rtl/hyperbus/axc3000_hyperram_axi4.sv` | Verilator-lint clean; synthesizes on A3CY100BM16AE7S |
+| Integration wrapper (AXI4 slave + HyperBus conduit + tristate PHY stub) | `rtl/coredla_hyperram/axc3000_hyperram_axi4.sv` (moved from `rtl/hyperbus/` in the CoreDLA-HyperRAM rename cleanup) | Verilator-lint clean; synthesizes on A3CY100BM16AE7S |
 | Platform Designer component | `quartus/ip/axc3000_hyperram_axi4/axc3000_hyperram_axi4_hw.tcl` | Parses (`ip-make-ipx`) + elaborates + `validate_system` clean |
 | ed_zero.tcl swap recipe + attempt | this doc + `_ph3_ed_hyperram/` (uncommitted working copy) | qsys-generate OK, quartus_syn 0 errors, fit entered |
 
@@ -148,7 +151,7 @@ frequency knob**: to run `clk_ddr` faster than the HyperRAM clock, re-insert an 
 
 > **Update (this session — submodule adoption, see `docs/ph3_submodule.md`).** The connections above
 > describe the *prior* single-clock `hyperram_0` component (old tristate-stub PHY). The rewritten
-> `rtl/hyperbus/axc3000_hyperram_axi4.sv` wraps the `third_party/hyperram` submodule's
+> `rtl/coredla_hyperram/axc3000_hyperram_axi4.sv` wraps the `third_party/hyperram` submodule's
 > `hyperram_avalon`, whose real SDR PHY needs **two related clocks**, not one: the existing word-rate
 > `clk` (still `jtag_pll.outclk0`, unchanged) **and a new `clk2x`** — the 2× byte clock the SDR PHY
 > uses in place of a true +90° phase (see `axc3000_hyperram_axi4.sv` header and

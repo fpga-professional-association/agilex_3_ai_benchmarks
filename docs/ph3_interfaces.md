@@ -2,8 +2,9 @@
 
 Reconnaissance for the PH3 bridge (PLAN §9 PH3: "HyperRAM integration ... JTAG-Avalon master +
 mSGDMA + HBMC + inference IP"). Goal: pin down the *exact* AXI4 global-memory interface the FPGA AI
-Suite CoreDLA IP exposes, so we can build an adapter from it to `rtl/hyperbus/hbmc_core.sv` (16-bit
-Avalon-MM). This is investigation only — no RTL, no full Quartus compile, no hardware.
+Suite CoreDLA IP exposes, so we can build an adapter from it to `hbmc_core.sv` (16-bit
+Avalon-MM; now `sim/replay/hbmc_core.sv` — see the superseded note in §(b) below). This is
+investigation only — no RTL, no full Quartus compile, no hardware.
 
 ## Provenance of every quoted signal
 
@@ -102,12 +103,15 @@ is cleaner and removes the redundant bridge.
 > 16-bit-word contract the bridge already targets: `avs_address`/`avs_read`/`avs_write`/
 > `avs_writedata`/`avs_byteenable`/`avs_burstcount`/`avs_readdata`/`avs_readdatavalid`/
 > `avs_waitrequest`, mapped 1:1 from the bridge's `av_*` ports). `hbmc_core.sv` still exists in the
-> tree and is still exercised standalone by `sim/hyperbus/tb_axi4_hbmc_bridge.sv` /
-> `sim/hyperbus/run_bridge.sh` for datapath regression, but it is **not** in the wrapper's synthesis
-> or the new TB's build (`sim/hyperbus/run_hyperram_axi4.sh` explicitly excludes it — see the
-> package-collision caveat in `docs/ph3_submodule.md`).
+> tree, relocated to `sim/replay/hbmc_core.sv` and renamed package `hbmc_pkg` during the
+> CoreDLA-HyperRAM rename cleanup (test infrastructure for the record-replay integration TB,
+> `sim/replay/tb_replay_integ.sv`/`sim/replay/run.sh`). Its original standalone datapath-regression
+> TB/script (`sim/hyperbus/tb_axi4_hbmc_bridge.sv`, `sim/hyperbus/run_bridge.sh`) has been removed as
+> redundant — `hbmc_core.sv` is **not** in the wrapper's synthesis or the new TB's build
+> (`sim/hyperbus/run_hyperram_axi4.sh` explicitly excludes it — see the package-collision caveat in
+> `docs/ph3_submodule.md`).
 
-From `rtl/hyperbus/hbmc_core.sv:28-36` (+ CSR slave `:21-26`, package `rtl/hyperbus/hyperbus_pkg.sv`):
+From `sim/replay/hbmc_core.sv:28-36` (+ CSR slave `:21-26`, package `sim/replay/hbmc_pkg.sv`):
 
 | Avalon-MM signal | dir | width | notes |
 |---|---|---|---|

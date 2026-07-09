@@ -4,6 +4,16 @@ Controller + behavioral device model for the Winbond **W957D8NB** (128 Mb = 16 M
 1.8 V) on the AXC3000. PLAN §4 flags this as the single biggest infrastructure gap: Quartus ships no
 HyperBus controller and the stock Nios V example runs from internal RAM only.
 
+> **Superseded for the production PH3 datapath (see `docs/ph3_submodule.md`).** PH3 replaced this
+> clean-room controller with the `third_party/hyperram` submodule's silicon-proven controller + PHY
+> (`rtl/coredla_hyperram/`). The `hbmc_core`/`hyperbus_pkg` design documented below (renamed
+> `hbmc_pkg` during the CoreDLA-HyperRAM rename cleanup) still exists, but only as golden test
+> infrastructure at `sim/replay/{hbmc_core.sv,hbmc_pkg.sv,w957d8nb_bfm.sv}` for the record-replay
+> integration TB (`sim/replay/tb_replay_integ.sv`) — its standalone Quartus/TB path described in
+> "Hardware handoff" below (`quartus/hyperbus_smoke/`, `sim/hyperbus/tb_hyperbus.sv`,
+> `sim/hyperbus/run.sh`) has been removed as dead weight; this doc's protocol-model and CSR-map
+> content otherwise still accurately describes `sim/replay/hbmc_core.sv`.
+
 ## Provenance / decision record
 
 Step 1 of the issue was to survey existing cores before writing RTL. Outcome:
@@ -17,7 +27,8 @@ Step 1 of the issue was to survey existing cores before writing RTL. Outcome:
   that need is easier to own, to timing-close, and — critically — to simulate end-to-end here without
   pulling a vendor PHY into the protocol layer.
 
-**Decision:** implement a minimal clean-room Avalon-MM HyperBus controller (`rtl/hyperbus/hbmc_core.sv`),
+**Decision:** implement a minimal clean-room Avalon-MM HyperBus controller (now `sim/replay/hbmc_core.sv`,
+test infrastructure only — see the status note above),
 keeping the Agilex-specific DDR-IO in a separate PHY (synthesis only). If we later need trained
 capture at 166/200 MHz beyond what a simple PHY gives (#14), revisit OpenHBMC's PHY as a reference.
 License note: no third-party RTL is vendored here, so there is no license to carry.
@@ -36,11 +47,13 @@ but **not AC-timing-accurate**. Real datasheet timing is closed by the PHY + `.s
 
 Alignment: the controller drives `cs_n` combinationally and both the controller and the BFM derive
 their beat counter from it (`beat <= cs_n ? 0 : beat+1`), so they stay in exact lockstep. See
-`rtl/hyperbus/hbmc_core.sv` and `sim/hyperbus/w957d8nb_bfm.sv`.
+`sim/replay/hbmc_core.sv` and `sim/replay/w957d8nb_bfm.sv`.
 
-Verified in `sim/hyperbus/tb_hyperbus.sv` (Verilator, `sim/hyperbus/run.sh`): device-register (ID)
-read, single word R/W, linear burst R/W crossing a row boundary, and fixed vs variable latency with
-and without a refresh collision.
+Originally verified standalone by `sim/hyperbus/tb_hyperbus.sv` (Verilator, `sim/hyperbus/run.sh`):
+device-register (ID) read, single word R/W, linear burst R/W crossing a row boundary, and fixed vs
+variable latency with and without a refresh collision. That standalone TB has since been removed
+(dead weight once PH3 retired this controller to test infrastructure); the same controller is now
+exercised only as part of `sim/replay/tb_replay_integ.sv` (`sim/replay/run.sh`).
 
 ## CSR map (`hbmc_core`, 32-bit registers)
 
@@ -65,11 +78,11 @@ device signals a refresh collision by driving RWDS during CA; the controller sam
 and doubles accordingly. (Simplification of the full spec — fixed mode here means "no doubling",
 documented so the controller and device agree.)
 
-## Hardware handoff (needs Quartus; no board until #14)
+## Hardware handoff (superseded — kept as history)
 
-- `quartus/hyperbus_smoke/` + `quartus/constraints/hyperbus.sdc` are written but **not compiled here**
-  (no Quartus in CI). Closing 100 MHz timing with the RWDS-referenced `.sdc` and recording the result
-  is the remaining hardware/Quartus step, feeding PLAN's "closes at 166+ in GPIO?" risk item.
-- The Agilex DDR-IO PHY (mapping `hb_dq_o/oe/i`, `hb_rwds_*`, `hb_capture_delay` to bidirectional IO
-  with delay taps) is the Agilex-specific piece to add during bring-up; the smoke top uses plain
-  behavioral tri-states as a placeholder so the controller can be fitted.
+This controller's own path to hardware (`quartus/hyperbus_smoke/` + `quartus/constraints/hyperbus.sdc`,
+a synthesizable tristate-stub PHY) was never compiled and has been **removed** as dead weight:
+PH3 closed the "real DDR-IO HyperBus PHY" gap by adopting the `third_party/hyperram` submodule's
+silicon-proven PHY instead (`docs/ph3_submodule.md`), which now owns the hardware bring-up path
+via `quartus/ph3_hyperram_char/`. This controller (`sim/replay/hbmc_core.sv`) remains simulation-only
+test infrastructure and is not intended to reach hardware.

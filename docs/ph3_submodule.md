@@ -2,9 +2,18 @@
 
 This document is new this session. It explains what the `third_party/hyperram` git submodule is, why
 PH3 adopted it in place of the earlier hand-rolled `hbmc_core` + tristate-stub PHY, exactly how it is
-wired into `rtl/hyperbus/axc3000_hyperram_axi4.sv`, and — most importantly — draws a hard line
+wired into `rtl/coredla_hyperram/axc3000_hyperram_axi4.sv`, and — most importantly — draws a hard line
 between what this session **verified** and what remains **hardware handoff**. Read
 `docs/ph3_status.md` first for the one-page summary; this doc is the detail behind it.
+
+> **Post-session cleanup note (CoreDLA-HyperRAM rename):** the production glue described here moved
+> from `rtl/hyperbus/` to `rtl/coredla_hyperram/`. The retired `hbmc_core`/`hyperbus_pkg` datapath
+> moved to `sim/replay/` as test infrastructure and its package was renamed `hbmc_pkg` —
+> **resolving the name-collision caveat below by construction** (the two packages simply have
+> different names now; the careful separate-filelist discipline this section describes was the
+> *workaround* while they shared a name). `sim/hyperbus/run_bridge.sh` and the standalone
+> bridge-vs-`hbmc_core` TB it built have since been deleted as redundant (superseded end-to-end by
+> `sim/hyperbus/run_hyperram_axi4.sh`), so references to it below are historical.
 
 ## What it is
 
@@ -15,7 +24,8 @@ front-ends and a swappable DDR PHY. It is owned and maintained by another sessio
 does not modify anything under `third_party/hyperram/`** (AGENTS.md "never invent" + the parent
 task's explicit constraint). Everything below cites the submodule as-is at the pinned commit.
 
-Why it replaced the earlier PH3 datapath: the prior `rtl/hyperbus/hbmc_core.sv` was PHY-agnostic and
+Why it replaced the earlier PH3 datapath: the prior `hbmc_core.sv` (now `sim/replay/hbmc_core.sv`,
+test infrastructure — see the rename note above) was PHY-agnostic and
 its wrapper (`axc3000_hyperram_axi4.sv`, pre-this-session) filled that PHY slot with a **thin SDR
 tristate stub** (`hb_ck = clk`, `assign hb_dq = hb_dq_oe ? hb_dq_o : 'z`) — it synthesized and routed
 but could not correctly clock a real W957D8NB. That was PH3 blocker #1
@@ -59,16 +69,16 @@ session sizing larger bursts knows to re-read the submodule's `README.md`/`BW_TE
 ## The wiring: bridge → `hyperram_avalon`
 
 ```
-CoreDLA 256-bit AXI4  →  axi4_hbmc_bridge (unchanged, rtl/hyperbus/axi4_hbmc_bridge.sv)
+CoreDLA 256-bit AXI4  →  axi4_hbmc_bridge (unchanged, rtl/coredla_hyperram/axi4_hbmc_bridge.sv)
                       →  16-bit Avalon-MM (av_* / avs_*, 1:1 mapped)
                       →  hyperram_avalon (third_party/hyperram/rtl/hyperram_avalon.sv, pinned)
                       →  split HyperBus pins (hb_ck/hb_ck_n/hb_cs_n/hb_rst_n/hb_dq_*/hb_rwds_*)
 ```
 
 `axi4_hbmc_bridge` (`docs/ph3_bridge_design.md`) is **byte-for-byte unchanged** by this swap — it
-still speaks the same 16-bit-word Avalon master contract it always did. `rtl/hyperbus/
-axc3000_hyperram_axi4.sv` was rewritten to wire that Avalon master directly onto `hyperram_avalon`'s
-Avalon slave instead of `hbmc_core`:
+still speaks the same 16-bit-word Avalon master contract it always did.
+`rtl/coredla_hyperram/axc3000_hyperram_axi4.sv` was rewritten to wire that Avalon master directly
+onto `hyperram_avalon`'s Avalon slave instead of `hbmc_core`:
 
 - `avs_address = { zero-pad, 1'b0, av_address }` — zero-extend the bridge's word address into
   `hyperram_avalon`'s wider `ADDR_WIDTH`, keeping the register-select MSB at 0 (memory space, not the
@@ -120,20 +130,26 @@ submodule's own guidance that both GENERIC and SDR ignore/tie this port.
 `reset_n` (active-low, synchronous, from the PD `reset_handler`) is inverted once in the wrapper
 (`rst = ~reset_n`) to match `hyperram_avalon`'s active-high synchronous `rst` convention.
 
-## The `hyperbus_pkg` name-collision caveat
+## The `hyperbus_pkg` name-collision caveat (RESOLVED — kept as history)
 
 `rtl/hyperbus/hyperbus_pkg.sv` (the pre-existing PH3 package, used by `hbmc_core.sv`) and
-`third_party/hyperram/rtl/hyperbus_pkg.sv` (the submodule's package) both declare
+`third_party/hyperram/rtl/hyperbus_pkg.sv` (the submodule's package) used to both declare
 `package hyperbus_pkg` — **same name, different contents**. SystemVerilog compilation units cannot
-contain two packages with the same name, so any build that touches the new wrapper must compile
-**only** the submodule's copy and must **never** also compile `rtl/hyperbus/hyperbus_pkg.sv` or
-`rtl/hyperbus/hbmc_core.sv` in the same run. `axi4_hbmc_bridge.sv` does not `import hyperbus_pkg::*`
-(verified by inspection), so it is package-independent and composes cleanly with either package —
+contain two packages with the same name, so any build that touched the new wrapper had to compile
+**only** the submodule's copy and had to **never** also compile the in-repo `hyperbus_pkg.sv` or
+`hbmc_core.sv` in the same run. `axi4_hbmc_bridge.sv` does not `import hyperbus_pkg::*`
+(verified by inspection), so it was package-independent and composed cleanly with either package —
 which is exactly why the bridge itself needed no changes. `sim/hyperbus/run_hyperram_axi4.sh` and
-`sim/hyperbus/run_bridge.sh` are two **separate** filelists/build directories for this reason: the
-former compiles the submodule's package + `hyperram_avalon` (never `hbmc_core.sv`/the old package);
-the latter compiles the old package + `hbmc_core.sv` (never the submodule). Do not merge them into
-one build.
+the now-removed `sim/hyperbus/run_bridge.sh` were two **separate** filelists/build directories for
+this reason: the former compiles the submodule's package + `hyperram_avalon` (never the in-repo
+package); the latter compiled the old package + `hbmc_core.sv` (never the submodule).
+
+**Resolved by the CoreDLA-HyperRAM rename cleanup**: the in-repo package moved to
+`sim/replay/hbmc_pkg.sv` and was renamed from `hyperbus_pkg` to `hbmc_pkg`, so it no longer shares a
+name with `third_party/hyperram/rtl/hyperbus_pkg.sv` at all — the separate-filelist discipline above
+is no longer load-bearing for new builds, just documented here for why `sim/replay/run.sh` (which
+still compiles both `sim/replay/hbmc_pkg.sv` and, separately, the submodule's package is never in
+the same build) keeps them apart.
 
 ## Verified this session vs. hardware handoff
 
@@ -146,8 +162,9 @@ while writing this doc — exit 0, `ALL AXC3000-HYPERRAM-AXI4 TBS PASSED`):**
   (`third_party/hyperram/sim/model/hyperram_model.sv`).
 - `bresp`/`rresp` OKAY on every transaction; a WSTRB-partial trip-wire case exercises
   `wstrb_partial_seen`.
-- No regression: `sim/hyperbus/run_bridge.sh` (the old bridge-vs-`hbmc_core` TB) and
-  `third_party/hyperram/sim/run.sh` (the submodule's own suite, untouched) both still pass.
+- No regression at the time: `sim/hyperbus/run_bridge.sh` (the old bridge-vs-`hbmc_core` TB, since
+  removed as redundant coverage — see the rename note above) and `third_party/hyperram/sim/run.sh`
+  (the submodule's own suite, untouched) both still passed.
 
 **Structural (synthesized this session, against THIS submodule-backed wrapper):**
 `quartus/ph3_hyperram_char` — `axc3000_hyperram_pads`→`axc3000_hyperram_axi4`→`hyperram_avalon`
