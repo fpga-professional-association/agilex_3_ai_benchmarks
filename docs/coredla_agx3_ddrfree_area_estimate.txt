@@ -1,0 +1,96 @@
+scratchpad
+ALMs: 916
+ALUTs: 158
+DSPs: 0
+Registers: 6327
+M20Ks: 167
+Memory ALMs: 0
+
+exit_fifo
+ALMs: 36
+ALUTs: 62
+DSPs: 0
+Registers: 297
+M20Ks: 7
+Memory ALMs: 0
+
+xbar_inst
+ALMs: 1368
+ALUTs: 2216
+DSPs: 0
+Registers: 5006
+M20Ks: 0
+Memory ALMs: 0
+
+total
+ALMs: 48518
+ALUTs: 66590
+DSPs: 42
+Registers: 111295
+M20Ks: 291
+Memory ALMs: 2391
+
+sequencer
+ALMs: 64
+ALUTs: 103
+DSPs: 0
+Registers: 132
+M20Ks: 0
+Memory ALMs: 0
+
+config_network
+ALMs: 975
+ALUTs: 1240
+DSPs: 0
+Registers: 2518
+M20Ks: 14
+Memory ALMs: 19
+
+softmax_inst
+ALMs: 668
+ALUTs: 692
+DSPs: 10
+Registers: 2454
+M20Ks: 7
+Memory ALMs: 80
+
+pe_array
+ALMs: 6122
+ALUTs: 4338
+DSPs: 32
+Registers: 16057
+M20Ks: 0
+Memory ALMs: 973
+
+aux_activation_inst
+ALMs: 673
+ALUTs: 1036
+DSPs: 0
+Registers: 1442
+M20Ks: 0
+Memory ALMs: 120
+
+dma
+ALMs: 3410
+ALUTs: 3651
+DSPs: 0
+Registers: 6162
+M20Ks: 35
+Memory ALMs: 618
+
+input_feeder
+ALMs: 2651
+ALUTs: 4134
+DSPs: 0
+Registers: 7490
+M20Ks: 56
+Memory ALMs: 221
+
+pool_inst
+ALMs: 510
+ALUTs: 743
+DSPs: 0
+Registers: 1145
+M20Ks: 5
+Memory ALMs: 39
+

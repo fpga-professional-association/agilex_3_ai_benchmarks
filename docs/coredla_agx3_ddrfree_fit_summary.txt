@@ -1,0 +1,20 @@
+Fitter Status : Successful - Thu Jul  9 22:26:25 2026
+Quartus Prime Version : 26.1.0 Build 110 03/26/2026 SC Pro Edition
+Revision Name : top
+Top-level Entity Name : dla_top_quartus_wrapper
+Family : Agilex 3
+Device : A3CY100BM16AE7S
+Timing Models : Final
+Power Models : Final
+Device Status : Final
+Logic utilization (in ALMs) : 29,888 / 34,000 ( 88 % )
+Total dedicated logic registers : 87288
+Total pins : 5 / 254 ( 2 % )
+Total block memory bits : 4,021,962 / 5,365,760 ( 75 % )
+Total RAM Blocks : 247 / 262 ( 94 % )
+Total DSP Blocks : 63 / 276 ( 23 % )
+Total GTS Transceiver Channels : 0 / 4 ( 0 % )
+Total HSSI Ethernet Channels : 0 / 1 ( 0 % )
+Total HSSI PCIEs : 0 / 1 ( 0 % )
+Total HSSI HPS : 0 / 1 ( 0 % )
+Total PLLs : 0 / 11 ( 0 % )

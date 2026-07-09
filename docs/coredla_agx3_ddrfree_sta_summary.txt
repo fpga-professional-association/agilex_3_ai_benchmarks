@@ -1,0 +1,105 @@
+------------------------------------------------------------
+Timing Analyzer Summary
+------------------------------------------------------------
+
+Type  : Setup 'clk_axi~derived'
+Slack : -3.826
+TNS   : -22558.666
+Corner: Slow fix6 0C Model
+
+Type  : Setup 'clk_dla~derived'
+Slack : -1.599
+TNS   : -41730.630
+Corner: Slow fix6 0C Model
+
+Type  : Setup 'clk_ddr~derived'
+Slack : -1.206
+TNS   : -1404.394
+Corner: Slow fix6a 0C Model
+
+Type  : Setup 'clk_pcie~derived'
+Slack : -0.530
+TNS   : -6.290
+Corner: Slow fix6 0C Model
+
+Type  : Hold 'clk_ddr~derived'
+Slack : 0.000
+TNS   : 0.000
+Corner: Fast fix6 0C Model
+
+Type  : Hold 'clk_dla~derived'
+Slack : 0.001
+TNS   : 0.000
+Corner: Fast fix6 0C Model
+
+Type  : Hold 'clk_axi~derived'
+Slack : 0.020
+TNS   : 0.000
+Corner: Fast fix6 0C Model
+
+Type  : Hold 'clk_pcie~derived'
+Slack : 0.098
+TNS   : 0.000
+Corner: Fast fix6 0C Model
+
+Type  : Recovery 'clk_dla~derived'
+Slack : -0.739
+TNS   : -331.085
+Corner: Slow fix6 0C Model
+
+Type  : Recovery 'clk_ddr~derived'
+Slack : -0.345
+TNS   : -26.241
+Corner: Slow fix6 0C Model
+
+Type  : Recovery 'clk_axi~derived'
+Slack : -0.303
+TNS   : -7.490
+Corner: Slow fix6 0C Model
+
+Type  : Recovery 'clk_pcie~derived'
+Slack : 0.227
+TNS   : 0.000
+Corner: Slow fix6 0C Model
+
+Type  : Removal 'clk_pcie~derived'
+Slack : 0.101
+TNS   : 0.000
+Corner: Fast fix6 0C Model
+
+Type  : Removal 'clk_ddr~derived'
+Slack : 0.148
+TNS   : 0.000
+Corner: Fast fix6 0C Model
+
+Type  : Removal 'clk_dla~derived'
+Slack : 0.150
+TNS   : 0.000
+Corner: Fast fix6 0C Model
+
+Type  : Removal 'clk_axi~derived'
+Slack : 0.155
+TNS   : 0.000
+Corner: Fast fix6 0C Model
+
+Type  : Minimum Pulse Width 'clk_axi~derived'
+Slack : -2.571
+TNS   : -33467.201
+Corner: Slow fix6 100C Model
+
+Type  : Minimum Pulse Width 'clk_dla~derived'
+Slack : -1.916
+TNS   : -102509.130
+Corner: Slow fix6 0C Model
+
+Type  : Minimum Pulse Width 'clk_ddr~derived'
+Slack : -1.833
+TNS   : -4243.756
+Corner: Slow fix6 100C Model
+
+Type  : Minimum Pulse Width 'clk_pcie~derived'
+Slack : -1.833
+TNS   : -44.738
+Corner: Slow fix6 100C Model
+
+------------------------------------------------------------
