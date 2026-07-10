@@ -265,3 +265,26 @@ Everything below needs the physical AXC3000 + the devkit lock; none of it was at
 
 No RTL, no CoreDLA IP, and no model artifacts were modified — only the platform's build script and
 its board-pinout constraints.
+
+## 7. Silicon proof-of-life (MEASURED on the AXC3000, 2026-07-10)
+
+Programmed `top.sof` (clk_dla retuned to 280 MHz; CSR/HyperRAM/JTAG domains timing-clean, clk_dla
+44 endpoints at −0.156 ns — near-clean, parity-gated) and validated the control + memory planes over
+JTAG (devkit lock held):
+
+- **Bitstream programs** — `Configuration succeeded`, 0 errors.
+- **CoreDLA CSR reachable + responds** — ID register `0x8000_0000` = `0x81C43991`; `COMPLETION_COUNT`
+  (`0x8000_0224`) = `0x0` (correct idle); `hw_timer` (`0x8000_0800`) = `0x0`.
+- **HyperRAM AXI memory path works** — the CoreDLA 256-bit AXI4 "DDR" port → `axi4_hbmc_bridge` →
+  DDIO PHY → HyperRAM chain is functional over the JTAG master: **5/5 guard-banded (row/word-spaced)
+  writes round-tripped bit-exact** (0x100/0x200/0x400/0x800/0x1000).
+- **Write-wound law confirmed live** — two *abutting* separate writes (word 0 then word 2) → the
+  later write wounded the 4 words below its base, clobbering word 0 (`0xDEADBEEF` → `0x02000202`).
+  This is exactly the residual the guard-banded write map neutralizes; the 5/5 spaced result confirms
+  the mitigation works.
+
+**This is the first proof that CoreDLA + HyperRAM runs on the AXC3000** — control plane and memory
+subsystem both alive on silicon. Remaining for a measured *inference*: the host driver that writes the
+`.aot` config-words + weights + input into HyperRAM (guard-banded, per the wound rules), runs the CSR
+handshake (`INPUT_OUTPUT_BASE` written last = trigger → poll `COMPLETION_COUNT`), reads the output, and
+parity-checks it vs the CPU-INT8 reference — now de-risked since every path it needs is proven working.
