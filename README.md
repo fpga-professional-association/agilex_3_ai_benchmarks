@@ -17,7 +17,8 @@ latency / throughput / accuracy / energy** per the benchmark's rules ([`docs/mlp
 |---|---|
 | **Models compile to the FPGA** | ✅ **all four core MLPerf Tiny models place 100% on the Agilex-3 CoreDLA IP** — `dla_compiler`-verified, via equivalence-preserving graph surgery (MLPerf **Closed-Division-legal**) |
 | **Memory-subsystem benchmarks** | ✅ measured on the physical board (HyperRAM + on-chip M20K bandwidth) |
-| **On-hardware inference numbers** | 🔶 in progress — needs the CoreDLA-on-AXC3000 integration (a DDR-free build + the CSR start/done handshake); the board program→readback loop itself is already proven |
+| **CoreDLA on the AXC3000** | ✅ **proof-of-life on silicon** — a CoreDLA+HyperRAM bitstream programs; the CoreDLA CSR responds (ID `0x81C43991`) and the HyperRAM AXI memory path works (guard-banded writes bit-exact; the device write-wound law confirmed + mitigated). First proof CoreDLA runs on this board. |
+| **On-hardware inference numbers** | 🔶 next — the control plane + memory are validated; remaining is the host driver (load `.aot` config/weights/input → CSR handshake → parity-check output). Both a HyperRAM-backed (memory-bound) and a DDR-free (compute-bound) path are in flight. |
 
 ### Models → CoreDLA (compile-verified, accuracy-preserved)
 
