@@ -92,3 +92,5 @@ models/scratch/
 sw/hls4ml/hls4ml_prj*/
 sw/hls4ml/*.onnx
 venv-hls4ml/
+quartus/coredla_agx3_ddrfree/platform/build/
+quartus/coredla_agx3_ddrfree/platform/out_*/

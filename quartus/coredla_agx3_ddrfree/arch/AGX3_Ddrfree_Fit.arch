@@ -12,8 +12,14 @@ arch_precision : FP12AGX
 
 # The stream buffer is a large M20K consumer; halving it 8192->4096 (still ample for a 32x32
 # resnet8) trims the last M20K needed to drop under the C100's 262-block ceiling. Measured result
-# with this value: M20K 247/262 (94%), ALM 29,888/34,000 (88%) -- FITS. (At 8192 it was 275/262.)
-stream_buffer_depth : 4096
+# with this value: M20K 247/262 (94%), ALM 29,888/34,000 (88%) -- FITS as a BARE IP. (At 8192 it
+# was 275/262.) 3072 is dla_compiler's own reported legal minimum for resnet8 ("Stream Buffer
+# depth is not enough to avoid slicing... minimum Stream Buffer depth of: 3072") -- trimmed one
+# more notch to 3072 here because the full PLATFORM (bare IP + JTAG/msgDMA/on-chip-buffer
+# overhead, see docs/ddrfree_platform_findings.md "platform-level M20K overhead") needs every
+# spare block: even after trimming the platform's ingress/egress on-chip buffers to
+# resnet8-only sizes, the platform still needed 270/262 M20K with stream_buffer_depth=4096.
+stream_buffer_depth : 3072
 
 enable_on_chip_parameters : true
 disable_external_memory : true
@@ -23,16 +29,20 @@ output_channels_max : 14320
 filter_size_width_max : 28
 filter_size_height_max : 28
 
+# fifo_depth trimmed 4096->2048 (input) / 3072->2048 (output): the platform (bare IP + JTAG/msgDMA
+# overhead) measured 263/262 M20K with stream_buffer_depth=3072 alone -- 1 block over. These
+# stream FIFOs are legal at 2048 for resnet8 (dla_create_ip succeeds) and give whatever extra
+# margin is available; see docs/ddrfree_platform_findings.md.
 input_stream_interface {
   enable: true
   data_width: 128
-  fifo_depth: 4096
+  fifo_depth: 2048
 }
 
 output_stream_interface {
   enable : true
   data_width : 128
-  fifo_depth : 3072
+  fifo_depth : 2048
 }
 
 layout_transform_params {
@@ -52,7 +62,7 @@ layout_transform_params {
 pe_array {
   num_interleaved_features : 12
   num_interleaved_filters : 1
-  exit_fifo_depth : 1024
+  exit_fifo_depth : 512
   enable_scale : true
 }
 
