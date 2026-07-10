@@ -1,0 +1,31 @@
+----------------------------------------------------------------
+Performance Estimator DDR Usage Estimate for: tf2onnx_0
+WARNING: Memory Bandwidth Bottleneck Detected.
+  - 770.489 MB/s of DDR Bandwidth Required for 386.165 fps
+  - Assumed Maximum Available BW Only: 342 MB/s
+  Performance is now Memory Bound. Throughput (FPS) has been scaled down to match available bandwidth.
+TOTAL DDR SPACE REQUIRED                         =         1.36 MB
+      DDR INPUT & OUTPUT BUFFER SIZE             =         0.28 MB
+      DDR CONFIG BUFFER SIZE                     =         0.07 MB
+      DDR FILTER BUFFER SIZE                     =         0.81 MB
+      DDR INTERMEDIATE BUFFER SIZE               =         0.19 MB
+NOTE: THIS ESTIMATE ASSUMES 1x I/O BUFFER. THE COREDLA RUNTIME DEFAULTS TO 5
+TOTAL DDR TRANSFERS REQUIRED                     =         1.95 MB
+      DDR FILTER READS REQUIRED                  =         0.83 MB
+      DDR FEATURE READS REQUIRED                 =         0.67 MB
+      DDR FEATURE WRITES REQUIRED                =         0.38 MB
+NUMBER OF DDR FEATURE READS                      =         7.00 
+MINIMUM AVERAGE DDR BANDWIDTH REQUIRED           =       770.49 MB/s
+ASSUMED DDR BANDWIDTH PER IP INSTANCE            =       342.00 MB/s
+----------------------------------------------------------------
+Performance Estimator Throughput Breakdown for: tf2onnx_0
+Arch: kvec16xcvec16_i12x1_fp12agx_sb8192_xbark16_actk16_poolk4
+Number of DLA instances                          =            1 
+Number of DDR Banks per DLA instance             =         1.00 
+CoreDLA Target Fmax                              =       350.00 MHz
+Batch Size                                       =         1.00 
+PE-only Conv Throughput No DDR                   =      2393.26 fps
+PE-only Conv Throughput                          =       178.67 fps
+----------------------------------------------------------------
+FINAL THROUGHPUT                                 =       180.34 fps
+FINAL THROUGHPUT PER FMAX (CoreDLA)              =         0.52 fps/MHz

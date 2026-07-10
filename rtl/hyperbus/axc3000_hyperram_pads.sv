@@ -1,20 +1,38 @@
-// axc3000_hyperram_pads — tiny board/synth wrapper: turns axc3000_hyperram_axi4's SPLIT HyperBus
-// pins (hb_dq_o/oe/i, hb_rwds_o/oe/i) into real bidirectional `inout` balls.
+// axc3000_hyperram_pads — the board/synth-only layer for the PH3 HyperRAM memory subsystem: turns
+// the AXI4 slave + `clk`/`clk2x` into real AXC3000 HyperBus pins, and is the ONE place that picks
+// WHICH physical HyperBus PHY/I-O implementation drives those pins. See axc3000_hyperram_axi4.sv's
+// header for why the split-vs-inout boundary exists; this file is the inout side of that boundary
+// and is NOT expected to be exercised by any Verilator TB (only lint-checked there).
 //
-// axc3000_hyperram_axi4.sv (and everything it instantiates, down to hyperram_avalon and its PHY) is
-// deliberately `inout`-free so it stays Verilator-clean and its testbench can resolve the shared
-// HyperBus bus against a second split driver (the golden device model) — see the header of
-// axc3000_hyperram_axi4.sv. This module is the ONE place the tristate is reintroduced, and only for
-// synthesis/board use: it is what the Platform Designer component, a board top.sv, or the standalone
-// Quartus char build (quartus/ph3_hyperram_char/) instantiate at the actual HyperRAM package pins.
+// IO_VARIANT selects the implementation (generate-if, only the selected branch elaborates):
 //
-// Pure wiring: no logic, no registers, no clock gating, no reset. Under VERILATOR the tristate
-// releases to `0` instead of `'z` (Verilator has no true tristate net); this module is not expected
-// to be exercised by the Verilator TBs (which drive axc3000_hyperram_axi4 directly, split pins), but
-// it must still elaborate/lint cleanly under `--lint-only` since it is on the Quartus fileset list.
+//   "SPLIT_PHY" (legacy): axc3000_hyperram_axi4 (bridge -> hyperram_avalon -> hyperbus_phy dispatch,
+//     PHY_VARIANT param) -> this module's own tristate reintroduction. This is the path exercised by
+//     sim/hyperbus/tb_axc3000_hyperram_axi4.sv (PHY_VARIANT="GENERIC") and by the standalone
+//     quartus/ph3_hyperram_char/ char build (PHY_VARIANT="SDR"). UNCHANGED by this file's rewrite.
+//
+//   "DDIO_GPIO" (default; THE proven AXC3000 200 MHz-class board build): bridge -> hyperbus_avalon
+//     -> hyperbus_ctrl -> hyperbus_gpio_io, exactly mirroring third_party/hyperram/fpga/axc3000/
+//     top.sv (docs/ph3_submodule.md, docs/ph3_integration.md). hyperbus_gpio_io owns the real
+//     `inout` pads itself (vendor altera_gpio CK cell + raw tennm_ph2 DDIO DQ/RWDS TX atoms) and is
+//     NOT Verilator-simulable (device primitives) -- exactly like hyperbus_phy_altera before it, this
+//     branch is synthesis-only. It measured 341.1/332.3 MB/s write/read at CK=175 MHz on THIS board
+//     (third_party/hyperram/README.md "Performance & test status", DDR x8 row) -- this is the
+//     wiring that number came from, not the SPLIT_PHY/hyperbus_phy_altera.sv path (which is capped
+//     around ~176 MHz by a different, inferior CK-generation scheme; see hyperbus_gpio_io.sv header
+//     "why this exists"). Single-ended CK only: the AXC3000 HyperRAM ball-out has no hb_ck_n pin
+//     (third_party/hyperram/fpga/axc3000/top.sv, third_party/hyperram/fpga/axc3000/pins.tcl), so
+//     THIS module's port list has none either -- DIFF_CK/hb_ck_n only exist inside the legacy
+//     SPLIT_PHY branch's internal wiring to axc3000_hyperram_axi4, tied off, never exported.
+//
+// CTRL_* parameters below are the third_party/hyperram/fpga/axc3000/top.sv silicon-tuned constants
+// for the DDIO_GPIO branch's hyperbus_ctrl instance (device-row-aligned chop boundary, write
+// coalescing, latency trim) -- cited from that file, not invented (AGENTS.md).
 `ifndef AXC3000_HYPERRAM_PADS_SV
 `define AXC3000_HYPERRAM_PADS_SV
-module axc3000_hyperram_pads #(
+module axc3000_hyperram_pads
+  import hyperbus_pkg::*;
+#(
     parameter int    DATA_W            = 256,
     parameter int    ADDR_W            = 32,
     parameter int    WID_W             = 5,
@@ -22,15 +40,34 @@ module axc3000_hyperram_pads #(
     parameter int    LEN_W             = 8,
     parameter int    HB_ADDR_W         = 23,
     parameter int    HB_BURST_W        = 8,
+
+    // ---- board/PHY variant select (see header) ----
+    parameter        IO_VARIANT        = "DDIO_GPIO",  // "DDIO_GPIO" (board-proven) | "SPLIT_PHY" (legacy)
+
+    // ---- SPLIT_PHY branch only: forwarded to axc3000_hyperram_axi4 unchanged ----
     parameter        PHY_VARIANT       = "SDR",   // board/char build: real SDR PHY (not GENERIC)
-    parameter bit    DIFF_CK           = 1'b1,
-    parameter int    LATENCY_CLOCKS    = 6,
     parameter int    POR_DELAY_CYCLES  = 0,
-    parameter int    RD_PREAMBLE_SKIP  = 0,
-    parameter int    MAX_BURST_WORDS   = 0
+    parameter int    MAX_BURST_WORDS   = 0,
+
+    // ---- shared latency / read-preamble knobs (both branches) ----
+    parameter int    LATENCY_CLOCKS    = 6,
+    parameter int    RD_PREAMBLE_SKIP  = 1,        // W957D8NB: 1 (third_party/hyperram/fpga/axc3000/top.sv)
+
+    // ---- DDIO_GPIO branch only: hyperbus_ctrl silicon-tuned constants (top.sv defaults, cited) ----
+    parameter int          CTRL_MAX_BURST_WORDS      = 1024,      // = one device ROW
+    parameter logic [15:0] CTRL_BURST_BOUNDARY_WORDS = 16'h0400,  // = the 1024-word device ROW
+    parameter bit          CTRL_WR_COALESCE          = 1'b1,      // CS#-coalescing (issue #1 #4)
+    parameter int          CTRL_WR_COALESCE_WAIT     = 8,
+    parameter int          CTRL_WR_LAT_TRIM          = 3,         // device write window opens 3 CK early
+
+    // ---- DDIO_GPIO branch only: hyperbus_gpio_io alignment knobs (top.sv defaults, cited) ----
+    parameter bit          IO_TX_B_DLY   = 1'b1,
+    parameter bit          IO_CK_DIN_HI  = 1'b1,
+    parameter              IO_CK_GEN     = "FABRIC2X"  // proven-clean CK generator at CK<=175 MHz
 ) (
-    input  logic                 clk,
-    input  logic                 clk2x,
+    input  logic                 clk,      // word/CK-rate clock (controller + all TX launches)
+    input  logic                 clk2x,    // DDIO_GPIO: 2x-CK core-only clock (hyperbus_gpio_io.clk_smp);
+                                            // SPLIT_PHY: forwarded to axc3000_hyperram_axi4 unchanged
     input  logic                 reset_n,
 
     // ---- AXI4 slave: write address (AW) ----
@@ -72,11 +109,10 @@ module axc3000_hyperram_pads #(
     output logic                 s_axi_rvalid,
     input  logic                 s_axi_rready,
 
-    // ---- HyperBus device balls (real inout; board pins) ----
+    // ---- HyperBus device balls (real inout; board pins). Single-ended CK only -- no hb_ck_n. ----
     inout  wire  [7:0]           hb_dq,
     inout  wire                  hb_rwds,
     output logic                 hb_ck,
-    output logic                 hb_ck_n,
     output logic                 hb_cs_n,
     output logic                 hb_rst_n,
 
@@ -84,50 +120,191 @@ module axc3000_hyperram_pads #(
     output logic                 wstrb_partial_seen,
     output logic                 hi_addr_seen
 );
-  logic [7:0] hb_dq_o;
-  logic       hb_dq_oe;
-  logic [7:0] hb_dq_i;
-  logic       hb_rwds_o;
-  logic       hb_rwds_oe;
-  logic       hb_rwds_i;
 
-  axc3000_hyperram_axi4 #(
-      .DATA_W(DATA_W), .ADDR_W(ADDR_W), .WID_W(WID_W), .RID_W(RID_W), .LEN_W(LEN_W),
-      .HB_ADDR_W(HB_ADDR_W), .HB_BURST_W(HB_BURST_W),
-      .PHY_VARIANT(PHY_VARIANT), .DIFF_CK(DIFF_CK), .LATENCY_CLOCKS(LATENCY_CLOCKS),
-      .POR_DELAY_CYCLES(POR_DELAY_CYCLES), .RD_PREAMBLE_SKIP(RD_PREAMBLE_SKIP),
-      .MAX_BURST_WORDS(MAX_BURST_WORDS)
-  ) u_wrapper (
-      .clk(clk), .clk2x(clk2x), .reset_n(reset_n),
-      .s_axi_awid(s_axi_awid), .s_axi_awaddr(s_axi_awaddr), .s_axi_awlen(s_axi_awlen),
-      .s_axi_awsize(s_axi_awsize), .s_axi_awburst(s_axi_awburst), .s_axi_awvalid(s_axi_awvalid),
-      .s_axi_awready(s_axi_awready),
-      .s_axi_wdata(s_axi_wdata), .s_axi_wstrb(s_axi_wstrb), .s_axi_wlast(s_axi_wlast),
-      .s_axi_wvalid(s_axi_wvalid), .s_axi_wready(s_axi_wready),
-      .s_axi_bid(s_axi_bid), .s_axi_bresp(s_axi_bresp), .s_axi_bvalid(s_axi_bvalid),
-      .s_axi_bready(s_axi_bready),
-      .s_axi_arid(s_axi_arid), .s_axi_araddr(s_axi_araddr), .s_axi_arlen(s_axi_arlen),
-      .s_axi_arsize(s_axi_arsize), .s_axi_arburst(s_axi_arburst), .s_axi_arvalid(s_axi_arvalid),
-      .s_axi_arready(s_axi_arready),
-      .s_axi_rid(s_axi_rid), .s_axi_rdata(s_axi_rdata), .s_axi_rresp(s_axi_rresp),
-      .s_axi_rlast(s_axi_rlast), .s_axi_rvalid(s_axi_rvalid), .s_axi_rready(s_axi_rready),
-      .hb_ck(hb_ck), .hb_ck_n(hb_ck_n), .hb_cs_n(hb_cs_n), .hb_rst_n(hb_rst_n),
-      .hb_dq_o(hb_dq_o), .hb_dq_oe(hb_dq_oe), .hb_dq_i(hb_dq_i),
-      .hb_rwds_o(hb_rwds_o), .hb_rwds_oe(hb_rwds_oe), .hb_rwds_i(hb_rwds_i),
-      .init_done(init_done),
-      .wstrb_partial_seen(wstrb_partial_seen), .hi_addr_seen(hi_addr_seen));
+  generate
+    if (IO_VARIANT == "DDIO_GPIO") begin : g_ddio_gpio
+      // =========================================================================================
+      // Board-proven chain (third_party/hyperram/fpga/axc3000/top.sv, mirrored 1:1):
+      //   axi4_hbmc_bridge -> av_*/avs_* (16-bit word Avalon-MM) -> hyperbus_avalon (front end)
+      //   -> cmd/wr/rd -> hyperbus_ctrl (protocol engine) -> phy_* -> hyperbus_gpio_io (real pins)
+      // =========================================================================================
+      logic rst;
+      assign rst = ~reset_n;
 
-  // ---- tristate balls: drive when output-enabled, else release. VERILATOR has no real tristate net
-  //      (this module is not driven by the Verilator TBs, but must still elaborate/lint), so release
-  //      to 0 there instead of 'z, matching the convention used elsewhere in this tree. ----
+      logic [HB_ADDR_W-1:0]  av_address;
+      logic [HB_BURST_W-1:0] av_burstcount;
+      logic                  av_read, av_write;
+      logic [15:0]           av_writedata, av_readdata;
+      logic                  av_readdatavalid, av_waitrequest;
+
+      localparam int AVS_ADDR_W = 32;
+      localparam int AVS_LEN_W  = 16;
+
+      logic [AVS_ADDR_W-1:0] avs_address;
+      logic [15:0]           avs_writedata, avs_readdata;
+      logic [1:0]            avs_byteenable;
+      logic [AVS_LEN_W-1:0]  avs_burstcount;
+      logic                  avs_read, avs_write, avs_readdatavalid, avs_waitrequest;
+
+      axi4_hbmc_bridge #(
+          .DATA_W(DATA_W), .ADDR_W(ADDR_W), .WID_W(WID_W), .RID_W(RID_W),
+          .LEN_W(LEN_W), .HB_ADDR_W(HB_ADDR_W), .HB_BURST_W(HB_BURST_W)
+      ) u_bridge (
+          .clk(clk), .rst(rst),
+          .awid(s_axi_awid), .awaddr(s_axi_awaddr), .awlen(s_axi_awlen), .awsize(s_axi_awsize),
+          .awburst(s_axi_awburst), .awvalid(s_axi_awvalid), .awready(s_axi_awready),
+          .wdata(s_axi_wdata), .wstrb(s_axi_wstrb), .wlast(s_axi_wlast),
+          .wvalid(s_axi_wvalid), .wready(s_axi_wready),
+          .bid(s_axi_bid), .bresp(s_axi_bresp), .bvalid(s_axi_bvalid), .bready(s_axi_bready),
+          .arid(s_axi_arid), .araddr(s_axi_araddr), .arlen(s_axi_arlen), .arsize(s_axi_arsize),
+          .arburst(s_axi_arburst), .arvalid(s_axi_arvalid), .arready(s_axi_arready),
+          .rid(s_axi_rid), .rdata(s_axi_rdata), .rresp(s_axi_rresp), .rlast(s_axi_rlast),
+          .rvalid(s_axi_rvalid), .rready(s_axi_rready),
+          .av_address(av_address), .av_burstcount(av_burstcount),
+          .av_read(av_read), .av_write(av_write),
+          .av_writedata(av_writedata), .av_readdata(av_readdata),
+          .av_readdatavalid(av_readdatavalid), .av_waitrequest(av_waitrequest),
+          .wstrb_partial_seen(wstrb_partial_seen), .hi_addr_seen(hi_addr_seen));
+
+      // av_* -> avs_* 1:1 mapping (docs/ph3_submodule.md): zero-extend the word address, keep the
+      // register-select MSB = 0 (memory space); byteenable tied all-ones (bridge writes full words).
+      assign avs_address    = {{(AVS_ADDR_W-1-HB_ADDR_W){1'b0}}, 1'b0, av_address};
+      assign avs_burstcount = {{(AVS_LEN_W-HB_BURST_W){1'b0}}, av_burstcount};
+      assign avs_read       = av_read;
+      assign avs_write      = av_write;
+      assign avs_writedata  = av_writedata;
+      assign avs_byteenable = 2'b11;
+      assign av_readdata      = avs_readdata;
+      assign av_readdatavalid = avs_readdatavalid;
+      assign av_waitrequest   = avs_waitrequest;
+
+      // hyperbus_ctrl's own INIT_CR0 default is the device's raw POR image (5-clock latency), not
+      // derived from LATENCY_CLOCKS -- compute it here so the programmed CR0 always matches the
+      // controller's own wait count, mirroring axc3000_hyperram_axi4.sv's HB_INIT_CR0 and
+      // hyperbus_ctrl.sv's own local default.
+      localparam logic [15:0] HB_INIT_CR0 =
+          {1'b1, 3'b000, 4'b1111, hb_clocks_to_latency_code(LATENCY_CLOCKS), 1'b1, 3'b111};
+
+      logic        cmd_valid, cmd_ready, cmd_read, cmd_reg, cmd_wrap;
+      logic [31:0] cmd_addr;
+      logic [15:0] cmd_len;
+      logic        wr_valid, wr_ready, wr_last;
+      logic [15:0] wr_data;
+      logic [1:0]  wr_strb;
+      logic        rd_valid, rd_ready, rd_last;
+      logic [15:0] rd_data;
+      logic [1:0]  fe_dbg_state;
+
+      hyperbus_avalon #(
+          .DQ_WIDTH(8), .DATA_WIDTH(16), .ADDR_WIDTH(AVS_ADDR_W), .LEN_WIDTH(AVS_LEN_W)
+      ) u_fe (
+          .clk(clk), .rst(rst),
+          .avs_address(avs_address), .avs_read(avs_read), .avs_write(avs_write),
+          .avs_writedata(avs_writedata), .avs_byteenable(avs_byteenable),
+          .avs_burstcount(avs_burstcount),
+          .avs_readdata(avs_readdata), .avs_readdatavalid(avs_readdatavalid),
+          .avs_waitrequest(avs_waitrequest),
+          .cmd_valid(cmd_valid), .cmd_ready(cmd_ready), .cmd_read(cmd_read), .cmd_reg(cmd_reg),
+          .cmd_wrap(cmd_wrap), .cmd_addr(cmd_addr), .cmd_len(cmd_len),
+          .wr_valid(wr_valid), .wr_ready(wr_ready), .wr_data(wr_data), .wr_strb(wr_strb),
+          .wr_last(wr_last),
+          .rd_valid(rd_valid), .rd_ready(rd_ready), .rd_data(rd_data), .rd_last(rd_last),
+          .dbg_state(fe_dbg_state));
+
+      logic        phy_cs_n, phy_rst_n, phy_ck_en, phy_dq_oe, phy_rwds_oe, phy_rd_arm;
+      logic [15:0] phy_dq_o;
+      logic [1:0]  phy_rwds_o;
+      logic [15:0] phy_dq_i;
+      logic        phy_dq_i_valid, phy_rwds_i;
+      logic [3:0]  ctrl_dbg_state;
+      logic [5:0]  ctrl_dbg_rem, ctrl_dbg_seg;
+
+      hyperbus_ctrl #(
+          .DQ_WIDTH(8), .DATA_WIDTH(16), .ADDR_WIDTH(32), .LEN_WIDTH(16),
+          .LATENCY_CLOCKS(LATENCY_CLOCKS), .FIXED_LATENCY(1'b1),
+          .MAX_BURST_WORDS(CTRL_MAX_BURST_WORDS), .PROGRAM_CR(1'b1),
+          .POR_DELAY_CYCLES(POR_DELAY_CYCLES), .INIT_CR0(HB_INIT_CR0),
+          .BURST_BOUNDARY_WORDS(CTRL_BURST_BOUNDARY_WORDS), .WR_COMMIT_READ(1'b0),
+          .WR_COALESCE(CTRL_WR_COALESCE), .WR_COALESCE_WAIT(CTRL_WR_COALESCE_WAIT),
+          .WR_CHOP_REPLAY(1'b0), .WR_CHOP_PAUSE_CYCLES(0), .WR_CHOP_PAUSE_CK(1'b0),
+          .WR_LAT_TRIM(CTRL_WR_LAT_TRIM)
+      ) u_ctrl (
+          .clk(clk), .rst(rst),
+          .cmd_valid(cmd_valid), .cmd_ready(cmd_ready), .cmd_read(cmd_read), .cmd_reg(cmd_reg),
+          .cmd_wrap(cmd_wrap), .cmd_addr(cmd_addr), .cmd_len(cmd_len),
+          .wr_valid(wr_valid), .wr_ready(wr_ready), .wr_data(wr_data), .wr_strb(wr_strb),
+          .wr_last(wr_last),
+          .rd_valid(rd_valid), .rd_ready(rd_ready), .rd_data(rd_data), .rd_last(rd_last),
+          .busy(), .init_done(init_done), .err_underrun(), .err_timeout(),
+          .phy_cs_n(phy_cs_n), .phy_rst_n(phy_rst_n), .phy_ck_en(phy_ck_en),
+          .phy_dq_o(phy_dq_o), .phy_dq_oe(phy_dq_oe),
+          .phy_rwds_o(phy_rwds_o), .phy_rwds_oe(phy_rwds_oe), .phy_rd_arm(phy_rd_arm),
+          .phy_dq_i(phy_dq_i), .phy_dq_i_valid(phy_dq_i_valid), .phy_rwds_i(phy_rwds_i),
+          .dbg_state(ctrl_dbg_state), .dbg_rd_wptr(ctrl_dbg_rem), .dbg_rd_rptr(ctrl_dbg_seg));
+
+      hyperbus_gpio_io #(
+          .DQ_WIDTH(8), .RD_PREAMBLE_SKIP(RD_PREAMBLE_SKIP),
+          .TX_B_DLY(IO_TX_B_DLY), .CK_DIN_HI(IO_CK_DIN_HI), .CK_GEN(IO_CK_GEN)
+      ) u_io (
+          .clk(clk), .clk_smp(clk2x), .rst(rst),
+          .phy_cs_n(phy_cs_n), .phy_rst_n(phy_rst_n), .phy_ck_en(phy_ck_en),
+          .phy_dq_o(phy_dq_o), .phy_dq_oe(phy_dq_oe),
+          .phy_rwds_o(phy_rwds_o), .phy_rwds_oe(phy_rwds_oe), .phy_rd_arm(phy_rd_arm),
+          .phy_dq_i(phy_dq_i), .phy_dq_i_valid(phy_dq_i_valid), .phy_rwds_i(phy_rwds_i),
+          .hb_ck(hb_ck), .hb_cs_n(hb_cs_n), .hb_rst_n(hb_rst_n),
+          .hb_dq(hb_dq), .hb_rwds(hb_rwds));
+
+    end else begin : g_split_phy
+      // =========================================================================================
+      // Legacy path (unchanged): axc3000_hyperram_axi4 (split pins) + tristate reintroduction here.
+      // Exercised by sim/hyperbus/tb_axc3000_hyperram_axi4.sv (PHY_VARIANT="GENERIC") and the
+      // standalone quartus/ph3_hyperram_char/ build (PHY_VARIANT="SDR").
+      // =========================================================================================
+      logic [7:0] hb_dq_o;
+      logic       hb_dq_oe;
+      logic [7:0] hb_dq_i;
+      logic       hb_rwds_o;
+      logic       hb_rwds_oe;
+      logic       hb_rwds_i;
+      logic       hb_ck_n_unused;
+
+      axc3000_hyperram_axi4 #(
+          .DATA_W(DATA_W), .ADDR_W(ADDR_W), .WID_W(WID_W), .RID_W(RID_W), .LEN_W(LEN_W),
+          .HB_ADDR_W(HB_ADDR_W), .HB_BURST_W(HB_BURST_W),
+          .PHY_VARIANT(PHY_VARIANT), .DIFF_CK(1'b0), .LATENCY_CLOCKS(LATENCY_CLOCKS),
+          .POR_DELAY_CYCLES(POR_DELAY_CYCLES), .RD_PREAMBLE_SKIP(RD_PREAMBLE_SKIP),
+          .MAX_BURST_WORDS(MAX_BURST_WORDS)
+      ) u_wrapper (
+          .clk(clk), .clk2x(clk2x), .reset_n(reset_n),
+          .s_axi_awid(s_axi_awid), .s_axi_awaddr(s_axi_awaddr), .s_axi_awlen(s_axi_awlen),
+          .s_axi_awsize(s_axi_awsize), .s_axi_awburst(s_axi_awburst), .s_axi_awvalid(s_axi_awvalid),
+          .s_axi_awready(s_axi_awready),
+          .s_axi_wdata(s_axi_wdata), .s_axi_wstrb(s_axi_wstrb), .s_axi_wlast(s_axi_wlast),
+          .s_axi_wvalid(s_axi_wvalid), .s_axi_wready(s_axi_wready),
+          .s_axi_bid(s_axi_bid), .s_axi_bresp(s_axi_bresp), .s_axi_bvalid(s_axi_bvalid),
+          .s_axi_bready(s_axi_bready),
+          .s_axi_arid(s_axi_arid), .s_axi_araddr(s_axi_araddr), .s_axi_arlen(s_axi_arlen),
+          .s_axi_arsize(s_axi_arsize), .s_axi_arburst(s_axi_arburst), .s_axi_arvalid(s_axi_arvalid),
+          .s_axi_arready(s_axi_arready),
+          .s_axi_rid(s_axi_rid), .s_axi_rdata(s_axi_rdata), .s_axi_rresp(s_axi_rresp),
+          .s_axi_rlast(s_axi_rlast), .s_axi_rvalid(s_axi_rvalid), .s_axi_rready(s_axi_rready),
+          .hb_ck(hb_ck), .hb_ck_n(hb_ck_n_unused), .hb_cs_n(hb_cs_n), .hb_rst_n(hb_rst_n),
+          .hb_dq_o(hb_dq_o), .hb_dq_oe(hb_dq_oe), .hb_dq_i(hb_dq_i),
+          .hb_rwds_o(hb_rwds_o), .hb_rwds_oe(hb_rwds_oe), .hb_rwds_i(hb_rwds_i),
+          .init_done(init_done),
+          .wstrb_partial_seen(wstrb_partial_seen), .hi_addr_seen(hi_addr_seen));
+
 `ifdef VERILATOR
-  assign hb_dq   = hb_dq_oe   ? hb_dq_o   : 8'h00;
-  assign hb_rwds = hb_rwds_oe ? hb_rwds_o : 1'b0;
+      assign hb_dq   = hb_dq_oe   ? hb_dq_o   : 8'h00;
+      assign hb_rwds = hb_rwds_oe ? hb_rwds_o : 1'b0;
 `else
-  assign hb_dq   = hb_dq_oe   ? hb_dq_o   : 8'bz;
-  assign hb_rwds = hb_rwds_oe ? hb_rwds_o : 1'bz;
+      assign hb_dq   = hb_dq_oe   ? hb_dq_o   : 8'bz;
+      assign hb_rwds = hb_rwds_oe ? hb_rwds_o : 1'bz;
 `endif
-  assign hb_dq_i   = hb_dq;
-  assign hb_rwds_i = hb_rwds;
+      assign hb_dq_i   = hb_dq;
+      assign hb_rwds_i = hb_rwds;
+    end
+  endgenerate
+
 endmodule
 `endif

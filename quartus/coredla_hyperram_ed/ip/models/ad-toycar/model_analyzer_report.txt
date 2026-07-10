@@ -1,0 +1,979 @@
+This report displays information about the original OpenVINO graph and the transformed OpenVINO graph.
+Multiple layers in the original graph might be fused, others might be split, while some might be changed entirely.
+
+
+The structure of this report is:
+- List of redundant modules. Modules activated in the arch file, but not used
+- List of all unsupported layers in the original OpenVINO graph
+- List of reasons for unsupporting layers
+- Original graph per layer support information analysis
+- Interal name to original name mappings
+- Per layer information dump
+
+
+List of redundant modules. Modules activated in the arch file, but not used:
+INFO: Arch file enables the sigmoid activation module, however, sigmoid activations are not used in the model.
+To avoid allocating unnecessary resources, disable the sigmoid activation module in the arch file.
+
+INFO: Arch file enables the PReLU activation module, however, PReLU activations are not used in the model.
+To avoid allocating unnecessary resources, disable the PReLU activation module in the arch file.
+
+- Arch file enables the pool module, however, pool is not used in the model.
+  - To avoid allocating unnecessary resources, disable the pool module in the arch file.
+
+- Arch file enables the softmax module, however, softmax is not used in the model.
+  - To avoid allocating unnecessary resources, disable the softmax module in the arch file.
+
+
+List of all unsupported layers in the original OpenVINO graph:
+- All layers are supported
+
+
+List of reasons for unsupporting layers:
+- No direct reasons for CPU placement exist
+
+
+Original graph per layer support information analysis:
+- All layers are supported
+
+Internal name to original name mappings:
+Transformed Layer Name: input_1
+- Original Layer Name:
+  - input_1
+
+Transformed Layer Name: Identity/sink_port_0
+- Original Layer Name:
+  - Identity/sink_port_0
+
+Transformed Layer Name: Identity_1
+- Original Layer Name:
+  - Identity_1
+
+Transformed Layer Name: Constant_1669
+- Original Layer Name:
+  - Constant_1669
+
+Transformed Layer Name: Identity
+- Original Layer Name:
+  - Identity
+
+Transformed Layer Name: Identity/fq_weights_1
+- Original Layer Name:
+  - Identity/fq_weights_1
+
+Transformed Layer Name: Relu__45/fq_output_0
+- Original Layer Names:
+  - Relu__45
+  - Relu__45/fq_output_0
+
+Transformed Layer Name: Constant_3676
+- Original Layer Name:
+  - Relu__45/fq_output_0/output_high
+
+Transformed Layer Name: Constant_3675
+- Original Layer Name:
+  - Relu__45/fq_output_0/output_low
+
+Transformed Layer Name: Constant_3674
+- Original Layer Name:
+  - Relu__45/fq_output_0/input_high
+
+Transformed Layer Name: Constant_3673
+- Original Layer Name:
+  - Relu__45/fq_output_0/input_low
+
+Transformed Layer Name: Add__48
+- Original Layer Name:
+  - Add__48
+
+Transformed Layer Name: Constant_1668
+- Original Layer Name:
+  - Constant_1668
+
+Transformed Layer Name: functional_1/activation_8/Relu;functional_1/dense_8/BiasAdd
+- Original Layer Name:
+  - functional_1/activation_8/Relu;functional_1/dense_8/BiasAdd
+
+Transformed Layer Name: functional_1/activation_8/Relu;functional_1/dense_8/BiasAdd/fq_weights_1
+- Original Layer Name:
+  - functional_1/activation_8/Relu;functional_1/dense_8/BiasAdd/fq_weights_1
+
+Transformed Layer Name: Relu__40/fq_output_0
+- Original Layer Names:
+  - Relu__40
+  - Relu__40/fq_output_0
+
+Transformed Layer Name: Constant_3672
+- Original Layer Name:
+  - Relu__40/fq_output_0/output_high
+
+Transformed Layer Name: Constant_3671
+- Original Layer Name:
+  - Relu__40/fq_output_0/output_low
+
+Transformed Layer Name: Constant_3670
+- Original Layer Name:
+  - Relu__40/fq_output_0/input_high
+
+Transformed Layer Name: Constant_3669
+- Original Layer Name:
+  - Relu__40/fq_output_0/input_low
+
+Transformed Layer Name: Add__43
+- Original Layer Name:
+  - Add__43
+
+Transformed Layer Name: Constant_1667
+- Original Layer Name:
+  - Constant_1667
+
+Transformed Layer Name: functional_1/activation_7/Relu;functional_1/dense_7/BiasAdd
+- Original Layer Name:
+  - functional_1/activation_7/Relu;functional_1/dense_7/BiasAdd
+
+Transformed Layer Name: functional_1/activation_7/Relu;functional_1/dense_7/BiasAdd/fq_weights_1
+- Original Layer Name:
+  - functional_1/activation_7/Relu;functional_1/dense_7/BiasAdd/fq_weights_1
+
+Transformed Layer Name: Relu__35/fq_output_0
+- Original Layer Names:
+  - Relu__35
+  - Relu__35/fq_output_0
+
+Transformed Layer Name: Constant_3668
+- Original Layer Name:
+  - Relu__35/fq_output_0/output_high
+
+Transformed Layer Name: Constant_3667
+- Original Layer Name:
+  - Relu__35/fq_output_0/output_low
+
+Transformed Layer Name: Constant_3666
+- Original Layer Name:
+  - Relu__35/fq_output_0/input_high
+
+Transformed Layer Name: Constant_3665
+- Original Layer Name:
+  - Relu__35/fq_output_0/input_low
+
+Transformed Layer Name: Add__38
+- Original Layer Name:
+  - Add__38
+
+Transformed Layer Name: Constant_1666
+- Original Layer Name:
+  - Constant_1666
+
+Transformed Layer Name: functional_1/activation_6/Relu;functional_1/dense_6/BiasAdd
+- Original Layer Name:
+  - functional_1/activation_6/Relu;functional_1/dense_6/BiasAdd
+
+Transformed Layer Name: functional_1/activation_6/Relu;functional_1/dense_6/BiasAdd/fq_weights_1
+- Original Layer Name:
+  - functional_1/activation_6/Relu;functional_1/dense_6/BiasAdd/fq_weights_1
+
+Transformed Layer Name: Relu__30/fq_output_0
+- Original Layer Names:
+  - Relu__30
+  - Relu__30/fq_output_0
+
+Transformed Layer Name: Constant_3664
+- Original Layer Name:
+  - Relu__30/fq_output_0/output_high
+
+Transformed Layer Name: Constant_3663
+- Original Layer Name:
+  - Relu__30/fq_output_0/output_low
+
+Transformed Layer Name: Constant_3662
+- Original Layer Name:
+  - Relu__30/fq_output_0/input_high
+
+Transformed Layer Name: Constant_3661
+- Original Layer Name:
+  - Relu__30/fq_output_0/input_low
+
+Transformed Layer Name: Add__33
+- Original Layer Name:
+  - Add__33
+
+Transformed Layer Name: Constant_1665
+- Original Layer Name:
+  - Constant_1665
+
+Transformed Layer Name: functional_1/activation_5/Relu;functional_1/dense_5/BiasAdd
+- Original Layer Name:
+  - functional_1/activation_5/Relu;functional_1/dense_5/BiasAdd
+
+Transformed Layer Name: functional_1/activation_5/Relu;functional_1/dense_5/BiasAdd/fq_weights_1
+- Original Layer Name:
+  - functional_1/activation_5/Relu;functional_1/dense_5/BiasAdd/fq_weights_1
+
+Transformed Layer Name: Relu__25/fq_output_0
+- Original Layer Names:
+  - Relu__25
+  - Relu__25/fq_output_0
+
+Transformed Layer Name: Constant_3660
+- Original Layer Name:
+  - Relu__25/fq_output_0/output_high
+
+Transformed Layer Name: Constant_3659
+- Original Layer Name:
+  - Relu__25/fq_output_0/output_low
+
+Transformed Layer Name: Constant_3658
+- Original Layer Name:
+  - Relu__25/fq_output_0/input_high
+
+Transformed Layer Name: Constant_3657
+- Original Layer Name:
+  - Relu__25/fq_output_0/input_low
+
+Transformed Layer Name: Add__28
+- Original Layer Name:
+  - Add__28
+
+Transformed Layer Name: Constant_1664
+- Original Layer Name:
+  - Constant_1664
+
+Transformed Layer Name: functional_1/activation_4/Relu;functional_1/dense_4/BiasAdd
+- Original Layer Name:
+  - functional_1/activation_4/Relu;functional_1/dense_4/BiasAdd
+
+Transformed Layer Name: functional_1/activation_4/Relu;functional_1/dense_4/BiasAdd/fq_weights_1
+- Original Layer Name:
+  - functional_1/activation_4/Relu;functional_1/dense_4/BiasAdd/fq_weights_1
+
+Transformed Layer Name: Relu__20/fq_output_0
+- Original Layer Names:
+  - Relu__20
+  - Relu__20/fq_output_0
+
+Transformed Layer Name: Constant_3656
+- Original Layer Name:
+  - Relu__20/fq_output_0/output_high
+
+Transformed Layer Name: Constant_3655
+- Original Layer Name:
+  - Relu__20/fq_output_0/output_low
+
+Transformed Layer Name: Constant_3654
+- Original Layer Name:
+  - Relu__20/fq_output_0/input_high
+
+Transformed Layer Name: Constant_3653
+- Original Layer Name:
+  - Relu__20/fq_output_0/input_low
+
+Transformed Layer Name: Add__23
+- Original Layer Name:
+  - Add__23
+
+Transformed Layer Name: Constant_1663
+- Original Layer Name:
+  - Constant_1663
+
+Transformed Layer Name: functional_1/activation_3/Relu;functional_1/dense_3/BiasAdd
+- Original Layer Name:
+  - functional_1/activation_3/Relu;functional_1/dense_3/BiasAdd
+
+Transformed Layer Name: functional_1/activation_3/Relu;functional_1/dense_3/BiasAdd/fq_weights_1
+- Original Layer Name:
+  - functional_1/activation_3/Relu;functional_1/dense_3/BiasAdd/fq_weights_1
+
+Transformed Layer Name: Relu__15/fq_output_0
+- Original Layer Names:
+  - Relu__15
+  - Relu__15/fq_output_0
+
+Transformed Layer Name: Constant_3652
+- Original Layer Name:
+  - Relu__15/fq_output_0/output_high
+
+Transformed Layer Name: Constant_3651
+- Original Layer Name:
+  - Relu__15/fq_output_0/output_low
+
+Transformed Layer Name: Constant_3650
+- Original Layer Name:
+  - Relu__15/fq_output_0/input_high
+
+Transformed Layer Name: Constant_3649
+- Original Layer Name:
+  - Relu__15/fq_output_0/input_low
+
+Transformed Layer Name: Add__18
+- Original Layer Name:
+  - Add__18
+
+Transformed Layer Name: Constant_1662
+- Original Layer Name:
+  - Constant_1662
+
+Transformed Layer Name: functional_1/activation_2/Relu;functional_1/dense_2/BiasAdd
+- Original Layer Name:
+  - functional_1/activation_2/Relu;functional_1/dense_2/BiasAdd
+
+Transformed Layer Name: functional_1/activation_2/Relu;functional_1/dense_2/BiasAdd/fq_weights_1
+- Original Layer Name:
+  - functional_1/activation_2/Relu;functional_1/dense_2/BiasAdd/fq_weights_1
+
+Transformed Layer Name: Relu__10/fq_output_0
+- Original Layer Names:
+  - Relu__10
+  - Relu__10/fq_output_0
+
+Transformed Layer Name: Constant_3648
+- Original Layer Name:
+  - Relu__10/fq_output_0/output_high
+
+Transformed Layer Name: Constant_3647
+- Original Layer Name:
+  - Relu__10/fq_output_0/output_low
+
+Transformed Layer Name: Constant_3646
+- Original Layer Name:
+  - Relu__10/fq_output_0/input_high
+
+Transformed Layer Name: Constant_3645
+- Original Layer Name:
+  - Relu__10/fq_output_0/input_low
+
+Transformed Layer Name: Add__13
+- Original Layer Name:
+  - Add__13
+
+Transformed Layer Name: Constant_1661
+- Original Layer Name:
+  - Constant_1661
+
+Transformed Layer Name: functional_1/activation_1/Relu;functional_1/dense_1/BiasAdd
+- Original Layer Name:
+  - functional_1/activation_1/Relu;functional_1/dense_1/BiasAdd
+
+Transformed Layer Name: functional_1/activation_1/Relu;functional_1/dense_1/BiasAdd/fq_weights_1
+- Original Layer Name:
+  - functional_1/activation_1/Relu;functional_1/dense_1/BiasAdd/fq_weights_1
+
+Transformed Layer Name: Relu__5/fq_output_0
+- Original Layer Names:
+  - Relu__5
+  - Relu__5/fq_output_0
+
+Transformed Layer Name: Constant_3644
+- Original Layer Name:
+  - Relu__5/fq_output_0/output_high
+
+Transformed Layer Name: Constant_3643
+- Original Layer Name:
+  - Relu__5/fq_output_0/output_low
+
+Transformed Layer Name: Constant_3642
+- Original Layer Name:
+  - Relu__5/fq_output_0/input_high
+
+Transformed Layer Name: Constant_3641
+- Original Layer Name:
+  - Relu__5/fq_output_0/input_low
+
+Transformed Layer Name: Add__8
+- Original Layer Name:
+  - Add__8
+
+Transformed Layer Name: Constant_1660
+- Original Layer Name:
+  - Constant_1660
+
+Transformed Layer Name: functional_1/activation/Relu;functional_1/dense/BiasAdd
+- Original Layer Name:
+  - functional_1/activation/Relu;functional_1/dense/BiasAdd
+
+Transformed Layer Name: functional_1/activation/Relu;functional_1/dense/BiasAdd/fq_weights_1
+- Original Layer Name:
+  - functional_1/activation/Relu;functional_1/dense/BiasAdd/fq_weights_1
+
+Transformed Layer Name: input_1/fq_output_0
+- Original Layer Name:
+  - input_1/fq_output_0
+
+Transformed Layer Name: Constant_3640
+- Original Layer Name:
+  - input_1/fq_output_0/output_high
+
+Transformed Layer Name: Constant_3639
+- Original Layer Name:
+  - input_1/fq_output_0/output_low
+
+Transformed Layer Name: Constant_3638
+- Original Layer Name:
+  - input_1/fq_output_0/input_high
+
+Transformed Layer Name: Constant_3637
+- Original Layer Name:
+  - input_1/fq_output_0/input_low
+
+
+Per layer information dump:
+Transformed Layer Name: input_1
+- Type:      Parameter
+- FPGA Support: True
+- Original Layer Name:
+  - input_1
+
+Transformed Layer Name: Identity/sink_port_0
+- Type:      Result
+- FPGA Support: True
+- Original Layer Name:
+  - Identity/sink_port_0
+
+Transformed Layer Name: Identity_1
+- Type:      Add
+- FPGA Support: True
+- Original Layer Name:
+  - Identity_1
+
+Transformed Layer Name: Constant_1669
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Constant_1669
+
+Transformed Layer Name: Identity
+- Type:      MatMul
+- FPGA Support: True
+- Original Layer Name:
+  - Identity
+
+Transformed Layer Name: Identity/fq_weights_1
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Identity/fq_weights_1
+
+Transformed Layer Name: Relu__45/fq_output_0
+- Type:      FakeQuantize
+- FPGA Support: True
+- Original Layer Names:
+  - Relu__45
+  - Relu__45/fq_output_0
+
+Transformed Layer Name: Constant_3676
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__45/fq_output_0/output_high
+
+Transformed Layer Name: Constant_3675
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__45/fq_output_0/output_low
+
+Transformed Layer Name: Constant_3674
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__45/fq_output_0/input_high
+
+Transformed Layer Name: Constant_3673
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__45/fq_output_0/input_low
+
+Transformed Layer Name: Add__48
+- Type:      Add
+- FPGA Support: True
+- Original Layer Name:
+  - Add__48
+
+Transformed Layer Name: Constant_1668
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Constant_1668
+
+Transformed Layer Name: functional_1/activation_8/Relu;functional_1/dense_8/BiasAdd
+- Type:      MatMul
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/activation_8/Relu;functional_1/dense_8/BiasAdd
+
+Transformed Layer Name: functional_1/activation_8/Relu;functional_1/dense_8/BiasAdd/fq_weights_1
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/activation_8/Relu;functional_1/dense_8/BiasAdd/fq_weights_1
+
+Transformed Layer Name: Relu__40/fq_output_0
+- Type:      FakeQuantize
+- FPGA Support: True
+- Original Layer Names:
+  - Relu__40
+  - Relu__40/fq_output_0
+
+Transformed Layer Name: Constant_3672
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__40/fq_output_0/output_high
+
+Transformed Layer Name: Constant_3671
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__40/fq_output_0/output_low
+
+Transformed Layer Name: Constant_3670
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__40/fq_output_0/input_high
+
+Transformed Layer Name: Constant_3669
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__40/fq_output_0/input_low
+
+Transformed Layer Name: Add__43
+- Type:      Add
+- FPGA Support: True
+- Original Layer Name:
+  - Add__43
+
+Transformed Layer Name: Constant_1667
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Constant_1667
+
+Transformed Layer Name: functional_1/activation_7/Relu;functional_1/dense_7/BiasAdd
+- Type:      MatMul
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/activation_7/Relu;functional_1/dense_7/BiasAdd
+
+Transformed Layer Name: functional_1/activation_7/Relu;functional_1/dense_7/BiasAdd/fq_weights_1
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/activation_7/Relu;functional_1/dense_7/BiasAdd/fq_weights_1
+
+Transformed Layer Name: Relu__35/fq_output_0
+- Type:      FakeQuantize
+- FPGA Support: True
+- Original Layer Names:
+  - Relu__35
+  - Relu__35/fq_output_0
+
+Transformed Layer Name: Constant_3668
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__35/fq_output_0/output_high
+
+Transformed Layer Name: Constant_3667
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__35/fq_output_0/output_low
+
+Transformed Layer Name: Constant_3666
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__35/fq_output_0/input_high
+
+Transformed Layer Name: Constant_3665
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__35/fq_output_0/input_low
+
+Transformed Layer Name: Add__38
+- Type:      Add
+- FPGA Support: True
+- Original Layer Name:
+  - Add__38
+
+Transformed Layer Name: Constant_1666
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Constant_1666
+
+Transformed Layer Name: functional_1/activation_6/Relu;functional_1/dense_6/BiasAdd
+- Type:      MatMul
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/activation_6/Relu;functional_1/dense_6/BiasAdd
+
+Transformed Layer Name: functional_1/activation_6/Relu;functional_1/dense_6/BiasAdd/fq_weights_1
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/activation_6/Relu;functional_1/dense_6/BiasAdd/fq_weights_1
+
+Transformed Layer Name: Relu__30/fq_output_0
+- Type:      FakeQuantize
+- FPGA Support: True
+- Original Layer Names:
+  - Relu__30
+  - Relu__30/fq_output_0
+
+Transformed Layer Name: Constant_3664
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__30/fq_output_0/output_high
+
+Transformed Layer Name: Constant_3663
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__30/fq_output_0/output_low
+
+Transformed Layer Name: Constant_3662
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__30/fq_output_0/input_high
+
+Transformed Layer Name: Constant_3661
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__30/fq_output_0/input_low
+
+Transformed Layer Name: Add__33
+- Type:      Add
+- FPGA Support: True
+- Original Layer Name:
+  - Add__33
+
+Transformed Layer Name: Constant_1665
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Constant_1665
+
+Transformed Layer Name: functional_1/activation_5/Relu;functional_1/dense_5/BiasAdd
+- Type:      MatMul
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/activation_5/Relu;functional_1/dense_5/BiasAdd
+
+Transformed Layer Name: functional_1/activation_5/Relu;functional_1/dense_5/BiasAdd/fq_weights_1
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/activation_5/Relu;functional_1/dense_5/BiasAdd/fq_weights_1
+
+Transformed Layer Name: Relu__25/fq_output_0
+- Type:      FakeQuantize
+- FPGA Support: True
+- Original Layer Names:
+  - Relu__25
+  - Relu__25/fq_output_0
+
+Transformed Layer Name: Constant_3660
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__25/fq_output_0/output_high
+
+Transformed Layer Name: Constant_3659
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__25/fq_output_0/output_low
+
+Transformed Layer Name: Constant_3658
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__25/fq_output_0/input_high
+
+Transformed Layer Name: Constant_3657
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__25/fq_output_0/input_low
+
+Transformed Layer Name: Add__28
+- Type:      Add
+- FPGA Support: True
+- Original Layer Name:
+  - Add__28
+
+Transformed Layer Name: Constant_1664
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Constant_1664
+
+Transformed Layer Name: functional_1/activation_4/Relu;functional_1/dense_4/BiasAdd
+- Type:      MatMul
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/activation_4/Relu;functional_1/dense_4/BiasAdd
+
+Transformed Layer Name: functional_1/activation_4/Relu;functional_1/dense_4/BiasAdd/fq_weights_1
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/activation_4/Relu;functional_1/dense_4/BiasAdd/fq_weights_1
+
+Transformed Layer Name: Relu__20/fq_output_0
+- Type:      FakeQuantize
+- FPGA Support: True
+- Original Layer Names:
+  - Relu__20
+  - Relu__20/fq_output_0
+
+Transformed Layer Name: Constant_3656
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__20/fq_output_0/output_high
+
+Transformed Layer Name: Constant_3655
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__20/fq_output_0/output_low
+
+Transformed Layer Name: Constant_3654
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__20/fq_output_0/input_high
+
+Transformed Layer Name: Constant_3653
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__20/fq_output_0/input_low
+
+Transformed Layer Name: Add__23
+- Type:      Add
+- FPGA Support: True
+- Original Layer Name:
+  - Add__23
+
+Transformed Layer Name: Constant_1663
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Constant_1663
+
+Transformed Layer Name: functional_1/activation_3/Relu;functional_1/dense_3/BiasAdd
+- Type:      MatMul
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/activation_3/Relu;functional_1/dense_3/BiasAdd
+
+Transformed Layer Name: functional_1/activation_3/Relu;functional_1/dense_3/BiasAdd/fq_weights_1
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/activation_3/Relu;functional_1/dense_3/BiasAdd/fq_weights_1
+
+Transformed Layer Name: Relu__15/fq_output_0
+- Type:      FakeQuantize
+- FPGA Support: True
+- Original Layer Names:
+  - Relu__15
+  - Relu__15/fq_output_0
+
+Transformed Layer Name: Constant_3652
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__15/fq_output_0/output_high
+
+Transformed Layer Name: Constant_3651
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__15/fq_output_0/output_low
+
+Transformed Layer Name: Constant_3650
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__15/fq_output_0/input_high
+
+Transformed Layer Name: Constant_3649
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__15/fq_output_0/input_low
+
+Transformed Layer Name: Add__18
+- Type:      Add
+- FPGA Support: True
+- Original Layer Name:
+  - Add__18
+
+Transformed Layer Name: Constant_1662
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Constant_1662
+
+Transformed Layer Name: functional_1/activation_2/Relu;functional_1/dense_2/BiasAdd
+- Type:      MatMul
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/activation_2/Relu;functional_1/dense_2/BiasAdd
+
+Transformed Layer Name: functional_1/activation_2/Relu;functional_1/dense_2/BiasAdd/fq_weights_1
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/activation_2/Relu;functional_1/dense_2/BiasAdd/fq_weights_1
+
+Transformed Layer Name: Relu__10/fq_output_0
+- Type:      FakeQuantize
+- FPGA Support: True
+- Original Layer Names:
+  - Relu__10
+  - Relu__10/fq_output_0
+
+Transformed Layer Name: Constant_3648
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__10/fq_output_0/output_high
+
+Transformed Layer Name: Constant_3647
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__10/fq_output_0/output_low
+
+Transformed Layer Name: Constant_3646
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__10/fq_output_0/input_high
+
+Transformed Layer Name: Constant_3645
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__10/fq_output_0/input_low
+
+Transformed Layer Name: Add__13
+- Type:      Add
+- FPGA Support: True
+- Original Layer Name:
+  - Add__13
+
+Transformed Layer Name: Constant_1661
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Constant_1661
+
+Transformed Layer Name: functional_1/activation_1/Relu;functional_1/dense_1/BiasAdd
+- Type:      MatMul
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/activation_1/Relu;functional_1/dense_1/BiasAdd
+
+Transformed Layer Name: functional_1/activation_1/Relu;functional_1/dense_1/BiasAdd/fq_weights_1
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/activation_1/Relu;functional_1/dense_1/BiasAdd/fq_weights_1
+
+Transformed Layer Name: Relu__5/fq_output_0
+- Type:      FakeQuantize
+- FPGA Support: True
+- Original Layer Names:
+  - Relu__5
+  - Relu__5/fq_output_0
+
+Transformed Layer Name: Constant_3644
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__5/fq_output_0/output_high
+
+Transformed Layer Name: Constant_3643
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__5/fq_output_0/output_low
+
+Transformed Layer Name: Constant_3642
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__5/fq_output_0/input_high
+
+Transformed Layer Name: Constant_3641
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__5/fq_output_0/input_low
+
+Transformed Layer Name: Add__8
+- Type:      Add
+- FPGA Support: True
+- Original Layer Name:
+  - Add__8
+
+Transformed Layer Name: Constant_1660
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Constant_1660
+
+Transformed Layer Name: functional_1/activation/Relu;functional_1/dense/BiasAdd
+- Type:      MatMul
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/activation/Relu;functional_1/dense/BiasAdd
+
+Transformed Layer Name: functional_1/activation/Relu;functional_1/dense/BiasAdd/fq_weights_1
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/activation/Relu;functional_1/dense/BiasAdd/fq_weights_1
+
+Transformed Layer Name: input_1/fq_output_0
+- Type:      FakeQuantize
+- FPGA Support: True
+- Original Layer Name:
+  - input_1/fq_output_0
+
+Transformed Layer Name: Constant_3640
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - input_1/fq_output_0/output_high
+
+Transformed Layer Name: Constant_3639
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - input_1/fq_output_0/output_low
+
+Transformed Layer Name: Constant_3638
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - input_1/fq_output_0/input_high
+
+Transformed Layer Name: Constant_3637
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - input_1/fq_output_0/input_low
+

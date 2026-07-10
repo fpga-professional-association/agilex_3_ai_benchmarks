@@ -1,0 +1,1096 @@
+This report displays information about the original OpenVINO graph and the transformed OpenVINO graph.
+Multiple layers in the original graph might be fused, others might be split, while some might be changed entirely.
+
+
+The structure of this report is:
+- List of redundant modules. Modules activated in the arch file, but not used
+- List of all unsupported layers in the original OpenVINO graph
+- List of reasons for unsupporting layers
+- Original graph per layer support information analysis
+- Interal name to original name mappings
+- Per layer information dump
+
+
+List of redundant modules. Modules activated in the arch file, but not used:
+INFO: Arch file enables the sigmoid activation module, however, sigmoid activations are not used in the model.
+To avoid allocating unnecessary resources, disable the sigmoid activation module in the arch file.
+
+INFO: Arch file enables the PReLU activation module, however, PReLU activations are not used in the model.
+To avoid allocating unnecessary resources, disable the PReLU activation module in the arch file.
+
+- Arch file enables the pool module, however, pool is not used in the model.
+  - To avoid allocating unnecessary resources, disable the pool module in the arch file.
+
+
+List of all unsupported layers in the original OpenVINO graph:
+- All layers are supported
+
+
+List of reasons for unsupporting layers:
+- No direct reasons for CPU placement exist
+
+
+Original graph per layer support information analysis:
+- All layers are supported
+
+Internal name to original name mappings:
+Transformed Layer Name: input_1
+- Original Layer Name:
+  - input_1
+
+Transformed Layer Name: Identity/sink_port_0
+- Original Layer Name:
+  - Identity/sink_port_0
+
+Transformed Layer Name: Identity
+- Original Layer Name:
+  - Identity
+
+Transformed Layer Name: Add__95
+- Original Layer Name:
+  - Add__95
+
+Transformed Layer Name: Constant_2686
+- Original Layer Name:
+  - Constant_2686
+
+Transformed Layer Name: functional_1/dense/BiasAdd
+- Original Layer Name:
+  - functional_1/dense/BiasAdd
+
+Transformed Layer Name: functional_1/dense/BiasAdd/fq_weights_1
+- Original Layer Name:
+  - functional_1/dense/BiasAdd/fq_weights_1
+
+Transformed Layer Name: functional_1/flatten/Reshape
+- Original Layer Name:
+  - functional_1/flatten/Reshape
+
+Transformed Layer Name: Concat_374
+- Original Layer Names:
+  - Could not trace the origins of this transformed node
+
+Transformed Layer Name: functional_1_average_pooling2d_AvgPool_conv/fq_output_0
+- Original Layer Name:
+  - functional_1_average_pooling2d_AvgPool_conv/fq_output_0
+
+Transformed Layer Name: Constant_3753
+- Original Layer Name:
+  - functional_1_average_pooling2d_AvgPool_conv/fq_output_0/output_high
+
+Transformed Layer Name: Constant_3752
+- Original Layer Name:
+  - functional_1_average_pooling2d_AvgPool_conv/fq_output_0/output_low
+
+Transformed Layer Name: Constant_3751
+- Original Layer Name:
+  - functional_1_average_pooling2d_AvgPool_conv/fq_output_0/input_high
+
+Transformed Layer Name: Constant_3750
+- Original Layer Name:
+  - functional_1_average_pooling2d_AvgPool_conv/fq_output_0/input_low
+
+Transformed Layer Name: functional_1_average_pooling2d_AvgPool_conv
+- Original Layer Name:
+  - functional_1_average_pooling2d_AvgPool_conv
+
+Transformed Layer Name: functional_1_average_pooling2d_AvgPool_conv/fq_weights_1
+- Original Layer Name:
+  - functional_1_average_pooling2d_AvgPool_conv/fq_weights_1
+
+Transformed Layer Name: Relu__91/fq_output_0
+- Original Layer Names:
+  - Relu__91
+  - Relu__91/fq_output_0
+
+Transformed Layer Name: Relu__91/fq_output_0/output_high
+- Original Layer Name:
+  - Relu__91/fq_output_0/output_high
+
+Transformed Layer Name: Relu__91/fq_output_0/output_low
+- Original Layer Name:
+  - Relu__91/fq_output_0/output_low
+
+Transformed Layer Name: Relu__91/fq_output_0/input_high
+- Original Layer Name:
+  - Relu__91/fq_output_0/input_high
+
+Transformed Layer Name: Relu__91/fq_output_0/input_low
+- Original Layer Name:
+  - Relu__91/fq_output_0/input_low
+
+Transformed Layer Name: functional_1/activation_8/Relu;functional_1/batch_normalization_8/FusedBatchNormV3;functional_1/conv2d_4/BiasAdd/ReadVariableOp/resource;functional_1/conv2d_4/BiasAdd;functional_1/conv2d_4/Conv2D1
+- Original Layer Name:
+  - functional_1/activation_8/Relu;functional_1/batch_normalization_8/FusedBatchNormV3;functional_1/conv2d_4/BiasAdd/ReadVariableOp/resource;functional_1/conv2d_4/BiasAdd;functional_1/conv2d_4/Conv2D1
+
+Transformed Layer Name: Reshape_364
+- Original Layer Name:
+  - Reshape_364
+
+Transformed Layer Name: functional_1/activation_8/Relu;functional_1/batch_normalization_8/FusedBatchNormV3;functional_1/conv2d_4/BiasAdd/ReadVariableOp/resource;functional_1/conv2d_4/BiasAdd;functional_1/conv2d_4/Conv2D1/WithoutBiases
+- Original Layer Name:
+  - functional_1/activation_8/Relu;functional_1/batch_normalization_8/FusedBatchNormV3;functional_1/conv2d_4/BiasAdd/ReadVariableOp/resource;functional_1/conv2d_4/BiasAdd;functional_1/conv2d_4/Conv2D1/WithoutBiases
+
+Transformed Layer Name: functional_1/conv2d_4/Conv2D_dequant
+- Original Layer Name:
+  - functional_1/conv2d_4/Conv2D_dequant
+
+Transformed Layer Name: Relu__88/fq_output_0
+- Original Layer Names:
+  - Relu__88
+  - Relu__88/fq_output_0
+
+Transformed Layer Name: Constant_3749
+- Original Layer Name:
+  - Relu__88/fq_output_0/output_high
+
+Transformed Layer Name: Constant_3748
+- Original Layer Name:
+  - Relu__88/fq_output_0/output_low
+
+Transformed Layer Name: Constant_3747
+- Original Layer Name:
+  - Relu__88/fq_output_0/input_high
+
+Transformed Layer Name: Constant_3746
+- Original Layer Name:
+  - Relu__88/fq_output_0/input_low
+
+Transformed Layer Name: functional_1/activation_7/Relu;functional_1/batch_normalization_7/FusedBatchNormV3;functional_1/depthwise_conv2d_3/depthwise;functional_1/depthwise_conv2d_3/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d_3/BiasAdd/ReadVariableOp/resource1
+- Original Layer Name:
+  - functional_1/activation_7/Relu;functional_1/batch_normalization_7/FusedBatchNormV3;functional_1/depthwise_conv2d_3/depthwise;functional_1/depthwise_conv2d_3/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d_3/BiasAdd/ReadVariableOp/resource1
+
+Transformed Layer Name: Reshape_350
+- Original Layer Name:
+  - Reshape_350
+
+Transformed Layer Name: functional_1/activation_7/Relu;functional_1/batch_normalization_7/FusedBatchNormV3;functional_1/depthwise_conv2d_3/depthwise;functional_1/depthwise_conv2d_3/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d_3/BiasAdd/ReadVariableOp/resource1/WithoutBiases
+- Original Layer Name:
+  - functional_1/activation_7/Relu;functional_1/batch_normalization_7/FusedBatchNormV3;functional_1/depthwise_conv2d_3/depthwise;functional_1/depthwise_conv2d_3/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d_3/BiasAdd/ReadVariableOp/resource1/WithoutBiases
+
+Transformed Layer Name: functional_1/activation_7/Relu;functional_1/batch_normalization_7/FusedBatchNormV3;functional_1/depthwise_conv2d_3/depthwise;functional_1/depthwise_conv2d_3/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d_3/BiasAdd/ReadVariableOp/resource1/WithoutBiases/fq_weights_1
+- Original Layer Name:
+  - functional_1/activation_7/Relu;functional_1/batch_normalization_7/FusedBatchNormV3;functional_1/depthwise_conv2d_3/depthwise;functional_1/depthwise_conv2d_3/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d_3/BiasAdd/ReadVariableOp/resource1/WithoutBiases/fq_weights_1
+
+Transformed Layer Name: Relu__85/fq_output_0
+- Original Layer Names:
+  - Relu__85
+  - Relu__85/fq_output_0
+
+Transformed Layer Name: Relu__85/fq_output_0/output_high
+- Original Layer Name:
+  - Relu__85/fq_output_0/output_high
+
+Transformed Layer Name: Relu__85/fq_output_0/output_low
+- Original Layer Name:
+  - Relu__85/fq_output_0/output_low
+
+Transformed Layer Name: Relu__85/fq_output_0/input_high
+- Original Layer Name:
+  - Relu__85/fq_output_0/input_high
+
+Transformed Layer Name: Relu__85/fq_output_0/input_low
+- Original Layer Name:
+  - Relu__85/fq_output_0/input_low
+
+Transformed Layer Name: functional_1/activation_6/Relu;functional_1/batch_normalization_6/FusedBatchNormV3;functional_1/conv2d_3/BiasAdd/ReadVariableOp/resource;functional_1/conv2d_3/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/conv2d_3/Conv2D1
+- Original Layer Name:
+  - functional_1/activation_6/Relu;functional_1/batch_normalization_6/FusedBatchNormV3;functional_1/conv2d_3/BiasAdd/ReadVariableOp/resource;functional_1/conv2d_3/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/conv2d_3/Conv2D1
+
+Transformed Layer Name: Reshape_290
+- Original Layer Name:
+  - Reshape_290
+
+Transformed Layer Name: functional_1/activation_6/Relu;functional_1/batch_normalization_6/FusedBatchNormV3;functional_1/conv2d_3/BiasAdd/ReadVariableOp/resource;functional_1/conv2d_3/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/conv2d_3/Conv2D1/WithoutBiases
+- Original Layer Name:
+  - functional_1/activation_6/Relu;functional_1/batch_normalization_6/FusedBatchNormV3;functional_1/conv2d_3/BiasAdd/ReadVariableOp/resource;functional_1/conv2d_3/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/conv2d_3/Conv2D1/WithoutBiases
+
+Transformed Layer Name: functional_1/conv2d_3/Conv2D_dequant
+- Original Layer Name:
+  - functional_1/conv2d_3/Conv2D_dequant
+
+Transformed Layer Name: Relu__82/fq_output_0
+- Original Layer Names:
+  - Relu__82
+  - Relu__82/fq_output_0
+
+Transformed Layer Name: Constant_3745
+- Original Layer Name:
+  - Relu__82/fq_output_0/output_high
+
+Transformed Layer Name: Constant_3744
+- Original Layer Name:
+  - Relu__82/fq_output_0/output_low
+
+Transformed Layer Name: Constant_3743
+- Original Layer Name:
+  - Relu__82/fq_output_0/input_high
+
+Transformed Layer Name: Constant_3742
+- Original Layer Name:
+  - Relu__82/fq_output_0/input_low
+
+Transformed Layer Name: functional_1/activation_5/Relu;functional_1/batch_normalization_5/FusedBatchNormV3;functional_1/depthwise_conv2d_2/depthwise;functional_1/depthwise_conv2d_2/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d_2/BiasAdd/ReadVariableOp/resource1
+- Original Layer Name:
+  - functional_1/activation_5/Relu;functional_1/batch_normalization_5/FusedBatchNormV3;functional_1/depthwise_conv2d_2/depthwise;functional_1/depthwise_conv2d_2/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d_2/BiasAdd/ReadVariableOp/resource1
+
+Transformed Layer Name: Reshape_276
+- Original Layer Name:
+  - Reshape_276
+
+Transformed Layer Name: functional_1/activation_5/Relu;functional_1/batch_normalization_5/FusedBatchNormV3;functional_1/depthwise_conv2d_2/depthwise;functional_1/depthwise_conv2d_2/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d_2/BiasAdd/ReadVariableOp/resource1/WithoutBiases
+- Original Layer Name:
+  - functional_1/activation_5/Relu;functional_1/batch_normalization_5/FusedBatchNormV3;functional_1/depthwise_conv2d_2/depthwise;functional_1/depthwise_conv2d_2/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d_2/BiasAdd/ReadVariableOp/resource1/WithoutBiases
+
+Transformed Layer Name: functional_1/activation_5/Relu;functional_1/batch_normalization_5/FusedBatchNormV3;functional_1/depthwise_conv2d_2/depthwise;functional_1/depthwise_conv2d_2/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d_2/BiasAdd/ReadVariableOp/resource1/WithoutBiases/fq_weights_1
+- Original Layer Name:
+  - functional_1/activation_5/Relu;functional_1/batch_normalization_5/FusedBatchNormV3;functional_1/depthwise_conv2d_2/depthwise;functional_1/depthwise_conv2d_2/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d_2/BiasAdd/ReadVariableOp/resource1/WithoutBiases/fq_weights_1
+
+Transformed Layer Name: Relu__79/fq_output_0
+- Original Layer Names:
+  - Relu__79
+  - Relu__79/fq_output_0
+
+Transformed Layer Name: Relu__79/fq_output_0/output_high
+- Original Layer Name:
+  - Relu__79/fq_output_0/output_high
+
+Transformed Layer Name: Relu__79/fq_output_0/output_low
+- Original Layer Name:
+  - Relu__79/fq_output_0/output_low
+
+Transformed Layer Name: Relu__79/fq_output_0/input_high
+- Original Layer Name:
+  - Relu__79/fq_output_0/input_high
+
+Transformed Layer Name: Relu__79/fq_output_0/input_low
+- Original Layer Name:
+  - Relu__79/fq_output_0/input_low
+
+Transformed Layer Name: functional_1/activation_4/Relu;functional_1/batch_normalization_4/FusedBatchNormV3;functional_1/conv2d_2/BiasAdd/ReadVariableOp/resource;functional_1/conv2d_2/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/conv2d_2/Conv2D1
+- Original Layer Name:
+  - functional_1/activation_4/Relu;functional_1/batch_normalization_4/FusedBatchNormV3;functional_1/conv2d_2/BiasAdd/ReadVariableOp/resource;functional_1/conv2d_2/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/conv2d_2/Conv2D1
+
+Transformed Layer Name: Reshape_216
+- Original Layer Name:
+  - Reshape_216
+
+Transformed Layer Name: functional_1/activation_4/Relu;functional_1/batch_normalization_4/FusedBatchNormV3;functional_1/conv2d_2/BiasAdd/ReadVariableOp/resource;functional_1/conv2d_2/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/conv2d_2/Conv2D1/WithoutBiases
+- Original Layer Name:
+  - functional_1/activation_4/Relu;functional_1/batch_normalization_4/FusedBatchNormV3;functional_1/conv2d_2/BiasAdd/ReadVariableOp/resource;functional_1/conv2d_2/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/conv2d_2/Conv2D1/WithoutBiases
+
+Transformed Layer Name: functional_1/conv2d_2/Conv2D_dequant
+- Original Layer Name:
+  - functional_1/conv2d_2/Conv2D_dequant
+
+Transformed Layer Name: Relu__76/fq_output_0
+- Original Layer Names:
+  - Relu__76
+  - Relu__76/fq_output_0
+
+Transformed Layer Name: Constant_3741
+- Original Layer Name:
+  - Relu__76/fq_output_0/output_high
+
+Transformed Layer Name: Constant_3740
+- Original Layer Name:
+  - Relu__76/fq_output_0/output_low
+
+Transformed Layer Name: Constant_3739
+- Original Layer Name:
+  - Relu__76/fq_output_0/input_high
+
+Transformed Layer Name: Constant_3738
+- Original Layer Name:
+  - Relu__76/fq_output_0/input_low
+
+Transformed Layer Name: functional_1/activation_3/Relu;functional_1/batch_normalization_3/FusedBatchNormV3;functional_1/depthwise_conv2d_1/depthwise;functional_1/depthwise_conv2d_1/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d_1/BiasAdd/ReadVariableOp/resource1
+- Original Layer Name:
+  - functional_1/activation_3/Relu;functional_1/batch_normalization_3/FusedBatchNormV3;functional_1/depthwise_conv2d_1/depthwise;functional_1/depthwise_conv2d_1/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d_1/BiasAdd/ReadVariableOp/resource1
+
+Transformed Layer Name: Reshape_202
+- Original Layer Name:
+  - Reshape_202
+
+Transformed Layer Name: functional_1/activation_3/Relu;functional_1/batch_normalization_3/FusedBatchNormV3;functional_1/depthwise_conv2d_1/depthwise;functional_1/depthwise_conv2d_1/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d_1/BiasAdd/ReadVariableOp/resource1/WithoutBiases
+- Original Layer Name:
+  - functional_1/activation_3/Relu;functional_1/batch_normalization_3/FusedBatchNormV3;functional_1/depthwise_conv2d_1/depthwise;functional_1/depthwise_conv2d_1/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d_1/BiasAdd/ReadVariableOp/resource1/WithoutBiases
+
+Transformed Layer Name: functional_1/activation_3/Relu;functional_1/batch_normalization_3/FusedBatchNormV3;functional_1/depthwise_conv2d_1/depthwise;functional_1/depthwise_conv2d_1/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d_1/BiasAdd/ReadVariableOp/resource1/WithoutBiases/fq_weights_1
+- Original Layer Name:
+  - functional_1/activation_3/Relu;functional_1/batch_normalization_3/FusedBatchNormV3;functional_1/depthwise_conv2d_1/depthwise;functional_1/depthwise_conv2d_1/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d_1/BiasAdd/ReadVariableOp/resource1/WithoutBiases/fq_weights_1
+
+Transformed Layer Name: Relu__73/fq_output_0
+- Original Layer Names:
+  - Relu__73
+  - Relu__73/fq_output_0
+
+Transformed Layer Name: Relu__73/fq_output_0/output_high
+- Original Layer Name:
+  - Relu__73/fq_output_0/output_high
+
+Transformed Layer Name: Relu__73/fq_output_0/output_low
+- Original Layer Name:
+  - Relu__73/fq_output_0/output_low
+
+Transformed Layer Name: Relu__73/fq_output_0/input_high
+- Original Layer Name:
+  - Relu__73/fq_output_0/input_high
+
+Transformed Layer Name: Relu__73/fq_output_0/input_low
+- Original Layer Name:
+  - Relu__73/fq_output_0/input_low
+
+Transformed Layer Name: functional_1/activation_2/Relu;functional_1/batch_normalization_2/FusedBatchNormV3;functional_1/conv2d_1/BiasAdd/ReadVariableOp/resource;functional_1/conv2d_1/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/conv2d_1/Conv2D1
+- Original Layer Name:
+  - functional_1/activation_2/Relu;functional_1/batch_normalization_2/FusedBatchNormV3;functional_1/conv2d_1/BiasAdd/ReadVariableOp/resource;functional_1/conv2d_1/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/conv2d_1/Conv2D1
+
+Transformed Layer Name: Reshape_142
+- Original Layer Name:
+  - Reshape_142
+
+Transformed Layer Name: functional_1/activation_2/Relu;functional_1/batch_normalization_2/FusedBatchNormV3;functional_1/conv2d_1/BiasAdd/ReadVariableOp/resource;functional_1/conv2d_1/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/conv2d_1/Conv2D1/WithoutBiases
+- Original Layer Name:
+  - functional_1/activation_2/Relu;functional_1/batch_normalization_2/FusedBatchNormV3;functional_1/conv2d_1/BiasAdd/ReadVariableOp/resource;functional_1/conv2d_1/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/conv2d_1/Conv2D1/WithoutBiases
+
+Transformed Layer Name: functional_1/conv2d_1/Conv2D_dequant
+- Original Layer Name:
+  - functional_1/conv2d_1/Conv2D_dequant
+
+Transformed Layer Name: Relu__70/fq_output_0
+- Original Layer Names:
+  - Relu__70
+  - Relu__70/fq_output_0
+
+Transformed Layer Name: Constant_3737
+- Original Layer Name:
+  - Relu__70/fq_output_0/output_high
+
+Transformed Layer Name: Constant_3736
+- Original Layer Name:
+  - Relu__70/fq_output_0/output_low
+
+Transformed Layer Name: Constant_3735
+- Original Layer Name:
+  - Relu__70/fq_output_0/input_high
+
+Transformed Layer Name: Constant_3734
+- Original Layer Name:
+  - Relu__70/fq_output_0/input_low
+
+Transformed Layer Name: functional_1/activation_1/Relu;functional_1/batch_normalization_1/FusedBatchNormV3;functional_1/depthwise_conv2d/depthwise;functional_1/depthwise_conv2d/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d/BiasAdd/ReadVariableOp/resource1
+- Original Layer Name:
+  - functional_1/activation_1/Relu;functional_1/batch_normalization_1/FusedBatchNormV3;functional_1/depthwise_conv2d/depthwise;functional_1/depthwise_conv2d/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d/BiasAdd/ReadVariableOp/resource1
+
+Transformed Layer Name: Reshape_128
+- Original Layer Name:
+  - Reshape_128
+
+Transformed Layer Name: functional_1/activation_1/Relu;functional_1/batch_normalization_1/FusedBatchNormV3;functional_1/depthwise_conv2d/depthwise;functional_1/depthwise_conv2d/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d/BiasAdd/ReadVariableOp/resource1/WithoutBiases
+- Original Layer Name:
+  - functional_1/activation_1/Relu;functional_1/batch_normalization_1/FusedBatchNormV3;functional_1/depthwise_conv2d/depthwise;functional_1/depthwise_conv2d/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d/BiasAdd/ReadVariableOp/resource1/WithoutBiases
+
+Transformed Layer Name: functional_1/activation_1/Relu;functional_1/batch_normalization_1/FusedBatchNormV3;functional_1/depthwise_conv2d/depthwise;functional_1/depthwise_conv2d/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d/BiasAdd/ReadVariableOp/resource1/WithoutBiases/fq_weights_1
+- Original Layer Name:
+  - functional_1/activation_1/Relu;functional_1/batch_normalization_1/FusedBatchNormV3;functional_1/depthwise_conv2d/depthwise;functional_1/depthwise_conv2d/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d/BiasAdd/ReadVariableOp/resource1/WithoutBiases/fq_weights_1
+
+Transformed Layer Name: Relu__67/fq_output_0
+- Original Layer Names:
+  - Relu__67
+  - Relu__67/fq_output_0
+
+Transformed Layer Name: Relu__67/fq_output_0/output_high
+- Original Layer Name:
+  - Relu__67/fq_output_0/output_high
+
+Transformed Layer Name: Relu__67/fq_output_0/output_low
+- Original Layer Name:
+  - Relu__67/fq_output_0/output_low
+
+Transformed Layer Name: Relu__67/fq_output_0/input_high
+- Original Layer Name:
+  - Relu__67/fq_output_0/input_high
+
+Transformed Layer Name: Relu__67/fq_output_0/input_low
+- Original Layer Name:
+  - Relu__67/fq_output_0/input_low
+
+Transformed Layer Name: functional_1/activation/Relu;functional_1/batch_normalization/FusedBatchNormV3;functional_1/conv2d/BiasAdd/ReadVariableOp/resource;functional_1/conv2d/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/conv2d/Conv2D1
+- Original Layer Name:
+  - functional_1/activation/Relu;functional_1/batch_normalization/FusedBatchNormV3;functional_1/conv2d/BiasAdd/ReadVariableOp/resource;functional_1/conv2d/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/conv2d/Conv2D1
+
+Transformed Layer Name: Reshape_68
+- Original Layer Name:
+  - Reshape_68
+
+Transformed Layer Name: functional_1/activation/Relu;functional_1/batch_normalization/FusedBatchNormV3;functional_1/conv2d/BiasAdd/ReadVariableOp/resource;functional_1/conv2d/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/conv2d/Conv2D1/WithoutBiases
+- Original Layer Name:
+  - functional_1/activation/Relu;functional_1/batch_normalization/FusedBatchNormV3;functional_1/conv2d/BiasAdd/ReadVariableOp/resource;functional_1/conv2d/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/conv2d/Conv2D1/WithoutBiases
+
+Transformed Layer Name: functional_1/conv2d/Conv2D_dequant
+- Original Layer Name:
+  - functional_1/conv2d/Conv2D_dequant
+
+Transformed Layer Name: functional_1/activation/Relu;functional_1/batch_normalization/FusedBatchNormV3;functional_1/conv2d/BiasAdd/ReadVariableOp/resource;functional_1/conv2d/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/conv2d/Conv2D1__107
+- Original Layer Name:
+  - functional_1/activation/Relu;functional_1/batch_normalization/FusedBatchNormV3;functional_1/conv2d/BiasAdd/ReadVariableOp/resource;functional_1/conv2d/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/conv2d/Conv2D1__107
+
+Transformed Layer Name: new_shape__167
+- Original Layer Name:
+  - new_shape__167
+
+Transformed Layer Name: input_1/fq_output_0
+- Original Layer Name:
+  - input_1/fq_output_0
+
+Transformed Layer Name: Constant_3733
+- Original Layer Name:
+  - input_1/fq_output_0/output_high
+
+Transformed Layer Name: Constant_3732
+- Original Layer Name:
+  - input_1/fq_output_0/output_low
+
+Transformed Layer Name: Constant_3731
+- Original Layer Name:
+  - input_1/fq_output_0/input_high
+
+Transformed Layer Name: Constant_3730
+- Original Layer Name:
+  - input_1/fq_output_0/input_low
+
+
+Per layer information dump:
+Transformed Layer Name: input_1
+- Type:      Parameter
+- FPGA Support: True
+- Original Layer Name:
+  - input_1
+
+Transformed Layer Name: Identity/sink_port_0
+- Type:      Result
+- FPGA Support: True
+- Original Layer Name:
+  - Identity/sink_port_0
+
+Transformed Layer Name: Identity
+- Type:      Softmax
+- FPGA Support: True
+- Original Layer Name:
+  - Identity
+
+Transformed Layer Name: Add__95
+- Type:      Add
+- FPGA Support: True
+- Original Layer Name:
+  - Add__95
+
+Transformed Layer Name: Constant_2686
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Constant_2686
+
+Transformed Layer Name: functional_1/dense/BiasAdd
+- Type:      MatMul
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/dense/BiasAdd
+
+Transformed Layer Name: functional_1/dense/BiasAdd/fq_weights_1
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/dense/BiasAdd/fq_weights_1
+
+Transformed Layer Name: functional_1/flatten/Reshape
+- Type:      Reshape
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/flatten/Reshape
+
+Transformed Layer Name: Concat_374
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Names:
+  - Could not trace the origins of this transformed node
+
+Transformed Layer Name: functional_1_average_pooling2d_AvgPool_conv/fq_output_0
+- Type:      FakeQuantize
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1_average_pooling2d_AvgPool_conv/fq_output_0
+
+Transformed Layer Name: Constant_3753
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1_average_pooling2d_AvgPool_conv/fq_output_0/output_high
+
+Transformed Layer Name: Constant_3752
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1_average_pooling2d_AvgPool_conv/fq_output_0/output_low
+
+Transformed Layer Name: Constant_3751
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1_average_pooling2d_AvgPool_conv/fq_output_0/input_high
+
+Transformed Layer Name: Constant_3750
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1_average_pooling2d_AvgPool_conv/fq_output_0/input_low
+
+Transformed Layer Name: functional_1_average_pooling2d_AvgPool_conv
+- Type:      GroupConvolution
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1_average_pooling2d_AvgPool_conv
+
+Transformed Layer Name: functional_1_average_pooling2d_AvgPool_conv/fq_weights_1
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1_average_pooling2d_AvgPool_conv/fq_weights_1
+
+Transformed Layer Name: Relu__91/fq_output_0
+- Type:      FakeQuantize
+- FPGA Support: True
+- Original Layer Names:
+  - Relu__91
+  - Relu__91/fq_output_0
+
+Transformed Layer Name: Relu__91/fq_output_0/output_high
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__91/fq_output_0/output_high
+
+Transformed Layer Name: Relu__91/fq_output_0/output_low
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__91/fq_output_0/output_low
+
+Transformed Layer Name: Relu__91/fq_output_0/input_high
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__91/fq_output_0/input_high
+
+Transformed Layer Name: Relu__91/fq_output_0/input_low
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__91/fq_output_0/input_low
+
+Transformed Layer Name: functional_1/activation_8/Relu;functional_1/batch_normalization_8/FusedBatchNormV3;functional_1/conv2d_4/BiasAdd/ReadVariableOp/resource;functional_1/conv2d_4/BiasAdd;functional_1/conv2d_4/Conv2D1
+- Type:      Add
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/activation_8/Relu;functional_1/batch_normalization_8/FusedBatchNormV3;functional_1/conv2d_4/BiasAdd/ReadVariableOp/resource;functional_1/conv2d_4/BiasAdd;functional_1/conv2d_4/Conv2D1
+
+Transformed Layer Name: Reshape_364
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Reshape_364
+
+Transformed Layer Name: functional_1/activation_8/Relu;functional_1/batch_normalization_8/FusedBatchNormV3;functional_1/conv2d_4/BiasAdd/ReadVariableOp/resource;functional_1/conv2d_4/BiasAdd;functional_1/conv2d_4/Conv2D1/WithoutBiases
+- Type:      Convolution
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/activation_8/Relu;functional_1/batch_normalization_8/FusedBatchNormV3;functional_1/conv2d_4/BiasAdd/ReadVariableOp/resource;functional_1/conv2d_4/BiasAdd;functional_1/conv2d_4/Conv2D1/WithoutBiases
+
+Transformed Layer Name: functional_1/conv2d_4/Conv2D_dequant
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/conv2d_4/Conv2D_dequant
+
+Transformed Layer Name: Relu__88/fq_output_0
+- Type:      FakeQuantize
+- FPGA Support: True
+- Original Layer Names:
+  - Relu__88
+  - Relu__88/fq_output_0
+
+Transformed Layer Name: Constant_3749
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__88/fq_output_0/output_high
+
+Transformed Layer Name: Constant_3748
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__88/fq_output_0/output_low
+
+Transformed Layer Name: Constant_3747
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__88/fq_output_0/input_high
+
+Transformed Layer Name: Constant_3746
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__88/fq_output_0/input_low
+
+Transformed Layer Name: functional_1/activation_7/Relu;functional_1/batch_normalization_7/FusedBatchNormV3;functional_1/depthwise_conv2d_3/depthwise;functional_1/depthwise_conv2d_3/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d_3/BiasAdd/ReadVariableOp/resource1
+- Type:      Add
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/activation_7/Relu;functional_1/batch_normalization_7/FusedBatchNormV3;functional_1/depthwise_conv2d_3/depthwise;functional_1/depthwise_conv2d_3/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d_3/BiasAdd/ReadVariableOp/resource1
+
+Transformed Layer Name: Reshape_350
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Reshape_350
+
+Transformed Layer Name: functional_1/activation_7/Relu;functional_1/batch_normalization_7/FusedBatchNormV3;functional_1/depthwise_conv2d_3/depthwise;functional_1/depthwise_conv2d_3/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d_3/BiasAdd/ReadVariableOp/resource1/WithoutBiases
+- Type:      GroupConvolution
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/activation_7/Relu;functional_1/batch_normalization_7/FusedBatchNormV3;functional_1/depthwise_conv2d_3/depthwise;functional_1/depthwise_conv2d_3/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d_3/BiasAdd/ReadVariableOp/resource1/WithoutBiases
+
+Transformed Layer Name: functional_1/activation_7/Relu;functional_1/batch_normalization_7/FusedBatchNormV3;functional_1/depthwise_conv2d_3/depthwise;functional_1/depthwise_conv2d_3/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d_3/BiasAdd/ReadVariableOp/resource1/WithoutBiases/fq_weights_1
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/activation_7/Relu;functional_1/batch_normalization_7/FusedBatchNormV3;functional_1/depthwise_conv2d_3/depthwise;functional_1/depthwise_conv2d_3/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d_3/BiasAdd/ReadVariableOp/resource1/WithoutBiases/fq_weights_1
+
+Transformed Layer Name: Relu__85/fq_output_0
+- Type:      FakeQuantize
+- FPGA Support: True
+- Original Layer Names:
+  - Relu__85
+  - Relu__85/fq_output_0
+
+Transformed Layer Name: Relu__85/fq_output_0/output_high
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__85/fq_output_0/output_high
+
+Transformed Layer Name: Relu__85/fq_output_0/output_low
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__85/fq_output_0/output_low
+
+Transformed Layer Name: Relu__85/fq_output_0/input_high
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__85/fq_output_0/input_high
+
+Transformed Layer Name: Relu__85/fq_output_0/input_low
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__85/fq_output_0/input_low
+
+Transformed Layer Name: functional_1/activation_6/Relu;functional_1/batch_normalization_6/FusedBatchNormV3;functional_1/conv2d_3/BiasAdd/ReadVariableOp/resource;functional_1/conv2d_3/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/conv2d_3/Conv2D1
+- Type:      Add
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/activation_6/Relu;functional_1/batch_normalization_6/FusedBatchNormV3;functional_1/conv2d_3/BiasAdd/ReadVariableOp/resource;functional_1/conv2d_3/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/conv2d_3/Conv2D1
+
+Transformed Layer Name: Reshape_290
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Reshape_290
+
+Transformed Layer Name: functional_1/activation_6/Relu;functional_1/batch_normalization_6/FusedBatchNormV3;functional_1/conv2d_3/BiasAdd/ReadVariableOp/resource;functional_1/conv2d_3/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/conv2d_3/Conv2D1/WithoutBiases
+- Type:      Convolution
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/activation_6/Relu;functional_1/batch_normalization_6/FusedBatchNormV3;functional_1/conv2d_3/BiasAdd/ReadVariableOp/resource;functional_1/conv2d_3/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/conv2d_3/Conv2D1/WithoutBiases
+
+Transformed Layer Name: functional_1/conv2d_3/Conv2D_dequant
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/conv2d_3/Conv2D_dequant
+
+Transformed Layer Name: Relu__82/fq_output_0
+- Type:      FakeQuantize
+- FPGA Support: True
+- Original Layer Names:
+  - Relu__82
+  - Relu__82/fq_output_0
+
+Transformed Layer Name: Constant_3745
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__82/fq_output_0/output_high
+
+Transformed Layer Name: Constant_3744
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__82/fq_output_0/output_low
+
+Transformed Layer Name: Constant_3743
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__82/fq_output_0/input_high
+
+Transformed Layer Name: Constant_3742
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__82/fq_output_0/input_low
+
+Transformed Layer Name: functional_1/activation_5/Relu;functional_1/batch_normalization_5/FusedBatchNormV3;functional_1/depthwise_conv2d_2/depthwise;functional_1/depthwise_conv2d_2/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d_2/BiasAdd/ReadVariableOp/resource1
+- Type:      Add
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/activation_5/Relu;functional_1/batch_normalization_5/FusedBatchNormV3;functional_1/depthwise_conv2d_2/depthwise;functional_1/depthwise_conv2d_2/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d_2/BiasAdd/ReadVariableOp/resource1
+
+Transformed Layer Name: Reshape_276
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Reshape_276
+
+Transformed Layer Name: functional_1/activation_5/Relu;functional_1/batch_normalization_5/FusedBatchNormV3;functional_1/depthwise_conv2d_2/depthwise;functional_1/depthwise_conv2d_2/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d_2/BiasAdd/ReadVariableOp/resource1/WithoutBiases
+- Type:      GroupConvolution
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/activation_5/Relu;functional_1/batch_normalization_5/FusedBatchNormV3;functional_1/depthwise_conv2d_2/depthwise;functional_1/depthwise_conv2d_2/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d_2/BiasAdd/ReadVariableOp/resource1/WithoutBiases
+
+Transformed Layer Name: functional_1/activation_5/Relu;functional_1/batch_normalization_5/FusedBatchNormV3;functional_1/depthwise_conv2d_2/depthwise;functional_1/depthwise_conv2d_2/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d_2/BiasAdd/ReadVariableOp/resource1/WithoutBiases/fq_weights_1
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/activation_5/Relu;functional_1/batch_normalization_5/FusedBatchNormV3;functional_1/depthwise_conv2d_2/depthwise;functional_1/depthwise_conv2d_2/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d_2/BiasAdd/ReadVariableOp/resource1/WithoutBiases/fq_weights_1
+
+Transformed Layer Name: Relu__79/fq_output_0
+- Type:      FakeQuantize
+- FPGA Support: True
+- Original Layer Names:
+  - Relu__79
+  - Relu__79/fq_output_0
+
+Transformed Layer Name: Relu__79/fq_output_0/output_high
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__79/fq_output_0/output_high
+
+Transformed Layer Name: Relu__79/fq_output_0/output_low
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__79/fq_output_0/output_low
+
+Transformed Layer Name: Relu__79/fq_output_0/input_high
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__79/fq_output_0/input_high
+
+Transformed Layer Name: Relu__79/fq_output_0/input_low
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__79/fq_output_0/input_low
+
+Transformed Layer Name: functional_1/activation_4/Relu;functional_1/batch_normalization_4/FusedBatchNormV3;functional_1/conv2d_2/BiasAdd/ReadVariableOp/resource;functional_1/conv2d_2/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/conv2d_2/Conv2D1
+- Type:      Add
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/activation_4/Relu;functional_1/batch_normalization_4/FusedBatchNormV3;functional_1/conv2d_2/BiasAdd/ReadVariableOp/resource;functional_1/conv2d_2/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/conv2d_2/Conv2D1
+
+Transformed Layer Name: Reshape_216
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Reshape_216
+
+Transformed Layer Name: functional_1/activation_4/Relu;functional_1/batch_normalization_4/FusedBatchNormV3;functional_1/conv2d_2/BiasAdd/ReadVariableOp/resource;functional_1/conv2d_2/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/conv2d_2/Conv2D1/WithoutBiases
+- Type:      Convolution
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/activation_4/Relu;functional_1/batch_normalization_4/FusedBatchNormV3;functional_1/conv2d_2/BiasAdd/ReadVariableOp/resource;functional_1/conv2d_2/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/conv2d_2/Conv2D1/WithoutBiases
+
+Transformed Layer Name: functional_1/conv2d_2/Conv2D_dequant
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/conv2d_2/Conv2D_dequant
+
+Transformed Layer Name: Relu__76/fq_output_0
+- Type:      FakeQuantize
+- FPGA Support: True
+- Original Layer Names:
+  - Relu__76
+  - Relu__76/fq_output_0
+
+Transformed Layer Name: Constant_3741
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__76/fq_output_0/output_high
+
+Transformed Layer Name: Constant_3740
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__76/fq_output_0/output_low
+
+Transformed Layer Name: Constant_3739
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__76/fq_output_0/input_high
+
+Transformed Layer Name: Constant_3738
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__76/fq_output_0/input_low
+
+Transformed Layer Name: functional_1/activation_3/Relu;functional_1/batch_normalization_3/FusedBatchNormV3;functional_1/depthwise_conv2d_1/depthwise;functional_1/depthwise_conv2d_1/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d_1/BiasAdd/ReadVariableOp/resource1
+- Type:      Add
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/activation_3/Relu;functional_1/batch_normalization_3/FusedBatchNormV3;functional_1/depthwise_conv2d_1/depthwise;functional_1/depthwise_conv2d_1/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d_1/BiasAdd/ReadVariableOp/resource1
+
+Transformed Layer Name: Reshape_202
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Reshape_202
+
+Transformed Layer Name: functional_1/activation_3/Relu;functional_1/batch_normalization_3/FusedBatchNormV3;functional_1/depthwise_conv2d_1/depthwise;functional_1/depthwise_conv2d_1/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d_1/BiasAdd/ReadVariableOp/resource1/WithoutBiases
+- Type:      GroupConvolution
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/activation_3/Relu;functional_1/batch_normalization_3/FusedBatchNormV3;functional_1/depthwise_conv2d_1/depthwise;functional_1/depthwise_conv2d_1/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d_1/BiasAdd/ReadVariableOp/resource1/WithoutBiases
+
+Transformed Layer Name: functional_1/activation_3/Relu;functional_1/batch_normalization_3/FusedBatchNormV3;functional_1/depthwise_conv2d_1/depthwise;functional_1/depthwise_conv2d_1/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d_1/BiasAdd/ReadVariableOp/resource1/WithoutBiases/fq_weights_1
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/activation_3/Relu;functional_1/batch_normalization_3/FusedBatchNormV3;functional_1/depthwise_conv2d_1/depthwise;functional_1/depthwise_conv2d_1/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d_1/BiasAdd/ReadVariableOp/resource1/WithoutBiases/fq_weights_1
+
+Transformed Layer Name: Relu__73/fq_output_0
+- Type:      FakeQuantize
+- FPGA Support: True
+- Original Layer Names:
+  - Relu__73
+  - Relu__73/fq_output_0
+
+Transformed Layer Name: Relu__73/fq_output_0/output_high
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__73/fq_output_0/output_high
+
+Transformed Layer Name: Relu__73/fq_output_0/output_low
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__73/fq_output_0/output_low
+
+Transformed Layer Name: Relu__73/fq_output_0/input_high
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__73/fq_output_0/input_high
+
+Transformed Layer Name: Relu__73/fq_output_0/input_low
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__73/fq_output_0/input_low
+
+Transformed Layer Name: functional_1/activation_2/Relu;functional_1/batch_normalization_2/FusedBatchNormV3;functional_1/conv2d_1/BiasAdd/ReadVariableOp/resource;functional_1/conv2d_1/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/conv2d_1/Conv2D1
+- Type:      Add
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/activation_2/Relu;functional_1/batch_normalization_2/FusedBatchNormV3;functional_1/conv2d_1/BiasAdd/ReadVariableOp/resource;functional_1/conv2d_1/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/conv2d_1/Conv2D1
+
+Transformed Layer Name: Reshape_142
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Reshape_142
+
+Transformed Layer Name: functional_1/activation_2/Relu;functional_1/batch_normalization_2/FusedBatchNormV3;functional_1/conv2d_1/BiasAdd/ReadVariableOp/resource;functional_1/conv2d_1/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/conv2d_1/Conv2D1/WithoutBiases
+- Type:      Convolution
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/activation_2/Relu;functional_1/batch_normalization_2/FusedBatchNormV3;functional_1/conv2d_1/BiasAdd/ReadVariableOp/resource;functional_1/conv2d_1/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/conv2d_1/Conv2D1/WithoutBiases
+
+Transformed Layer Name: functional_1/conv2d_1/Conv2D_dequant
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/conv2d_1/Conv2D_dequant
+
+Transformed Layer Name: Relu__70/fq_output_0
+- Type:      FakeQuantize
+- FPGA Support: True
+- Original Layer Names:
+  - Relu__70
+  - Relu__70/fq_output_0
+
+Transformed Layer Name: Constant_3737
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__70/fq_output_0/output_high
+
+Transformed Layer Name: Constant_3736
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__70/fq_output_0/output_low
+
+Transformed Layer Name: Constant_3735
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__70/fq_output_0/input_high
+
+Transformed Layer Name: Constant_3734
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__70/fq_output_0/input_low
+
+Transformed Layer Name: functional_1/activation_1/Relu;functional_1/batch_normalization_1/FusedBatchNormV3;functional_1/depthwise_conv2d/depthwise;functional_1/depthwise_conv2d/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d/BiasAdd/ReadVariableOp/resource1
+- Type:      Add
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/activation_1/Relu;functional_1/batch_normalization_1/FusedBatchNormV3;functional_1/depthwise_conv2d/depthwise;functional_1/depthwise_conv2d/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d/BiasAdd/ReadVariableOp/resource1
+
+Transformed Layer Name: Reshape_128
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Reshape_128
+
+Transformed Layer Name: functional_1/activation_1/Relu;functional_1/batch_normalization_1/FusedBatchNormV3;functional_1/depthwise_conv2d/depthwise;functional_1/depthwise_conv2d/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d/BiasAdd/ReadVariableOp/resource1/WithoutBiases
+- Type:      GroupConvolution
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/activation_1/Relu;functional_1/batch_normalization_1/FusedBatchNormV3;functional_1/depthwise_conv2d/depthwise;functional_1/depthwise_conv2d/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d/BiasAdd/ReadVariableOp/resource1/WithoutBiases
+
+Transformed Layer Name: functional_1/activation_1/Relu;functional_1/batch_normalization_1/FusedBatchNormV3;functional_1/depthwise_conv2d/depthwise;functional_1/depthwise_conv2d/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d/BiasAdd/ReadVariableOp/resource1/WithoutBiases/fq_weights_1
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/activation_1/Relu;functional_1/batch_normalization_1/FusedBatchNormV3;functional_1/depthwise_conv2d/depthwise;functional_1/depthwise_conv2d/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/depthwise_conv2d/BiasAdd/ReadVariableOp/resource1/WithoutBiases/fq_weights_1
+
+Transformed Layer Name: Relu__67/fq_output_0
+- Type:      FakeQuantize
+- FPGA Support: True
+- Original Layer Names:
+  - Relu__67
+  - Relu__67/fq_output_0
+
+Transformed Layer Name: Relu__67/fq_output_0/output_high
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__67/fq_output_0/output_high
+
+Transformed Layer Name: Relu__67/fq_output_0/output_low
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__67/fq_output_0/output_low
+
+Transformed Layer Name: Relu__67/fq_output_0/input_high
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__67/fq_output_0/input_high
+
+Transformed Layer Name: Relu__67/fq_output_0/input_low
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Relu__67/fq_output_0/input_low
+
+Transformed Layer Name: functional_1/activation/Relu;functional_1/batch_normalization/FusedBatchNormV3;functional_1/conv2d/BiasAdd/ReadVariableOp/resource;functional_1/conv2d/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/conv2d/Conv2D1
+- Type:      Add
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/activation/Relu;functional_1/batch_normalization/FusedBatchNormV3;functional_1/conv2d/BiasAdd/ReadVariableOp/resource;functional_1/conv2d/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/conv2d/Conv2D1
+
+Transformed Layer Name: Reshape_68
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - Reshape_68
+
+Transformed Layer Name: functional_1/activation/Relu;functional_1/batch_normalization/FusedBatchNormV3;functional_1/conv2d/BiasAdd/ReadVariableOp/resource;functional_1/conv2d/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/conv2d/Conv2D1/WithoutBiases
+- Type:      Convolution
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/activation/Relu;functional_1/batch_normalization/FusedBatchNormV3;functional_1/conv2d/BiasAdd/ReadVariableOp/resource;functional_1/conv2d/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/conv2d/Conv2D1/WithoutBiases
+
+Transformed Layer Name: functional_1/conv2d/Conv2D_dequant
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/conv2d/Conv2D_dequant
+
+Transformed Layer Name: functional_1/activation/Relu;functional_1/batch_normalization/FusedBatchNormV3;functional_1/conv2d/BiasAdd/ReadVariableOp/resource;functional_1/conv2d/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/conv2d/Conv2D1__107
+- Type:      Reshape
+- FPGA Support: True
+- Original Layer Name:
+  - functional_1/activation/Relu;functional_1/batch_normalization/FusedBatchNormV3;functional_1/conv2d/BiasAdd/ReadVariableOp/resource;functional_1/conv2d/BiasAdd;functional_1/conv2d_4/Conv2D;functional_1/conv2d/Conv2D1__107
+
+Transformed Layer Name: new_shape__167
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - new_shape__167
+
+Transformed Layer Name: input_1/fq_output_0
+- Type:      FakeQuantize
+- FPGA Support: True
+- Original Layer Name:
+  - input_1/fq_output_0
+
+Transformed Layer Name: Constant_3733
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - input_1/fq_output_0/output_high
+
+Transformed Layer Name: Constant_3732
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - input_1/fq_output_0/output_low
+
+Transformed Layer Name: Constant_3731
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - input_1/fq_output_0/input_high
+
+Transformed Layer Name: Constant_3730
+- Type:      Constant
+- FPGA Support: True
+- Original Layer Name:
+  - input_1/fq_output_0/input_low
+
