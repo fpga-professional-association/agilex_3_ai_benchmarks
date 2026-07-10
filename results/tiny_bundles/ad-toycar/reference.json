@@ -1,0 +1,124 @@
+{
+  "model_id": "ad-toycar",
+  "metric": "auc",
+  "output_bytes": 640,
+  "records": [
+    {
+      "file": "records/rec_00000.int8",
+      "label": 1,
+      "audio_file": "anomaly_id_01_00000000.wav",
+      "frame_index": 0,
+      "cpu_recon_mse": 8.97313117980957
+    },
+    {
+      "file": "records/rec_00001.int8",
+      "label": 1,
+      "audio_file": "anomaly_id_01_00000164.wav",
+      "frame_index": 0,
+      "cpu_recon_mse": 11.696053504943848
+    },
+    {
+      "file": "records/rec_00002.int8",
+      "label": 1,
+      "audio_file": "anomaly_id_02_00000064.wav",
+      "frame_index": 0,
+      "cpu_recon_mse": 9.585203170776367
+    },
+    {
+      "file": "records/rec_00003.int8",
+      "label": 1,
+      "audio_file": "anomaly_id_02_00000228.wav",
+      "frame_index": 0,
+      "cpu_recon_mse": 12.114336013793945
+    },
+    {
+      "file": "records/rec_00004.int8",
+      "label": 1,
+      "audio_file": "anomaly_id_03_00000126.wav",
+      "frame_index": 0,
+      "cpu_recon_mse": 9.533452987670898
+    },
+    {
+      "file": "records/rec_00005.int8",
+      "label": 1,
+      "audio_file": "anomaly_id_04_00000025.wav",
+      "frame_index": 0,
+      "cpu_recon_mse": 9.836709976196289
+    },
+    {
+      "file": "records/rec_00006.int8",
+      "label": 1,
+      "audio_file": "anomaly_id_04_00000189.wav",
+      "frame_index": 0,
+      "cpu_recon_mse": 12.212904930114746
+    },
+    {
+      "file": "records/rec_00007.int8",
+      "label": 0,
+      "audio_file": "normal_id_01_00000088.wav",
+      "frame_index": 0,
+      "cpu_recon_mse": 9.40766429901123
+    },
+    {
+      "file": "records/rec_00008.int8",
+      "label": 0,
+      "audio_file": "normal_id_01_00000252.wav",
+      "frame_index": 0,
+      "cpu_recon_mse": 12.24487590789795
+    },
+    {
+      "file": "records/rec_00009.int8",
+      "label": 0,
+      "audio_file": "normal_id_02_00000066.wav",
+      "frame_index": 0,
+      "cpu_recon_mse": 9.586633682250977
+    },
+    {
+      "file": "records/rec_00010.int8",
+      "label": 0,
+      "audio_file": "normal_id_02_00000230.wav",
+      "frame_index": 0,
+      "cpu_recon_mse": 10.559571266174316
+    },
+    {
+      "file": "records/rec_00011.int8",
+      "label": 0,
+      "audio_file": "normal_id_03_00000044.wav",
+      "frame_index": 0,
+      "cpu_recon_mse": 12.488146781921387
+    },
+    {
+      "file": "records/rec_00012.int8",
+      "label": 0,
+      "audio_file": "normal_id_03_00000207.wav",
+      "frame_index": 0,
+      "cpu_recon_mse": 9.327262878417969
+    },
+    {
+      "file": "records/rec_00013.int8",
+      "label": 0,
+      "audio_file": "normal_id_04_00000021.wav",
+      "frame_index": 0,
+      "cpu_recon_mse": 7.643370151519775
+    },
+    {
+      "file": "records/rec_00014.int8",
+      "label": 0,
+      "audio_file": "normal_id_04_00000185.wav",
+      "frame_index": 0,
+      "cpu_recon_mse": 11.002939224243164
+    },
+    {
+      "file": "records/rec_00015.int8",
+      "label": 0,
+      "audio_file": "normal_id_04_00000349.wav",
+      "frame_index": 0,
+      "cpu_recon_mse": 11.87811279296875
+    }
+  ],
+  "cpu_int8": {
+    "metric_name": "auc",
+    "value": 0.7811054378011925,
+    "results_path": "results/ph2_ad-toycar-int8-deployed_20260710.json"
+  }
+}

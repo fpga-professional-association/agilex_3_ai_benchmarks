@@ -100,3 +100,9 @@ models/scratch/
 quartus/coredla_hyperram_ed/ip/coredla_ip/
 quartus/coredla_hyperram_ed/**/output_files/
 *.aot
+
+# MLPerf Tiny reference bundles (docs/tiny_reference_bundles.md): the small parity set directly
+# under results/tiny_bundles/<model>/ IS committed (records/*.int8 + reference.json + manifest.json,
+# tens-hundreds of KB). The larger accuracy_full/ subdir is regenerated on demand by
+# sw/model_prep/build_tiny_bundle.py and never committed (can be arbitrarily large).
+results/tiny_bundles/*/accuracy_full/

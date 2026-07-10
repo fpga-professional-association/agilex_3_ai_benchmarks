@@ -1,0 +1,22 @@
+{
+  "model_id": "ad-toycar",
+  "mlperf_benchmark": "Anomaly Detection (AD)",
+  "metric": "auc",
+  "n_records": 16,
+  "n_input_bytes": 640,
+  "quant": {
+    "scale": 0.5122092452703738,
+    "zero_point": 0,
+    "source": "quartus/coredla_hyperram_ed/ip/models/ad-toycar/ad-toycar.xml",
+    "fakequantize": {
+      "input_low": -65.56278228759766,
+      "input_high": 65.05057525634766,
+      "output_low": -65.56278228759766,
+      "output_high": 65.05057525634766,
+      "levels": 256
+    }
+  },
+  "layout": "flat",
+  "element_order": "row-major (numpy/C order) INT8",
+  "notes": "See docs/tiny_reference_bundles.md for full provenance. cpu_pred is the argmax of the *deployed* IR's own simulated-INT8 (FakeQuantize) output on this exact input -- not hardware. ref_output (bit-exact device INT8 output bytes) is deliberately NOT included: CoreDLA's dla_compiler performs its own final-layer INT8 requantization internally and that scale is not observable off-hardware (dla_compiler has no simulate/dump-reference mode -- checked: `dla_compiler --help`). The primary correctness gate is cpu_pred==hardware-argmax agreement (100% expected); see parity_debugging.md."
+}
