@@ -76,6 +76,7 @@ add_fileset_file hyperram_avalon.sv       SYSTEM_VERILOG PATH ${HR_RTL}/hyperram
 add_fileset_file hyperbus_gpio_io.sv      SYSTEM_VERILOG PATH ${HR_FPGA_AXC3000}/hyperbus_gpio_io.sv
 add_fileset_file axi4_hbmc_bridge.sv      SYSTEM_VERILOG PATH ../../../rtl/hyperbus/axi4_hbmc_bridge.sv
 add_fileset_file axc3000_hyperram_axi4.sv SYSTEM_VERILOG PATH ../../../rtl/hyperbus/axc3000_hyperram_axi4.sv
+add_fileset_file hyperram_cal_csr.sv      SYSTEM_VERILOG PATH ../../../rtl/hyperbus/hyperram_cal_csr.sv
 add_fileset_file axc3000_hyperram_pads.sv SYSTEM_VERILOG PATH ../../../rtl/hyperbus/axc3000_hyperram_pads.sv
 
 add_fileset SIM_VERILOG SIM_VERILOG "" ""
@@ -90,6 +91,7 @@ add_fileset_file hyperram_avalon.sv       SYSTEM_VERILOG PATH ${HR_RTL}/hyperram
 add_fileset_file hyperbus_gpio_io.sv      SYSTEM_VERILOG PATH ${HR_FPGA_AXC3000}/hyperbus_gpio_io.sv
 add_fileset_file axi4_hbmc_bridge.sv      SYSTEM_VERILOG PATH ../../../rtl/hyperbus/axi4_hbmc_bridge.sv
 add_fileset_file axc3000_hyperram_axi4.sv SYSTEM_VERILOG PATH ../../../rtl/hyperbus/axc3000_hyperram_axi4.sv
+add_fileset_file hyperram_cal_csr.sv      SYSTEM_VERILOG PATH ../../../rtl/hyperbus/hyperram_cal_csr.sv
 add_fileset_file axc3000_hyperram_pads.sv SYSTEM_VERILOG PATH ../../../rtl/hyperbus/axc3000_hyperram_pads.sv
 
 # -----------------------------------------------------------------------------------------------
@@ -220,4 +222,35 @@ proc elaborate {} {
     # submodule's own avs_waitrequest already holds off traffic until init completes — but it is a
     # useful bring-up/debug status bit to export (e.g. to an LED or a JTAG-visible register).
     add_interface_port status init_done          init_done          Output 1
+
+    # ---- per-fit launch-trim calibration CSR (Avalon-MM agent) --------------------------------
+    # Ported from the third_party/hyperram bench's REG_DBG/REG_CAL runtime knobs (hyperram_cal_csr.sv,
+    # wired into axc3000_hyperram_pads.sv's DDIO_GPIO launch path). The host JTAG-Avalon master pokes
+    # this to calibrate the trim-calibrated (NOT SDC-constrained) DQ/CK launch per fit, in-system, no
+    # recompile — the fix for the ED-only 4 KB address alias (scratch/hyperram_retest/
+    # alias_diagnosis.md; scratch/hyperram_retest/calibrate_ed.tcl runs the sweep). ed_zero.tcl maps
+    # it at 0x9000_0000, disjoint from the CSR data bridge (0x8000_0000) and the global-memory window.
+    # Word-addressed (each 32-bit register at byte offset 4*addr); pipelined read (readdatavalid one
+    # clock after an accepted read); waitrequest tied low. Same clk/reset domain as s_axi.
+    add_interface cal_csr avalon end
+    set_interface_property cal_csr associatedClock  clk
+    set_interface_property cal_csr associatedReset  reset
+    set_interface_property cal_csr addressUnits     WORDS
+    set_interface_property cal_csr bridgesToMaster  ""
+    set_interface_property cal_csr burstOnBurstBoundariesOnly false
+    set_interface_property cal_csr holdTime         0
+    set_interface_property cal_csr linewrapBursts   false
+    set_interface_property cal_csr maximumPendingReadTransactions 1
+    set_interface_property cal_csr readLatency      0
+    set_interface_property cal_csr readWaitTime     0
+    set_interface_property cal_csr setupTime        0
+    set_interface_property cal_csr timingUnits      Cycles
+    set_interface_property cal_csr writeWaitTime    0
+    add_interface_port cal_csr csr_address       address       Input  4
+    add_interface_port cal_csr csr_read          read          Input  1
+    add_interface_port cal_csr csr_write         write         Input  1
+    add_interface_port cal_csr csr_writedata     writedata     Input  32
+    add_interface_port cal_csr csr_readdata      readdata      Output 32
+    add_interface_port cal_csr csr_readdatavalid readdatavalid Output 1
+    add_interface_port cal_csr csr_waitrequest   waitrequest   Output 1
 }

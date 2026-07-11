@@ -83,6 +83,15 @@ proc do_create_system {} {
 	set_connection_parameter_value ${jtag_master}.master/${csr_data_bridge}.s0 baseAddress {0x80000000}
 	add_connection ${jtag_master}.master/${hw_timer_bridge}.s0
 	set_connection_parameter_value ${jtag_master}.master/${hw_timer_bridge}.s0 baseAddress {0x80000800}
+	# PH3 per-fit HyperRAM launch-trim calibration CSR (hyperram_0.cal_csr = the new Avalon-MM slave
+	# in axc3000_hyperram_axi4_hw.tcl, driving the DDIO_GPIO REG_DBG/REG_CAL runtime knobs). Poked by
+	# the host over JTAG (scratch/hyperram_retest/calibrate_ed.tcl) to calibrate the trim-calibrated
+	# (NOT SDC-constrained) DQ/CK launch per fit -> the fix path for the ED-only 4 KB address alias
+	# (scratch/hyperram_retest/alias_diagnosis.md). Base 0x90000000: disjoint from the CSR data bridge
+	# (0x80000000), hw_timer (0x80000800), and the span-extender global-memory window (0x0..0x1FFFFFFF,
+	# SLAVE_ADDRESS_WIDTH=29 out of the JTAG master). 16 word-registers (64 B span), 4 used.
+	add_connection ${jtag_master}.master/${hyperram}.cal_csr
+	set_connection_parameter_value ${jtag_master}.master/${hyperram}.cal_csr baseAddress {0x90000000}
 	# CoreDLA DDR AXI4 master (exported emif_data_bridge_0.s0, wired in top.sv) -> HyperRAM AXI4 slave
 	add_connection ${emif_data_bridge}.m0/${hyperram}.s_axi
 	set_connection_parameter_value ${emif_data_bridge}.m0/${hyperram}.s_axi baseAddress {0x0000}

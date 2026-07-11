@@ -100,3 +100,27 @@ echo "${out2}"
 echo "${out2}" | grep -q '^ALL HYPERBUS-BOUNDARY-ALIAS TBS PASSED$' \
   || { echo "tb_hyperbus_boundary_alias did not PASS"; exit 1; }
 echo "HYPERBUS-BOUNDARY-ALIAS TB PASSED"
+
+# ---- per-fit calibration CSR (2026-07-11): rtl/hyperbus/hyperram_cal_csr.sv is the new Avalon-MM
+# slave that ports the submodule bench's REG_DBG/REG_CAL runtime knobs into the ED (wired into
+# axc3000_hyperram_pads.sv's DDIO_GPIO branch, exported through the PD component + ed_zero.tcl at
+# base 0x9000_0000). It is pure logic (no device primitives), so it lints + self-checks under
+# Verilator here. -Wno-UNUSEDSIGNAL: REG_DBG[8] is the cr0-reprog W1 strobe (never stored, reads 0),
+# so bit 8 of the r_dbg store is intentionally unused. ----
+echo "=== lint hyperram_cal_csr standalone ==="
+verilator --lint-only --timing -Wall -Wno-DECLFILENAME -Wno-UNUSEDSIGNAL -Wno-TIMESCALEMOD \
+  rtl/hyperbus/hyperram_cal_csr.sv --top-module hyperram_cal_csr
+echo "hyperram_cal_csr lint clean"
+
+echo "=== build + run tb_hyperram_cal_csr ==="
+verilator --binary --timing -Wall ${TB_WAIVERS} -j 0 -Irtl/hyperbus --top-module tb_hyperram_cal_csr \
+  --Mdir sim/hyperbus/obj_cal_csr \
+  rtl/hyperbus/hyperram_cal_csr.sv sim/hyperbus/tb_hyperram_cal_csr.sv \
+  > sim/hyperbus/obj_cal_csr.build.log 2>&1 || {
+    echo "BUILD FAILED:"; cat sim/hyperbus/obj_cal_csr.build.log; exit 1; }
+
+out3=$(sim/hyperbus/obj_cal_csr/Vtb_hyperram_cal_csr)
+echo "${out3}"
+echo "${out3}" | grep -q '^ALL HYPERRAM-CAL-CSR TBS PASSED$' \
+  || { echo "tb_hyperram_cal_csr did not PASS"; exit 1; }
+echo "HYPERRAM-CAL-CSR TB PASSED"

@@ -118,8 +118,86 @@ module axc3000_hyperram_pads
 
     output logic                 init_done,
     output logic                 wstrb_partial_seen,
-    output logic                 hi_addr_seen
+    output logic                 hi_addr_seen,
+
+    // ---- per-fit launch-trim calibration CSR (Avalon-MM agent; driven by the host JTAG-Avalon
+    //      master in ed_zero.tcl at base 0x9000_0000). Ported from the submodule bench's
+    //      REG_DBG/REG_CAL runtime knobs so each ED bitstream is calibratable in-system with NO
+    //      recompile; reset images = the current proven static tie-offs => un-poked behavior is
+    //      unchanged. See rtl/hyperbus/hyperram_cal_csr.sv for the full register map. ----
+    input  logic [3:0]           csr_address,        // WORD address (byte offset = 4*addr)
+    input  logic                 csr_read,
+    input  logic                 csr_write,
+    input  logic [31:0]          csr_writedata,
+    output logic [31:0]          csr_readdata,
+    output logic                 csr_readdatavalid,
+    output logic                 csr_waitrequest
 );
+
+  // ===============================================================================================
+  // Per-fit launch-trim calibration CSR (shared by both IO_VARIANT branches). The DDIO_GPIO launch
+  // path is trim-calibrated, NOT SDC-constrained (third_party/hyperram/fpga/axc3000/README.md
+  // "Refit discipline"; scratch/hyperram_retest/alias_diagnosis.md), so its correct trim differs per
+  // fit and cannot be locked by static tie-offs -> the ED's 4 KB alias. This CSR exposes the bench's
+  // REG_DBG/REG_CAL runtime knobs over JTAG for in-system per-fit calibration.
+  //
+  // INVARIANCE: the reset images are the ED's current STATIC proven tie-offs, built structurally
+  // from this module's own CTRL_WR_LAT_TRIM / LATENCY_CLOCKS / RD_PREAMBLE_SKIP so a reparam stays
+  // self-consistent. DBG_RESET decode: wrtrim=CTRL_WR_LAT_TRIM lat=LATENCY_CLOCKS prewin_drive=1
+  // pn=4 contig=1 endcw=1 defuse=1 == 0x0007_1263 at the board defaults (3/6) — bit-identical to the
+  // pre-CSR ties. CAL_RESET: preamble_skip=RD_PREAMBLE_SKIP at [3:1] == 0x2 at the board default.
+  // ===============================================================================================
+  localparam logic [31:0] CAL_DBG_RESET =
+        (32'(CTRL_WR_LAT_TRIM) & 32'hF)
+      | ((32'(LATENCY_CLOCKS)  & 32'hF) << 4)
+      | (32'h1 << 9)                        // dbg_prewin_drive = 1
+      | ((32'd4 & 32'h7)       << 10)       // dbg_prewin_n     = 4
+      | (32'h1 << 16)                       // dbg_prewin_contig= 1
+      | (32'h1 << 17)                       // dbg_end_cwrite   = 1
+      | (32'h1 << 18);                      // dbg_spray_defuse = 1
+  localparam logic [31:0] CAL_CAL_RESET = (32'(RD_PREAMBLE_SKIP) & 32'h7) << 1;   // [3:1]
+
+  // CSR knob outputs (module scope; consumed by the g_ddio_gpio branch's u_ctrl / u_io below).
+  logic [3:0] knob_wr_lat_trim, knob_lat_clocks;
+  logic [2:0] knob_prewin_n;
+  logic       knob_cr0_reprog, knob_prewin_drive, knob_prewin_marker, knob_postwin_hold;
+  logic       knob_ck_stretch_off, knob_prewin_contig, knob_end_cwrite, knob_spray_defuse;
+  logic       csr_err_underrun;   // hyperbus_ctrl.err_underrun pulse -> CSR sticky (driven per branch)
+
+  hyperram_cal_csr #(
+      .ID_MAGIC (32'h4852_4331), .DBG_RESET (CAL_DBG_RESET), .CAL_RESET (CAL_CAL_RESET)
+  ) u_cal_csr (
+      .clk               (clk),
+      .rst               (~reset_n),
+      .csr_address       (csr_address),
+      .csr_read          (csr_read),
+      .csr_write         (csr_write),
+      .csr_writedata     (csr_writedata),
+      .csr_readdata      (csr_readdata),
+      .csr_readdatavalid (csr_readdatavalid),
+      .csr_waitrequest   (csr_waitrequest),
+      // sticky trip-wires: wstrb_partial/hi_addr are this module's own outputs (bridge-driven);
+      // err_underrun is hoisted out of the elaborated branch's controller (csr_err_underrun).
+      .sti_err_underrun  (csr_err_underrun),
+      .sti_wstrb_partial (wstrb_partial_seen),
+      .sti_hi_addr       (hi_addr_seen),
+      // REG_DBG live knobs
+      .dbg_wr_lat_trim   (knob_wr_lat_trim),
+      .dbg_lat_clocks    (knob_lat_clocks),
+      .dbg_cr0_reprog    (knob_cr0_reprog),
+      .dbg_prewin_drive  (knob_prewin_drive),
+      .dbg_prewin_n      (knob_prewin_n),
+      .dbg_prewin_marker (knob_prewin_marker),
+      .dbg_postwin_hold  (knob_postwin_hold),
+      .dbg_ck_stretch_off(knob_ck_stretch_off),
+      .dbg_prewin_contig (knob_prewin_contig),
+      .dbg_end_cwrite    (knob_end_cwrite),
+      .dbg_spray_defuse  (knob_spray_defuse),
+      // REG_CAL live read-eye knobs: inert in DDIO_GPIO (no runtime read-eye), left unconnected.
+      .cal_capture_phase (),
+      .cal_preamble_skip (),
+      .cal_rx_tap        (),
+      .cal_pair_skew     ());
 
   generate
     if (IO_VARIANT == "DDIO_GPIO") begin : g_ddio_gpio
@@ -205,12 +283,14 @@ module axc3000_hyperram_pads
       //      Same silicon-proven fix-set values as axc3000_hyperram_axi4.sv (see that file's header
       //      for the full derivation): fpga/axc3000/README.md's ERR_COUNT=0, 25-run 8192-word soak
       //      REG_DBG=0x0007_1263 = wrtrim=3 lat=6 prewin=1 pn=4 marker=0 posthold=0 ckstretchoff=0
-      //      contig=1 endcw=1 defuse=1. wrtrim/lat here are tied to this module's own CTRL_WR_LAT_TRIM
-      //      / LATENCY_CLOCKS parameters (already 3 / 6 by default, i.e. board-proven) rather than
-      //      re-declared as bare constants, so a future reparam stays self-consistent.
-      localparam logic [3:0] DBG_WR_LAT_TRIM_PROVEN = 4'(CTRL_WR_LAT_TRIM);
-      localparam logic [3:0] DBG_LAT_CLOCKS_PROVEN  = 4'(LATENCY_CLOCKS);
-      localparam logic [2:0] DBG_PREWIN_N_PROVEN    = 3'd4;   // "pn=4" -- soak-proven heal depth
+      //      contig=1 endcw=1 defuse=1.
+      //
+      //      RUNTIME-CALIBRATION UPDATE (this session): the dbg_* / dbg_ck_stretch_off tie-offs are
+      //      no longer STATIC — they are now driven by the module-scope u_cal_csr knob_* wires
+      //      (REG_DBG at CSR base 0x9000_0000), whose reset image CAL_DBG_RESET == 0x0007_1263 is the
+      //      exact fix set above. So an un-poked bitstream is bit-identical to the previous static
+      //      wiring; calibrate_ed.tcl can retune wr_lat_trim / lat / prewin / ck_stretch_off per fit
+      //      over JTAG to chase the trim-calibrated (non-SDC) DQ/CK launch that the 4 KB alias tracks.
 
       logic        cmd_valid, cmd_ready, cmd_read, cmd_reg, cmd_wrap;
       logic [31:0] cmd_addr;
@@ -266,22 +346,23 @@ module axc3000_hyperram_pads
           .wr_valid(wr_valid), .wr_ready(wr_ready), .wr_data(wr_data), .wr_strb(wr_strb),
           .wr_last(wr_last),
           .rd_valid(rd_valid), .rd_ready(rd_ready), .rd_data(rd_data), .rd_last(rd_last),
-          .busy(), .init_done(init_done), .err_underrun(), .err_timeout(),
+          .busy(), .init_done(init_done), .err_underrun(csr_err_underrun), .err_timeout(),
           .phy_cs_n(phy_cs_n), .phy_rst_n(phy_rst_n), .phy_ck_en(phy_ck_en),
           .phy_dq_o(phy_dq_o), .phy_dq_oe(phy_dq_oe),
           .phy_rwds_o(phy_rwds_o), .phy_rwds_oe(phy_rwds_oe), .phy_rd_arm(phy_rd_arm),
           .phy_dq_i(phy_dq_i), .phy_dq_i_valid(phy_dq_i_valid), .phy_rwds_i(phy_rwds_i),
           .dbg_state(ctrl_dbg_state), .dbg_rd_wptr(ctrl_dbg_rem), .dbg_rd_rptr(ctrl_dbg_seg),
-          // issue #13 live controller knobs (mandatory, no defaults; see localparam block above).
-          .dbg_wr_lat_trim(DBG_WR_LAT_TRIM_PROVEN), .dbg_lat_clocks(DBG_LAT_CLOCKS_PROVEN),
-          .dbg_cr0_reprog(1'b0),          // one-shot re-init strobe; never auto-fire
-          .dbg_prewin_drive(1'b1),        // fix set: ON
-          .dbg_prewin_n(DBG_PREWIN_N_PROVEN),  // fix set: pn=4
-          .dbg_prewin_marker(1'b0),       // diagnostic-only marker; OFF
-          .dbg_postwin_hold(1'b0),        // not part of the proven fix set; OFF
-          .dbg_prewin_contig(1'b1),       // fix set: ON
-          .dbg_end_cwrite(1'b1),          // fix set: ON
-          .dbg_spray_defuse(1'b1));       // fix set: ON
+          // issue #13 live controller knobs — now RUNTIME (REG_DBG @ CSR 0x9000_0000; reset image
+          // CAL_DBG_RESET == 0x0007_1263 = the proven fix set, so un-poked behavior is unchanged).
+          .dbg_wr_lat_trim(knob_wr_lat_trim), .dbg_lat_clocks(knob_lat_clocks),
+          .dbg_cr0_reprog(knob_cr0_reprog),
+          .dbg_prewin_drive(knob_prewin_drive),
+          .dbg_prewin_n(knob_prewin_n),
+          .dbg_prewin_marker(knob_prewin_marker),
+          .dbg_postwin_hold(knob_postwin_hold),
+          .dbg_prewin_contig(knob_prewin_contig),
+          .dbg_end_cwrite(knob_end_cwrite),
+          .dbg_spray_defuse(knob_spray_defuse));
 
       hyperbus_gpio_io #(
           .DQ_WIDTH(8), .RD_PREAMBLE_SKIP(RD_PREAMBLE_SKIP),
@@ -291,7 +372,8 @@ module axc3000_hyperram_pads
           .phy_cs_n(phy_cs_n), .phy_rst_n(phy_rst_n), .phy_ck_en(phy_ck_en),
           .phy_dq_o(phy_dq_o), .phy_dq_oe(phy_dq_oe),
           .phy_rwds_o(phy_rwds_o), .phy_rwds_oe(phy_rwds_oe), .phy_rd_arm(phy_rd_arm),
-          .dbg_ck_stretch_off(1'b0),   // issue #13 L-E knob; OFF in the proven fix set (REG_DBG[15]=0)
+          .dbg_ck_stretch_off(knob_ck_stretch_off),   // issue #13 L-E knob — now RUNTIME (REG_DBG[15];
+                                                       // reset 0 = proven fix set, host-sweepable)
           .phy_dq_i(phy_dq_i), .phy_dq_i_valid(phy_dq_i_valid), .phy_rwds_i(phy_rwds_i),
           .hb_ck(hb_ck), .hb_cs_n(hb_cs_n), .hb_rst_n(hb_rst_n),
           .hb_dq(hb_dq), .hb_rwds(hb_rwds));
@@ -309,6 +391,12 @@ module axc3000_hyperram_pads
       logic       hb_rwds_oe;
       logic       hb_rwds_i;
       logic       hb_ck_n_unused;
+
+      // The legacy SPLIT_PHY datapath (axc3000_hyperram_axi4 -> hyperram_avalon) keeps its own static
+      // dbg_*/cal_* fix-set ties (sim/char-only path, not the calibration target); the shared
+      // u_cal_csr's knob outputs are simply not consumed here. err_underrun is not exposed by
+      // axc3000_hyperram_axi4, so the CSR sticky source is tied inactive in this branch.
+      assign csr_err_underrun = 1'b0;
 
       axc3000_hyperram_axi4 #(
           .DATA_W(DATA_W), .ADDR_W(ADDR_W), .WID_W(WID_W), .RID_W(RID_W), .LEN_W(LEN_W),
