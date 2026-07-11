@@ -27,17 +27,38 @@ numerics are healthy in emulation. Note: the phase-2 ingress-buffer sizing assum
 = 3072 B" — the real stream is F16 = 6144 B (the vendor lib's partitioning handles the 4096-B
 buffer, and framing is element-count-based — no tlast on the DLA ingress — so splitting is safe).
 
-## The blocker: compute never engages (cross-platform signature)
+## The blocker: constant output — corrected analysis (RTL forensics)
 
 On silicon the 32-B output is **byte-identical across ≥6 different inputs, across two bitstreams
 whose config ROMs differ in ~100 words (`--ffolding-option` 1 vs 0; weights byte-identical), and
-across weight-corrupting reconfig**: the output streamer drains a buffer that compute never
-writes. `FILTER/FEATURE/OUTPUT` CSR counters read 0 after "completed" inference. This is the
-same signature as the HyperRAM platform's hang ("0 filter reads / 0 input reads / 0 output
-writes") — which was attributed to HyperRAM write corruption; with the DDR-free platform showing
-it on **pristine ROM-baked parameters**, the common suspect is the AGX3-adapted CoreDLA arch/RTL
-itself (both arches hand-adapted from AGX7 templates, FP12AGX tensor-FP DSP config; AGX3 support
-in 2026.1.1 is new and the vendor's own AGX3 ED may be INT8-only-validated).
+across weight-corrupting reconfig** — while the bit-accurate emulator computes correctly with
+the same artifacts.
+
+**Corrections from the RTL deep-dive** (see `scratch/ddrfree_run/probe_debug_network.tcl`
+header for citations):
+
+- The `FILTER/FEATURE/OUTPUT` CSR counters are wired **only to the DDR-LSU AXI channels**,
+  which `DISABLE_DDR=1` ties to 0 (`dla_dma.sv:440-445,636,704,772,927`) — they are
+  **expected-zero and non-diagnostic in DDR-free mode**. An earlier revision of this analysis
+  inferred "PE never ran" from them; that inference was invalid.
+- The completion counter increments when the **output streamer** finishes its configured frame
+  (`dla_dma.sv:427`), not when compute finishes — so "completes with constant output" is
+  consistent with the two remaining theories.
+- On the (DDR-based) HyperRAM platform those counters ARE diagnostic — that diagnosis stands.
+- Tensor-FP DSP config is ruled out: the vendor's own AGX3 archs generate the identical wrapper
+  `DEVICE="AGX5"` + FP12AGX primitive selection.
+- The vendor ships **no AGX3 ddrfree/streaming arch** (AGX3 examples are DDR-based with
+  streaming/OCP off). Our arch grafts `enable_on_chip_parameters + disable_external_memory +
+  streaming` onto AGX3 — feature-sufficient (compiles; emulates correctly) but an RTL control
+  path never vendor-validated on this family.
+
+**Two live theories**, discriminated by `scratch/ddrfree_run/probe_debug_network.tcl` (dumps
+`dla_interface_profiling_counters` over the clk_dla CSR debug ring — a TIMEOUT is itself a
+clk_dla/reset verdict): (B1–B3) the on-chip config intercept / config-network clk_ddr→clk_dla
+distribution / sequencer never starts the PE (probe: config interfaces idx3-8 = 0), vs (B4)
+compute runs and the constant egress is an output-streamer/buffer-address issue (probe: PE→xbar
+idx10 > 0 and input-dependent). If B1: file a vendor case (unvalidated AGX3+OCP+streaming
+combination) and prefer the vendor-validated DDR-based path.
 
 ## Vendor tooling bugs found (reproducible)
 
