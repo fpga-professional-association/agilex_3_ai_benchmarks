@@ -19,7 +19,16 @@
 //
 // =====================================================================================
 // CSR MAP (Avalon-MM agent; 32-bit registers; csr_address is a WORD address, byte offset = 4*addr).
-// waitrequest tied low; reads are pipelined (readdatavalid one clock after an accepted read).
+// FIXED read latency = 1 clock (readdata registered one clock after the read is accepted); there is
+// NO readdatavalid and NO waitrequest. This is the plain fixed-latency Avalon-MM slave shape proven
+// on THIS board by the l2_m20k_bw JTAG-Avalon harness (rtl/microbench/l2_m20k_bw/m20k_bw.sv drives
+// csr_readdata with no readdatavalid/waitrequest at all). The earlier variable-latency form
+// (readdatavalid + readLatency 0 in the _hw.tcl) was the root cause of the on-silicon cal-CSR
+// readback bug: with a readdatavalid port but readLatency declared 0, the Platform Designer agent /
+// SLD master did not honour the one-cycle readdatavalid handshake and sampled the shared jtag_master
+// response bus a cycle early, returning stale interconnect data (the last HyperRAM word) instead of
+// this slave's registered readdata. A fixed readLatency==1 (this file) makes the interconnect sample
+// exactly when the RTL presents the data, with no handshake to mis-model.
 // =====================================================================================
 //   byte off | word | name    | access | bits / meaning
 //   ---------+------+---------+--------+-----------------------------------------------------------
@@ -71,9 +80,7 @@ module hyperram_cal_csr #(
     input  logic                 csr_read,
     input  logic                 csr_write,
     input  logic [31:0]          csr_writedata,
-    output logic [31:0]          csr_readdata,
-    output logic                 csr_readdatavalid,
-    output logic                 csr_waitrequest,
+    output logic [31:0]          csr_readdata,   // FIXED read latency = 1 (registered); no rdv/waitreq
 
     // ---- sticky trip-wire sources (from the bridge / controller) ----
     input  logic                 sti_err_underrun,   // hyperbus_ctrl.err_underrun pulse
@@ -130,10 +137,10 @@ module hyperram_cal_csr #(
     assign cal_rx_tap        = r_cal[8 -: CAL_RX_TAP_W];    // bits [8:4] at width 5
     assign cal_pair_skew     = r_cal[9];
 
-    // ---- Avalon-MM agent: 0 wait states, pipelined read (readdatavalid one clock later) ----
-    assign csr_waitrequest = 1'b0;
+    // ---- Avalon-MM agent: fixed read latency = 1 clock; no waitrequest (always ready), no
+    //      readdatavalid (interconnect samples readdata exactly one clock after an accepted read). ----
 
-    // combinational readdata select (registered below into the readdatavalid contract)
+    // combinational readdata select (registered below to give the fixed one-clock read latency)
     logic [31:0] rd_next;
     always_comb begin
         unique case (csr_address)
@@ -154,7 +161,6 @@ module hyperram_cal_csr #(
             stk_hi_addr       <= 1'b0;
             dbg_cr0_reprog    <= 1'b0;
             csr_readdata      <= 32'h0;
-            csr_readdatavalid <= 1'b0;
         end else begin
             // Sticky trip-wire accumulate (set-dominant over the STATUS-write clear below is NOT
             // desired: a clear followed by a fresh trip in the same cycle should still trip, so OR
@@ -181,9 +187,9 @@ module hyperram_cal_csr #(
                 endcase
             end
 
-            // ---- pipelined read: capture on the accept cycle, present next cycle ----
+            // ---- fixed read latency = 1: register the selected word every clock, so it is valid
+            //      exactly one clock after the interconnect asserts an (always-accepted) read ----
             csr_readdata      <= rd_next;
-            csr_readdatavalid <= csr_read;   // waitrequest is 0, so an asserted read is accepted now
         end
     end
 endmodule

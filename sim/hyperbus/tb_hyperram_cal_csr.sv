@@ -19,8 +19,7 @@ module tb_hyperram_cal_csr;
   logic [3:0]  csr_address = '0;
   logic        csr_read = 1'b0, csr_write = 1'b0;
   logic [31:0] csr_writedata = '0;
-  logic [31:0] csr_readdata;
-  logic        csr_readdatavalid, csr_waitrequest;
+  logic [31:0] csr_readdata;   // fixed 1-clock read latency; no readdatavalid/waitrequest
 
   logic        sti_err_underrun = 1'b0, sti_wstrb_partial = 1'b0, sti_hi_addr = 1'b0;
 
@@ -42,7 +41,6 @@ module tb_hyperram_cal_csr;
       .clk(clk), .rst(rst),
       .csr_address(csr_address), .csr_read(csr_read), .csr_write(csr_write),
       .csr_writedata(csr_writedata), .csr_readdata(csr_readdata),
-      .csr_readdatavalid(csr_readdatavalid), .csr_waitrequest(csr_waitrequest),
       .sti_err_underrun(sti_err_underrun), .sti_wstrb_partial(sti_wstrb_partial),
       .sti_hi_addr(sti_hi_addr),
       .dbg_wr_lat_trim(dbg_wr_lat_trim), .dbg_lat_clocks(dbg_lat_clocks),
@@ -59,7 +57,7 @@ module tb_hyperram_cal_csr;
     if (!cond) begin $display("FAIL: %s", msg); errors++; end
   endtask
 
-  // Avalon-MM agent (waitrequest tied 0, pipelined read, readdatavalid 1 clk after accept).
+  // Avalon-MM agent: fixed 1-clock read latency, no waitrequest (always ready), no readdatavalid.
   task automatic csr_wr(input logic [3:0] a, input logic [31:0] d);
     @(posedge clk); #1;
     csr_address = a; csr_write = 1'b1; csr_writedata = d; csr_read = 1'b0;
@@ -70,10 +68,9 @@ module tb_hyperram_cal_csr;
   task automatic csr_rd(input logic [3:0] a, output logic [31:0] d);
     @(posedge clk); #1;
     csr_address = a; csr_read = 1'b1; csr_write = 1'b0;
-    @(posedge clk);            // module samples csr_read here -> rdv/readdata registered
+    @(posedge clk);            // module registers csr_readdata = decode(a) here (read latency = 1)
     #1; csr_read = 1'b0;
-    chk(csr_readdatavalid === 1'b1, "readdatavalid not asserted 1 clk after accepted read");
-    d = csr_readdata;
+    d = csr_readdata;          // valid exactly one clock after the accepted read
   endtask
 
   logic [31:0] rd;

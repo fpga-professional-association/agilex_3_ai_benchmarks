@@ -124,14 +124,15 @@ module axc3000_hyperram_pads
     //      master in ed_zero.tcl at base 0x9000_0000). Ported from the submodule bench's
     //      REG_DBG/REG_CAL runtime knobs so each ED bitstream is calibratable in-system with NO
     //      recompile; reset images = the current proven static tie-offs => un-poked behavior is
-    //      unchanged. See rtl/hyperbus/hyperram_cal_csr.sv for the full register map. ----
+    //      unchanged. See rtl/hyperbus/hyperram_cal_csr.sv for the full register map. FIXED read
+    //      latency = 1 clock, NO readdatavalid / NO waitrequest (the proven l2_m20k_bw JTAG-Avalon
+    //      CSR shape) — the earlier readdatavalid/readLatency-0 form returned stale interconnect bus
+    //      data on silicon (see hyperram_cal_csr.sv header). ----
     input  logic [3:0]           csr_address,        // WORD address (byte offset = 4*addr)
     input  logic                 csr_read,
     input  logic                 csr_write,
     input  logic [31:0]          csr_writedata,
-    output logic [31:0]          csr_readdata,
-    output logic                 csr_readdatavalid,
-    output logic                 csr_waitrequest
+    output logic [31:0]          csr_readdata        // registered, fixed 1-clock read latency
 );
 
   // ===============================================================================================
@@ -174,8 +175,6 @@ module axc3000_hyperram_pads
       .csr_write         (csr_write),
       .csr_writedata     (csr_writedata),
       .csr_readdata      (csr_readdata),
-      .csr_readdatavalid (csr_readdatavalid),
-      .csr_waitrequest   (csr_waitrequest),
       // sticky trip-wires: wstrb_partial/hi_addr are this module's own outputs (bridge-driven);
       // err_underrun is hoisted out of the elaborated branch's controller (csr_err_underrun).
       .sti_err_underrun  (csr_err_underrun),

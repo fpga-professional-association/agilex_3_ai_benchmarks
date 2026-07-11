@@ -230,18 +230,25 @@ proc elaborate {} {
     # recompile — the fix for the ED-only 4 KB address alias (scratch/hyperram_retest/
     # alias_diagnosis.md; scratch/hyperram_retest/calibrate_ed.tcl runs the sweep). ed_zero.tcl maps
     # it at 0x9000_0000, disjoint from the CSR data bridge (0x8000_0000) and the global-memory window.
-    # Word-addressed (each 32-bit register at byte offset 4*addr); pipelined read (readdatavalid one
-    # clock after an accepted read); waitrequest tied low. Same clk/reset domain as s_axi.
+    # Word-addressed (each 32-bit register at byte offset 4*addr). PLAIN FIXED read latency = 1 clock
+    # (readLatency 1): the RTL registers readdata one clock after the read is accepted; there is NO
+    # readdatavalid and NO waitrequest port. This is the exact shape of the silicon-proven l2_m20k_bw
+    # JTAG-Avalon CSR slave on this board (rtl/microbench/l2_m20k_bw/m20k_bw.sv). It REPLACES the
+    # earlier variable-latency declaration (readdatavalid + readLatency 0 + maximumPendingReadTransactions
+    # + a stray bridgesToMaster ""), which was the ROOT CAUSE of the on-silicon cal-CSR readback bug:
+    # with a readdatavalid port but readLatency declared 0, the interconnect / SLD master did not honour
+    # the one-clock readdatavalid handshake and sampled the shared jtag_master response bus a clock
+    # early, returning stale interconnect data (the last HyperRAM word, 0x8888_0000) instead of this
+    # slave's ID/registers. A fixed readLatency==1 makes the interconnect sample exactly when the RTL
+    # presents the data — no handshake left to mis-model. Same clk/reset domain as s_axi.
     add_interface cal_csr avalon end
     set_interface_property cal_csr associatedClock  clk
     set_interface_property cal_csr associatedReset  reset
     set_interface_property cal_csr addressUnits     WORDS
-    set_interface_property cal_csr bridgesToMaster  ""
     set_interface_property cal_csr burstOnBurstBoundariesOnly false
     set_interface_property cal_csr holdTime         0
     set_interface_property cal_csr linewrapBursts   false
-    set_interface_property cal_csr maximumPendingReadTransactions 1
-    set_interface_property cal_csr readLatency      0
+    set_interface_property cal_csr readLatency      1
     set_interface_property cal_csr readWaitTime     0
     set_interface_property cal_csr setupTime        0
     set_interface_property cal_csr timingUnits      Cycles
@@ -251,6 +258,4 @@ proc elaborate {} {
     add_interface_port cal_csr csr_write         write         Input  1
     add_interface_port cal_csr csr_writedata     writedata     Input  32
     add_interface_port cal_csr csr_readdata      readdata      Output 32
-    add_interface_port cal_csr csr_readdatavalid readdatavalid Output 1
-    add_interface_port cal_csr csr_waitrequest   waitrequest   Output 1
 }
