@@ -45,8 +45,15 @@ INC="-I${HR}/rtl -I${HR}/rtl/if -I${HR}/rtl/phy -Irtl/hyperbus"
 
 echo "=== lint wrapper RTL standalone (-Wall, strict; submodule sources on the command line so"
 echo "    hyperram_avalon/phy elaborate) ==="
+# -Wno-WIDTHEXPAND (2026-07-11, hyperram bump to b544bb7 / issue #13 fix-set retest): the submodule's
+# own hyperbus_ctrl.sv (pinned; DO NOT edit) has pre-existing width mismatches unrelated to this
+# wrapper's port wiring -- COMMIT_READ_MODE string-parameter comparisons (lines 619/628) and the new
+# 4-bit dbg_lat_clocks/dbg_wr_lat_trim knobs used in 32-bit arithmetic (lines 1298/1321/1322). These
+# now surface here too because u_ctrl only fully elaborates once its dbg_*/cal_* ports are actually
+# connected (see this run's PINMISSING fix) -- already waived below for the TB build; mirrored here so
+# the lint-only pass can reach a real pass/fail signal instead of aborting on submodule-internal noise.
 LINT_WAIVERS="-Wno-TIMESCALEMOD -Wno-PINCONNECTEMPTY -Wno-UNUSEDSIGNAL -Wno-UNUSEDPARAM \
-              -Wno-DECLFILENAME"
+              -Wno-DECLFILENAME -Wno-WIDTHEXPAND"
 verilator --lint-only --timing -Wall ${LINT_WAIVERS} ${INC} "${SUB_SRCS[@]}" "${WRAPPER_SRCS[@]}" \
   --top-module axc3000_hyperram_axi4
 echo "wrapper RTL lint clean"

@@ -199,6 +199,46 @@ module axc3000_hyperram_axi4
   assign av_readdatavalid = avs_readdatavalid;
   assign av_waitrequest   = avs_waitrequest;
 
+  // ---- issue #13 fix-set + read-eye-cal ties (third_party/hyperram bumped to commit b544bb7,
+  //      "Merge issue-13-instrumented: the W957D8NB write defect root-caused and FIXED on silicon
+  //      (issue #13)"). hyperram_avalon's cal_*/dbg_*/wrap_en ports have NO port defaults (Verilator
+  //      rejects them; docs/INTERFACES.md v9 + the submodule's own port comments: "every instantiation
+  //      ties them"), so leaving them unconnected -- as this wrapper did until this edit, for both the
+  //      pre-existing cal_* set and the brand-new issue-#13 dbg_*/wrap_en set -- lets Quartus silently
+  //      tie every one of them to 0. For the dbg_* set that means FIX OFF: a build was mid-compile in
+  //      exactly that state when it was killed for this retest.
+  //
+  //      Values below are the SILICON-PROVEN fix-set from the ERR_COUNT=0, 25-run 8192-word soak
+  //      (third_party/hyperram/fpga/axc3000/README.md "Performance & test status": runtime fix set
+  //      REG_DBG=0x0007_1263) and the board's own POR seeds (fpga/axc3000/top.sv: DBG_RESET=
+  //      0x0000_0063, REG_CAL=0x0000_0002) -- decoded per fpga/axc3000/sysconsole/dbg_poke.tcl's
+  //      REG_DBG bit map:
+  //        REG_DBG = 0x0007_1263 = wrtrim=3 lat=6 prewin=1 pn=4 marker=0 posthold=0 ckstretchoff=0
+  //                                contig=1 endcw=1 defuse=1
+  //      i.e. the fix set is {prewin_drive, prewin_n=4, prewin_contig, end_cwrite, spray_defuse} ON;
+  //      {prewin_marker (attribution-only diagnostic, never a fix), postwin_hold (unused by this fix),
+  //       cr0_reprog (one-shot re-init strobe -- never auto-fire it), wrap_en (REG_WRAP wrapped-write
+  //       PROBE, test-only, no meaning in a real memory build)} OFF. dbg_ck_stretch_off has no
+  //      equivalent in this GENERIC/SDR hyperbus_phy codepath (it is a hyperbus_gpio_io-only knob; see
+  //      rtl/hyperbus/axc3000_hyperram_pads.sv's DDIO_GPIO branch instead).
+  localparam logic [3:0] DBG_WR_LAT_TRIM_PROVEN = 4'd3;   // matches top.sv / axc3000_hyperram_pads.sv
+      // DDIO_GPIO's CTRL_WR_LAT_TRIM=3 ("device write window opens 3 CK early", silicon-measured).
+      // hyperram_avalon does NOT forward a WR_LAT_TRIM parameter override of its own (hyperbus_ctrl's
+      // own default is 0 and is unreachable through hyperram_avalon's parameter list) -- this runtime
+      // dbg_wr_lat_trim tie is the ONLY way to apply the proven trim value in this codepath.
+  localparam logic [3:0] DBG_LAT_CLOCKS_PROVEN = 4'(LATENCY_CLOCKS);
+      // = this wrapper's own LATENCY_CLOCKS parameter (POR default 6, board-proven), so a future
+      // recompile with a different LATENCY_CLOCKS stays self-consistent instead of silently drifting.
+  localparam logic [2:0] DBG_PREWIN_N_PROVEN = 3'd4;   // "pn=4" -- soak-proven trailing-CK heal depth
+  localparam logic [HB_CAL_PREAMBLE_SKIP_WIDTH-1:0] CAL_PREAMBLE_SKIP_PROVEN =
+      HB_CAL_PREAMBLE_SKIP_WIDTH'(RD_PREAMBLE_SKIP);
+      // Reproduces this wrapper's own RD_PREAMBLE_SKIP parameter (board: 1, W957D8NB read-strobe
+      // preamble) as the runtime cal_preamble_skip seed: hyperbus_phy_sdr.sv resets its internal
+      // cal_preamble_skip tracking FROM this same RD_PREAMBLE_SKIP parameter at reset, so tying the
+      // port to a *constant* equal to the parameter exactly reproduces that POR behavior with no live
+      // retune wired here (REG_CAL=0x2 on the board bandwidth-test build encodes this same
+      // preamble_skip=1; cal_capture_phase/cal_rx_tap/cal_pair_skew are all 0 there too -- see below).
+
   // ---- HyperRAM controller + real PHY (third_party/hyperram submodule, pinned; DO NOT edit) ----
   /* verilator lint_off PINCONNECTEMPTY */
   hyperram_avalon #(
@@ -214,6 +254,23 @@ module axc3000_hyperram_axi4
       .clk90   (clk2x),   // GENERIC: real +90deg; SDR: repurposed as the 2x byte clock, 0deg
       .clk_ref (clk),     // tie for GENERIC/SDR (both ignore/tie this port)
       .rst     (rst),
+      // ---- runtime PHY read-eye calibration (mandatory, no defaults; see localparam block above) --
+      .cal_capture_phase (1'b0),                    // = CAPTURE_PHASE parameter's own default (0)
+      .cal_preamble_skip (CAL_PREAMBLE_SKIP_PROVEN),
+      .cal_rx_tap        ('0),                      // unused in SDR (DDIO tap select); 0 in board REG_CAL
+      .cal_pair_skew     (1'b0),                    // unused in SDR (DDIO byte-pairing); 0 in board REG_CAL
+      // ---- issue #13 live controller knobs (mandatory, no defaults; see localparam block above) ----
+      .dbg_wr_lat_trim   (DBG_WR_LAT_TRIM_PROVEN),
+      .dbg_lat_clocks    (DBG_LAT_CLOCKS_PROVEN),
+      .dbg_cr0_reprog    (1'b0),                    // one-shot re-init strobe; never auto-fire
+      .dbg_prewin_drive  (1'b1),                    // fix set: ON
+      .dbg_prewin_n      (DBG_PREWIN_N_PROVEN),      // fix set: pn=4
+      .dbg_prewin_marker (1'b0),                    // diagnostic-only marker; OFF (real data, not 0xA5xx)
+      .dbg_postwin_hold  (1'b0),                    // not part of the proven fix set; OFF
+      .dbg_prewin_contig (1'b1),                    // fix set: ON
+      .dbg_end_cwrite    (1'b1),                    // fix set: ON
+      .dbg_spray_defuse  (1'b1),                    // fix set: ON
+      .wrap_en           (1'b0),                    // REG_WRAP probe is test-only; OFF for real traffic
       .avs_address       (avs_address),
       .avs_read          (avs_read),
       .avs_write         (avs_write),
@@ -234,6 +291,11 @@ module axc3000_hyperram_axi4
       .hb_rwds_oe (hb_rwds_oe),
       .hb_rwds_i  (hb_rwds_i),
       .init_done  (init_done),
+      .err_underrun (/* unused: no sticky status output in this wrapper's port list to fold a write-
+                      * data-underrun pulse into without changing the AXI4/PD-component interface (out
+                      * of scope for this fix-set wiring); left visibly dangling, same convention as
+                      * dbg_bus below. See axc3000_hyperram_pads.sv's DDIO_GPIO branch, which ties its
+                      * hyperbus_ctrl .err_underrun() the same way. */),
       .dbg_bus    (/* unused: bring-up debug tap, see hyperram_avalon.sv */));
   /* verilator lint_on PINCONNECTEMPTY */
 endmodule

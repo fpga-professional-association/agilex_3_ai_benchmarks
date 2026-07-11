@@ -185,6 +185,33 @@ module axc3000_hyperram_pads
       localparam logic [15:0] HB_INIT_CR0 =
           {1'b1, 3'b000, 4'b1111, hb_clocks_to_latency_code(LATENCY_CLOCKS), 1'b1, 3'b111};
 
+      // ---- issue #13 fix-set ties (third_party/hyperram bumped to commit b544bb7, "Merge
+      //      issue-13-instrumented: the W957D8NB write defect root-caused and FIXED on silicon
+      //      (issue #13)"). THIS is the branch that actually elaborates on real hardware: IO_VARIANT
+      //      defaults to "DDIO_GPIO" (see the module header and axc3000_hyperram_axi4_hw.tcl's "NOTE
+      //      (honest, updated)"), and neither ed_zero.tcl's instantiate_hyperram nor the PD component's
+      //      HDL_PARAMETER list (quartus/ip/axc3000_hyperram_axi4/axc3000_hyperram_axi4_hw.tcl) expose
+      //      IO_VARIANT, so this generate-if branch is the one Quartus actually synthesizes for the
+      //      CoreDLA-integrated system -- NOT the g_split_phy branch below (axc3000_hyperram_axi4.sv /
+      //      hyperram_avalon), which only elaborates if a caller explicitly overrides IO_VARIANT. This
+      //      branch's hyperbus_ctrl (u_ctrl below) and hyperbus_gpio_io (u_io below) instances had NO
+      //      dbg_* port connections at all before this edit -- every one of hyperbus_ctrl's dbg_wr_
+      //      lat_trim/dbg_lat_clocks/.../dbg_spray_defuse ports (and hyperbus_gpio_io's
+      //      dbg_ck_stretch_off) has no port default (Verilator rejects one; see hyperbus_ctrl.sv's
+      //      port comments), so leaving them unconnected let Quartus tie every one of them to 0 = FIX
+      //      OFF: this is very likely the root cause behind the "DDIO_GPIO HyperRAM path corrupts
+      //      CONTIGUOUS writes" CoreDLA-on-silicon hang this retest is chasing.
+      //
+      //      Same silicon-proven fix-set values as axc3000_hyperram_axi4.sv (see that file's header
+      //      for the full derivation): fpga/axc3000/README.md's ERR_COUNT=0, 25-run 8192-word soak
+      //      REG_DBG=0x0007_1263 = wrtrim=3 lat=6 prewin=1 pn=4 marker=0 posthold=0 ckstretchoff=0
+      //      contig=1 endcw=1 defuse=1. wrtrim/lat here are tied to this module's own CTRL_WR_LAT_TRIM
+      //      / LATENCY_CLOCKS parameters (already 3 / 6 by default, i.e. board-proven) rather than
+      //      re-declared as bare constants, so a future reparam stays self-consistent.
+      localparam logic [3:0] DBG_WR_LAT_TRIM_PROVEN = 4'(CTRL_WR_LAT_TRIM);
+      localparam logic [3:0] DBG_LAT_CLOCKS_PROVEN  = 4'(LATENCY_CLOCKS);
+      localparam logic [2:0] DBG_PREWIN_N_PROVEN    = 3'd4;   // "pn=4" -- soak-proven heal depth
+
       logic        cmd_valid, cmd_ready, cmd_read, cmd_reg, cmd_wrap;
       logic [31:0] cmd_addr;
       logic [15:0] cmd_len;
@@ -204,6 +231,10 @@ module axc3000_hyperram_pads
           .avs_burstcount(avs_burstcount),
           .avs_readdata(avs_readdata), .avs_readdatavalid(avs_readdatavalid),
           .avs_waitrequest(avs_waitrequest),
+          // issue #13: wrap_en has no port default (mandatory tie, see the localparam block above);
+          // OFF here (linear bursts only) -- the REG_WRAP wrapped-write probe is test-only and has no
+          // CSR/host path wired into this memory-subsystem build to ever assert it.
+          .wrap_en(1'b0),
           .cmd_valid(cmd_valid), .cmd_ready(cmd_ready), .cmd_read(cmd_read), .cmd_reg(cmd_reg),
           .cmd_wrap(cmd_wrap), .cmd_addr(cmd_addr), .cmd_len(cmd_len),
           .wr_valid(wr_valid), .wr_ready(wr_ready), .wr_data(wr_data), .wr_strb(wr_strb),
@@ -240,7 +271,17 @@ module axc3000_hyperram_pads
           .phy_dq_o(phy_dq_o), .phy_dq_oe(phy_dq_oe),
           .phy_rwds_o(phy_rwds_o), .phy_rwds_oe(phy_rwds_oe), .phy_rd_arm(phy_rd_arm),
           .phy_dq_i(phy_dq_i), .phy_dq_i_valid(phy_dq_i_valid), .phy_rwds_i(phy_rwds_i),
-          .dbg_state(ctrl_dbg_state), .dbg_rd_wptr(ctrl_dbg_rem), .dbg_rd_rptr(ctrl_dbg_seg));
+          .dbg_state(ctrl_dbg_state), .dbg_rd_wptr(ctrl_dbg_rem), .dbg_rd_rptr(ctrl_dbg_seg),
+          // issue #13 live controller knobs (mandatory, no defaults; see localparam block above).
+          .dbg_wr_lat_trim(DBG_WR_LAT_TRIM_PROVEN), .dbg_lat_clocks(DBG_LAT_CLOCKS_PROVEN),
+          .dbg_cr0_reprog(1'b0),          // one-shot re-init strobe; never auto-fire
+          .dbg_prewin_drive(1'b1),        // fix set: ON
+          .dbg_prewin_n(DBG_PREWIN_N_PROVEN),  // fix set: pn=4
+          .dbg_prewin_marker(1'b0),       // diagnostic-only marker; OFF
+          .dbg_postwin_hold(1'b0),        // not part of the proven fix set; OFF
+          .dbg_prewin_contig(1'b1),       // fix set: ON
+          .dbg_end_cwrite(1'b1),          // fix set: ON
+          .dbg_spray_defuse(1'b1));       // fix set: ON
 
       hyperbus_gpio_io #(
           .DQ_WIDTH(8), .RD_PREAMBLE_SKIP(RD_PREAMBLE_SKIP),
@@ -250,6 +291,7 @@ module axc3000_hyperram_pads
           .phy_cs_n(phy_cs_n), .phy_rst_n(phy_rst_n), .phy_ck_en(phy_ck_en),
           .phy_dq_o(phy_dq_o), .phy_dq_oe(phy_dq_oe),
           .phy_rwds_o(phy_rwds_o), .phy_rwds_oe(phy_rwds_oe), .phy_rd_arm(phy_rd_arm),
+          .dbg_ck_stretch_off(1'b0),   // issue #13 L-E knob; OFF in the proven fix set (REG_DBG[15]=0)
           .phy_dq_i(phy_dq_i), .phy_dq_i_valid(phy_dq_i_valid), .phy_rwds_i(phy_rwds_i),
           .hb_ck(hb_ck), .hb_cs_n(hb_cs_n), .hb_rst_n(hb_rst_n),
           .hb_dq(hb_dq), .hb_rwds(hb_rwds));
