@@ -73,3 +73,30 @@ echo "${out}"
 echo "${out}" | grep -q '^ALL AXC3000-HYPERRAM-AXI4 TBS PASSED$' \
   || { echo "tb_axc3000_hyperram_axi4 did not PASS"; exit 1; }
 echo "AXC3000-HYPERRAM-AXI4 TB PASSED"
+
+# ---- boundary-alias regression (2026-07-11, silicon 4KB-alias retest): tb_axc3000_hyperram_axi4
+# above drives axc3000_hyperram_axi4.sv (the "SPLIT_PHY" branch) with BURST_BOUNDARY_WORDS=0 /
+# WR_COALESCE=0 (hyperram_avalon's own defaults, never overridden by that wrapper) -- i.e. the
+# issue-13 ROUND 3/4 row-boundary machinery (dbg_end_cwrite/dbg_spray_defuse, gated by
+# `end_cwrite_aligned = (BURST_BOUNDARY_WORDS != 0) && ...`) is completely INERT there. The REAL
+# board build elaborates axc3000_hyperram_pads.sv's default IO_VARIANT="DDIO_GPIO" branch, which
+# sets BURST_BOUNDARY_WORDS=1024 / WR_COALESCE=1 (its own CTRL_* constants) -- a materially
+# different configuration of the SAME shared hyperbus_avalon/hyperbus_ctrl RTL. tb_hyperbus_
+# boundary_alias.sv instantiates hyperram_avalon directly with that exact parameter set (PHY_
+# VARIANT="GENERIC" swapped in for the real device-primitive hyperbus_gpio_io, which is not
+# Verilator-simulable) and reproduces the on-silicon page-alias reproduction shape (write ALL
+# pages first, THEN read ALL pages back) at the real symptom's sentinel addresses. See
+# docs/coredla_hyperram_hang_diagnosis.md and scratch/hyperram_retest/alias_diagnosis.md for the
+# on-board symptom this is chasing.
+echo "=== build + run tb_hyperbus_boundary_alias ==="
+verilator --binary --timing -Wall ${TB_WAIVERS} -j 0 ${INC} --top-module tb_hyperbus_boundary_alias \
+  --Mdir sim/hyperbus/obj_boundary_alias \
+  "${SUB_SRCS[@]}" "${MODEL}" "sim/hyperbus/tb_hyperbus_boundary_alias.sv" \
+  > sim/hyperbus/obj_boundary_alias.build.log 2>&1 || {
+    echo "BUILD FAILED:"; cat sim/hyperbus/obj_boundary_alias.build.log; exit 1; }
+
+out2=$(sim/hyperbus/obj_boundary_alias/Vtb_hyperbus_boundary_alias)
+echo "${out2}"
+echo "${out2}" | grep -q '^ALL HYPERBUS-BOUNDARY-ALIAS TBS PASSED$' \
+  || { echo "tb_hyperbus_boundary_alias did not PASS"; exit 1; }
+echo "HYPERBUS-BOUNDARY-ALIAS TB PASSED"
