@@ -1124,7 +1124,7 @@ if {![info exists system_name]} {
 
 # DLA Clock Frequency
 if {![info exists dla_freq_mhz]} {
-	set dla_freq_mhz 600.0
+	set dla_freq_mhz 200.0
 }
 
 # Disable PMON by default
