@@ -229,7 +229,9 @@ proc elaborate {} {
     # this to calibrate the trim-calibrated (NOT SDC-constrained) DQ/CK launch per fit, in-system, no
     # recompile — the fix for the ED-only 4 KB address alias (scratch/hyperram_retest/
     # alias_diagnosis.md; scratch/hyperram_retest/calibrate_ed.tcl runs the sweep). ed_zero.tcl maps
-    # it at 0x9000_0000, disjoint from the CSR data bridge (0x8000_0000) and the global-memory window.
+    # it at 0x4000_0000, disjoint from the CSR data bridge (0x8000_0000) and the shrunk 512 MB
+    # global-memory window (0x0..0x1FFF_FFFF); see the ed_zero.tcl CAL-DECODE FIX for why 0x9000_0000
+    # aliased to HyperRAM on silicon.
     # Word-addressed (each 32-bit register at byte offset 4*addr). PLAIN FIXED read latency = 1 clock
     # (readLatency 1): the RTL registers readdata one clock after the read is accepted; there is NO
     # readdatavalid and NO waitrequest port. This is the exact shape of the silicon-proven l2_m20k_bw

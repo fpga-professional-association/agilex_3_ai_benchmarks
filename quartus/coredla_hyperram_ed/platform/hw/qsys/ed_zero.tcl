@@ -87,11 +87,14 @@ proc do_create_system {} {
 	# in axc3000_hyperram_axi4_hw.tcl, driving the DDIO_GPIO REG_DBG/REG_CAL runtime knobs). Poked by
 	# the host over JTAG (scratch/hyperram_retest/calibrate_ed.tcl) to calibrate the trim-calibrated
 	# (NOT SDC-constrained) DQ/CK launch per fit -> the fix path for the ED-only 4 KB address alias
-	# (scratch/hyperram_retest/alias_diagnosis.md). Base 0x90000000: disjoint from the CSR data bridge
-	# (0x80000000), hw_timer (0x80000800), and the span-extender global-memory window (0x0..0x1FFFFFFF,
-	# SLAVE_ADDRESS_WIDTH=29 out of the JTAG master). 16 word-registers (64 B span), 4 used.
+	# (scratch/hyperram_retest/alias_diagnosis.md). CAL-DECODE FIX: base moved 0x90000000 -> 0x40000000.
+	# 0x90000000 was aliasing to HyperRAM on silicon because the windowed_slave spanned 0x0..0x7FFFFFFF
+	# (old SLAVE_ADDRESS_WIDTH=29 words). With the window now shrunk to 512 MB (0x0..0x1FFFFFFF,
+	# SLAVE_ADDRESS_WIDTH=27 words), 0x40000000 is disjoint from the global-memory window, the CSR data
+	# bridge (0x80000000), and hw_timer (0x80000800), giving a clean decode: span=0b000, cal=0b010,
+	# csr=0b100 on address bits [31:29]. 16 word-registers (64 B span), 4 used.
 	add_connection ${jtag_master}.master/${hyperram}.cal_csr
-	set_connection_parameter_value ${jtag_master}.master/${hyperram}.cal_csr baseAddress {0x90000000}
+	set_connection_parameter_value ${jtag_master}.master/${hyperram}.cal_csr baseAddress {0x40000000}
 	# CoreDLA DDR AXI4 master (exported emif_data_bridge_0.s0, wired in top.sv) -> HyperRAM AXI4 slave
 	add_connection ${emif_data_bridge}.m0/${hyperram}.s_axi
 	set_connection_parameter_value ${emif_data_bridge}.m0/${hyperram}.s_axi baseAddress {0x0000}
@@ -181,8 +184,14 @@ proc instantiate_jtag_address_span_extender {} {
 	set_component_parameter_value MASTER_ADDRESS_DEF {0}
 	set_component_parameter_value MASTER_ADDRESS_WIDTH $emif_addr_width
 	set_component_parameter_value MAX_PENDING_READS {1}
-	# allocate 31 out of the 32 address bits coming out of the JTAG master for DDR access
-	set_component_parameter_value SLAVE_ADDRESS_WIDTH [expr {32 - 1 - int(log($data_width)/log(2)) + 3}]
+	# PH3 CAL-DECODE FIX: the windowed_slave global-memory window was sized to 31 byte-address bits
+	# (SLAVE_ADDRESS_WIDTH=29 words -> 0x0..0x7FFFFFFF, a 2 GB window), which on silicon swallowed the
+	# cal_csr at 0x90000000 (reads there returned HyperRAM[0]=0x88880000, not the cal ID) despite a
+	# correct-looking netlist decode. HyperRAM is only 8 MB, so a 2 GB host window is gratuitous. Drop
+	# SLAVE_ADDRESS_WIDTH by 2 words -> 27 words -> 29 byte-address bits -> a 512 MB window
+	# (0x0..0x1FFFFFFF). That frees 0x20000000..0x7FFFFFFF so the cal_csr can move to 0x40000000
+	# (below the CSR bridge @0x80000000, outside the shrunk window) for a clean top-3-bit decode.
+	set_component_parameter_value SLAVE_ADDRESS_WIDTH [expr {32 - 1 - int(log($data_width)/log(2)) + 3 - 2}]
 	set_component_parameter_value SUB_WINDOW_COUNT {1}
 	set_component_parameter_value SYNC_RESET {0}
 	set_component_project_property HIDE_FROM_IP_CATALOG {false}

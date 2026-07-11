@@ -121,7 +121,7 @@ module axc3000_hyperram_pads
     output logic                 hi_addr_seen,
 
     // ---- per-fit launch-trim calibration CSR (Avalon-MM agent; driven by the host JTAG-Avalon
-    //      master in ed_zero.tcl at base 0x9000_0000). Ported from the submodule bench's
+    //      master in ed_zero.tcl at base 0x4000_0000). Ported from the submodule bench's
     //      REG_DBG/REG_CAL runtime knobs so each ED bitstream is calibratable in-system with NO
     //      recompile; reset images = the current proven static tie-offs => un-poked behavior is
     //      unchanged. See rtl/hyperbus/hyperram_cal_csr.sv for the full register map. FIXED read
@@ -286,7 +286,7 @@ module axc3000_hyperram_pads
       //
       //      RUNTIME-CALIBRATION UPDATE (this session): the dbg_* / dbg_ck_stretch_off tie-offs are
       //      no longer STATIC — they are now driven by the module-scope u_cal_csr knob_* wires
-      //      (REG_DBG at CSR base 0x9000_0000), whose reset image CAL_DBG_RESET == 0x0007_1263 is the
+      //      (REG_DBG at CSR base 0x4000_0000), whose reset image CAL_DBG_RESET == 0x0007_1263 is the
       //      exact fix set above. So an un-poked bitstream is bit-identical to the previous static
       //      wiring; calibrate_ed.tcl can retune wr_lat_trim / lat / prewin / ck_stretch_off per fit
       //      over JTAG to chase the trim-calibrated (non-SDC) DQ/CK launch that the 4 KB alias tracks.
@@ -351,7 +351,7 @@ module axc3000_hyperram_pads
           .phy_rwds_o(phy_rwds_o), .phy_rwds_oe(phy_rwds_oe), .phy_rd_arm(phy_rd_arm),
           .phy_dq_i(phy_dq_i), .phy_dq_i_valid(phy_dq_i_valid), .phy_rwds_i(phy_rwds_i),
           .dbg_state(ctrl_dbg_state), .dbg_rd_wptr(ctrl_dbg_rem), .dbg_rd_rptr(ctrl_dbg_seg),
-          // issue #13 live controller knobs — now RUNTIME (REG_DBG @ CSR 0x9000_0000; reset image
+          // issue #13 live controller knobs — now RUNTIME (REG_DBG @ CSR 0x4000_0000; reset image
           // CAL_DBG_RESET == 0x0007_1263 = the proven fix set, so un-poked behavior is unchanged).
           .dbg_wr_lat_trim(knob_wr_lat_trim), .dbg_lat_clocks(knob_lat_clocks),
           .dbg_cr0_reprog(knob_cr0_reprog),
