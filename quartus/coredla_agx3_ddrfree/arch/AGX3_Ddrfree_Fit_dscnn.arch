@@ -1,0 +1,116 @@
+# AGX3 DDR-free arch, right-sized for ds-cnn-kws on the AXC3000 C100 (A3CY100BM16AE7S).
+# Forked from AGX3_Ddrfree_Fit.arch (the resnet8-fitting config): same DDR-free machinery +
+# softmax aux primitive (ds-cnn's rewritten IR also ends Conv...->MatMul->SoftMax, per
+# quartus/coredla_hyperram_ed/ip/models/ds-cnn-kws/ds-cnn-kws.xml). ds-cnn's weights are only
+# ~36 KB (vs resnet8's ~80 KB) so filter/config caches are trimmed further; its input is
+# 49x10x1 (H=49 > resnet8's 32x32), so layout_transform_params grows to cover that.
+# Build with: ARCH=arch/AGX3_Ddrfree_Fit_dscnn.arch MODEL=quartus/coredla_hyperram_ed/ip/models/ds-cnn-kws/ds-cnn-kws.xml \
+#             OUT=out_dscnn platform/build_platform.sh
+#
+# HONEST FINDING (does NOT reach dla_create_ip, let alone Quartus): dla_compiler rejects this
+# model+arch combination with a hard, non-resource error:
+#   "Width concats not supported in architectures with external memory disabled.
+#    Try setting output_image_width_max in the arch file to be larger than the max width in the
+#    graph to prevent slicing and concatenation."
+# This persists at output_image_width_max's max legal value (256, per coredla.proto's
+# [min=128,max=256,is_pow_2] constraint on that field) AND is unaffected by k_vector/c_vector
+# (tried 16/16 and 4/4) or stream_buffer_depth. ds-cnn's rewritten IR
+# (quartus/coredla_hyperram_ed/ip/models/ds-cnn-kws/ds-cnn-kws.xml) has a 49(H)x10(W) input -- a
+# much narrower/taller aspect ratio than resnet8 (32x32) or vww (96x96) -- and its 5
+# GroupConvolution (depthwise) layers appear to force a channel-alignment concat implemented via
+# a "width" trick that the DDR-free (disable_external_memory) datapath cannot execute at all,
+# regardless of buffer sizing. This is a toolchain/model-geometry incompatibility, not an
+# M20K/ALM budget problem -- ds-cnn's actual weights (~36 KB) are the smallest of the 4 Tiny
+# models, so it would otherwise have been the easiest fit. See docs/ddrfree_platform_findings.md.
+family : 'AGX3'
+k_vector : 16
+c_vector : 16
+arch_precision : FP12AGX
+
+stream_buffer_depth : 4096
+
+enable_on_chip_parameters : true
+disable_external_memory : true
+
+output_channels_max : 14320
+output_image_width_max : 256
+
+filter_size_width_max : 28
+filter_size_height_max : 28
+
+input_stream_interface {
+  enable: true
+  data_width: 128
+  fifo_depth: 4096
+}
+
+output_stream_interface {
+  enable : true
+  data_width : 128
+  fifo_depth : 3072
+}
+
+layout_transform_params {
+  max_channels : 4
+  max_feature_height : 49
+  max_feature_width : 10
+  max_feature_depth : 1
+  max_stride_height : 1
+  max_stride_width : 1
+  max_stride_depth : 1
+  max_pad_front : 0
+  max_pad_left : 1
+  max_pad_top : 1
+  input_type : F16
+}
+
+pe_array {
+  num_interleaved_features : 12
+  num_interleaved_filters : 1
+  exit_fifo_depth : 1024
+  enable_scale : true
+}
+
+filter_scratchpad {
+  filter_depth : 256
+  bias_scale_depth : 128
+}
+
+dma {
+  csr_addr_width : 11
+  csr_data_bytes : 4
+  ddr_addr_width : 32
+  ddr_burst_width : 4
+  ddr_data_bytes : 32
+  ddr_read_id_width : 2
+  ddr_write_id_width : 5
+}
+
+activation {
+  k_vector : 16
+  enable_clamp : false
+  enable_round_clamp : true
+  enable_leaky_relu : false
+  enable_sigmoid : false
+  enable_prelu : false
+}
+
+pool {
+  k_vector : 4
+  max_window_height : 3
+  max_window_width : 3
+  max_stride_vertical : 4
+  max_stride_horizontal : 4
+}
+
+config_network {
+  config_cache_depth : 3201
+}
+
+custom_aux_primitive {
+  k_vector : 1
+  layer_type : 'softmax'
+  name       : 'softmax'
+  type       : ELTWISE_WITH_MEMORY
+  max_num_channels : 2048
+}

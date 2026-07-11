@@ -1,0 +1,104 @@
+# AGX3 DDR-free arch, right-sized for ad-toycar on the AXC3000 C100 (A3CY100BM16AE7S).
+# ad-toycar (quartus/coredla_hyperram_ed/ip/models/ad-toycar/ad-toycar.xml) is a pure
+# MLP autoencoder (MatMul+Add+ReLU x10, NO Convolution/GroupConvolution, NO SoftMax) operating on
+# a flat 640-element vector in and out -- modeled as channels=640, spatial 1x1 (no layout
+# transform of a real image needed). Softmax aux primitive dropped (not present in this graph).
+#
+# HONEST FINDING: dla_create_ip succeeds (after bumping filter_scratchpad.filter_depth 1024->1052
+# per a "DDR-free filters require (1052) filter cache depth" hard error), but
+# `dla_compiler --fanalyze-area` on the resulting config: ALM 43,855/34,000 (129%),
+# M20K 328/262 (125%), DSP 52/276. Tried bumping k_vector/c_vector 16->64 (the compiler's own
+# WARNING: "layout transform strides (1x1x640) exceed c_vector(16)... consider increasing
+# c_vector to >= 640" suggested this would shrink the layout-transform's on-chip memory) -- it
+# instead made area MUCH worse (ALM 117,247, M20K 2,793, DSP 308>276 device max), because c_vector
+# directly widens the PE array/tensor engine. ad-toycar's 640-wide fully-connected autoencoder
+# (no Convolution/GroupConvolution at all, per quartus/coredla_hyperram_ed/ip/models/ad-toycar/
+# ad-toycar.xml) has no spatial locality for a systolic tensor array to exploit, so on this small
+# device there is no c_vector/k_vector choice that is simultaneously (a) big enough to avoid the
+# inefficient 1x1x640 layout-transform warning and (b) small enough to fit the C100's 276 DSPs /
+# 262 M20K. ad-toycar -- despite the smallest input/output (640 elements) -- has the LARGEST
+# weights (~268 KB) of the 4 Tiny models and does NOT fit the AXC3000 C100 in DDR-free mode,
+# confirming the task's a-priori expectation. See docs/ddrfree_platform_findings.md.
+family : 'AGX3'
+k_vector : 16
+c_vector : 16
+arch_precision : FP12AGX
+
+stream_buffer_depth : 2048
+
+enable_on_chip_parameters : true
+disable_external_memory : true
+
+output_channels_max : 640
+
+filter_size_width_max : 14
+filter_size_height_max : 14
+
+input_stream_interface {
+  enable: true
+  data_width: 128
+  fifo_depth: 2048
+}
+
+output_stream_interface {
+  enable : true
+  data_width : 128
+  fifo_depth : 2048
+}
+
+layout_transform_params {
+  max_channels : 640
+  max_feature_height : 1
+  max_feature_width : 1
+  max_feature_depth : 1
+  max_stride_height : 1
+  max_stride_width : 1
+  max_stride_depth : 1
+  max_pad_front : 0
+  max_pad_left : 0
+  max_pad_top : 0
+  input_type : F16
+}
+
+pe_array {
+  num_interleaved_features : 12
+  num_interleaved_filters : 1
+  exit_fifo_depth : 1024
+  enable_scale : true
+}
+
+filter_scratchpad {
+  filter_depth : 1052
+  bias_scale_depth : 128
+}
+
+dma {
+  csr_addr_width : 11
+  csr_data_bytes : 4
+  ddr_addr_width : 32
+  ddr_burst_width : 4
+  ddr_data_bytes : 32
+  ddr_read_id_width : 2
+  ddr_write_id_width : 5
+}
+
+activation {
+  k_vector : 16
+  enable_clamp : false
+  enable_round_clamp : true
+  enable_leaky_relu : false
+  enable_sigmoid : false
+  enable_prelu : false
+}
+
+pool {
+  k_vector : 4
+  max_window_height : 3
+  max_window_width : 3
+  max_stride_vertical : 4
+  max_stride_horizontal : 4
+}
+
+config_network {
+  config_cache_depth : 3201
+}

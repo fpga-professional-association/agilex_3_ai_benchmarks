@@ -1,0 +1,108 @@
+# AGX3 DDR-free arch, right-sized for mobilenetv1-025-vww on the AXC3000 C100 (A3CY100BM16AE7S).
+# Forked from AGX3_Ddrfree_Fit.arch. vww's rewritten IR (quartus/coredla_hyperram_ed/ip/models/
+# mobilenetv1-025-vww/mobilenetv1-025-vww.xml) is Conv+GroupConvolution (MobileNet depthwise-
+# separable) + one AvgPool + MatMul + SoftMax on a 3x96x96 input (vs resnet8's 3x32x32).
+#
+# HONEST FINDING: this IS dla_compiler-legal (dla_create_ip succeeds, unlike ds-cnn) but the
+# COMPILER-MANDATED minimums to avoid its own hard errors already overflow the C100 by >2x:
+#   stream_buffer_depth 4096->18432 ("Stream Buffer depth is not enough to avoid slicing when
+#     layout transform is enabled... Slicing is not supported when external memory is disabled")
+#   filter_scratchpad.filter_depth 512->1602, bias_scale_depth 128->272, config_cache_depth
+#     3201->8449 (all "DDR-free ... require (N) ... but is set to (M)" hard errors)
+# `dla_compiler --fanalyze-area` on the resulting (only-legal) config: ALM 44,787/34,000 (132%),
+# M20K 589/262 (225%), DSP 62/276 (23%). These are compiler FLOORS, not "optional feature" trims
+# (AGENTS.md-style knobs like sigmoid/prelu/eltwise were already off, same as resnet8's Fit arch)
+# -- there is no smaller-but-still-legal config for this model at 96x96 input resolution. vww
+# does NOT fit the AXC3000 C100 in DDR-free mode. See docs/ddrfree_platform_findings.md.
+family : 'AGX3'
+k_vector : 16
+c_vector : 16
+arch_precision : FP12AGX
+
+stream_buffer_depth : 18432
+
+enable_on_chip_parameters : true
+disable_external_memory : true
+
+output_channels_max : 14320
+output_image_width_max : 256
+
+filter_size_width_max : 28
+filter_size_height_max : 28
+
+input_stream_interface {
+  enable: true
+  data_width: 128
+  fifo_depth: 4096
+}
+
+output_stream_interface {
+  enable : true
+  data_width : 128
+  fifo_depth : 3072
+}
+
+layout_transform_params {
+  max_channels : 4
+  max_feature_height : 96
+  max_feature_width : 96
+  max_feature_depth : 1
+  max_stride_height : 1
+  max_stride_width : 1
+  max_stride_depth : 1
+  max_pad_front : 0
+  max_pad_left : 1
+  max_pad_top : 1
+  input_type : F16
+}
+
+pe_array {
+  num_interleaved_features : 12
+  num_interleaved_filters : 1
+  exit_fifo_depth : 1024
+  enable_scale : true
+}
+
+filter_scratchpad {
+  filter_depth : 1602
+  bias_scale_depth : 272
+}
+
+dma {
+  csr_addr_width : 11
+  csr_data_bytes : 4
+  ddr_addr_width : 32
+  ddr_burst_width : 4
+  ddr_data_bytes : 32
+  ddr_read_id_width : 2
+  ddr_write_id_width : 5
+}
+
+activation {
+  k_vector : 16
+  enable_clamp : false
+  enable_round_clamp : true
+  enable_leaky_relu : false
+  enable_sigmoid : false
+  enable_prelu : false
+}
+
+pool {
+  k_vector : 4
+  max_window_height : 3
+  max_window_width : 3
+  max_stride_vertical : 4
+  max_stride_horizontal : 4
+}
+
+config_network {
+  config_cache_depth : 8449
+}
+
+custom_aux_primitive {
+  k_vector : 1
+  layer_type : 'softmax'
+  name       : 'softmax'
+  type       : ELTWISE_WITH_MEMORY
+  max_num_channels : 2048
+}
