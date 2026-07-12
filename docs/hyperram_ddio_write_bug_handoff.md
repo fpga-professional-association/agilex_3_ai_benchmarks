@@ -1,5 +1,14 @@
 # HyperRAM DDIO write-path bug — handoff to the hyperram track (2026-07-12)
 
+## UPDATE 2026-07-12 — worked around at the bridge; no longer on the critical path
+
+A **write-combiner in `rtl/hyperbus/axi4_hbmc_bridge.sv`** (buffer the 8 partial writes of a 32-byte
+beat, flush as ONE full-strobe beat write = the proven one-write-per-beat pattern) makes contiguous
+host writes bit-exact on silicon (wound_retest 22528 B: 22528/22528, ascending 256/256). So a single
+full 16-word beat write DOES land cleanly on the DDIO — the defect is specifically **more than one
+write to the same beat**. The bug below still exists and is worth fixing for robustness/bandwidth
+(the combiner costs the read-your-writes flush), but it no longer blocks a HyperRAM inference.
+
 ## Verdict
 
 **Yes, there is a real HyperRAM bug, and it is in the submodule DDIO write path**

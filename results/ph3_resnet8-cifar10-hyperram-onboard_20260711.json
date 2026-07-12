@@ -1,0 +1,33 @@
+{
+  "kind": "measured",
+  "level": "PH3",
+  "subject": "resnet8-cifar10-hyperram-onboard",
+  "date": "2026-07-11",
+  "config": {
+    "device": "A3CY100BM16AE7S",
+    "board": "Arrow AXC3000",
+    "fclk_mhz": 200,
+    "model": "resnet8-cifar10",
+    "quantization": "int8-nncf-ptq",
+    "arch_file": "AGX3_Performance.arch",
+    "bitstream_sha256": "e0e363f26331de56c43f9b9fd38cf7b92f3d244d1b0cfda9dab0fa7a8afad6f9",
+    "report_paths": [
+      "scratch/hyperram_retest/build_v7.log",
+      "scratch/hyperram_retest/bench_v7.log",
+      "quartus/coredla_hyperram_ed/ip/models/resnet8-cifar10/resnet8-cifar10.xml"
+    ],
+    "tool_versions": {
+      "quartus": "26.1.0 Build 110 (Pro, Agilex 3)",
+      "fpga_ai_suite": "2026.1.1",
+      "openvino": "2025.4.0"
+    }
+  },
+  "metrics": {
+    "accuracy_top1": 0.86,
+    "n_records": 100,
+    "fmax_mhz": 200.0109,
+    "fps": 409.2873
+  },
+  "plan_ref": "§8 method / §10",
+  "notes": "FIRST measured CoreDLA + HyperRAM inference on the AXC3000. resnet8-cifar10 INT8, 100 CIFAR-10 test images (cifar_test_imgs / cifar_gt_1000.txt), vendor dla_benchmark -target_agx3_dev_jtag_system_console. top1=86% on-board vs 86.64% software reference (results/ph2_resnet8-cifar10-int8-deployed_20260710.json) -> compute is real, correct, and input-dependent (not the constant/garbage output of the DDR-free path). All 12 dla_benchmark steps completed, NO WaitForDla timeout. UNBLOCKED BY the HyperRAM write-combiner (rtl/hyperbus/axi4_hbmc_bridge.sv, v7 sof): the DDIO controller corrupts any 32-byte beat written more than once (docs/hyperram_ddio_write_bug_handoff.md), so the host's 8-partial-writes-per-beat config/weight load was garbage; the combiner gathers each beat's partial writes into ONE full-strobe beat write (proven bit-exact: wound_retest 22528B = 22528/22528). Also required JtagClock=6MHz to configure this cable. METRIC PROVENANCE: metrics.fps=409.29 is dla_benchmark's 'IP throughput per instance' = the DLA's on-chip compute rate, measured against the on-chip IP clock ('IP clock frequency measurement: 200.0109 MHz'), i.e. NOT the JTAG data plane. dla_benchmark's 'system throughput' (11.79 FPS) and 'latency' (83.8 ms) ARE the JTAG-hosted loop (PLAN §8 method E = control/readback only, never the data plane) -> smoke-test signals only, deliberately excluded from metrics. config.feed_method is omitted because the per-inference input delivery is PLAN §8 method E (JTAG into HyperRAM) which has no A-D enum value and is control/readback-only; the IP-throughput fps nonetheless isolates the engine computing from HyperRAM-resident data. FOLLOW-UPS: (1) cross-check fps/latency_p50/p99 via the on-chip hw_timer bracket in sw/host/coredla_csr_handshake.py for an independent schema-legit timing, and re-feed from HyperRAM (method B) rather than JTAG for a clean feed-cost number; (2) re-run over the full 1000 images for a tighter accuracy figure (100 is a valid aligned subset, ~1pt reference-consistent)."
+}
