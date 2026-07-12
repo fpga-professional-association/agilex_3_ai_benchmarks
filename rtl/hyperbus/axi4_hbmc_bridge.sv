@@ -5,9 +5,13 @@
 // master driving rtl/hyperbus/hbmc_core.sv (16-bit words, word address, linear bursts). See
 // docs/ph3_bridge_design.md for the full contract and FSM; docs/ph3_interfaces.md for provenance.
 //
-// v1 (documented in the design doc): single clock (no CDC), full-width writes only (partial WSTRB is
-// DETECTED via wstrb_partial_seen, not read-modify-written), serialized/one-outstanding, one 16-word
-// hbmc burst per 256-bit AXI beat (no CA amortization). This is a datapath proof, not a HW result.
+// v2 (2026-07-12): single clock (no CDC), serialized/one-outstanding, one 16-word hbmc burst per
+// 256-bit AXI beat (no CA amortization). Partial-WSTRB writes are now READ-MODIFY-WRITTEN: a beat
+// with any non-strobed byte is first read back from HyperRAM, the strobed bytes are merged in, and
+// the full beat is written. This fixes the on-silicon corruption where a partial (e.g. 32-bit JTAG)
+// write clobbered the other bytes of its 256-bit beat (confirmed 2026-07-12: same-beat writes
+// clobber, cross-beat do not — scratch/hyperram_retest/wstrb_abc.tcl). Full-width writes (CoreDLA's
+// own 256-bit datapath) skip the read and take the original fast path unchanged.
 //
 // RTL discipline (AGENTS.md / PLAN §3 LV1): synchronous reset only for architectural state (FSM,
 // counters, sticky status, running address); the beat data buffers and latched AXI attributes are
@@ -87,14 +91,16 @@ module axi4_hbmc_bridge #(
   localparam logic [1:0] RESP_OKAY = 2'b00;
 
   // ---- FSM ----
-  typedef enum logic [2:0] {
-    S_IDLE,        // wait for AW (write priority) or AR
-    S_W_DATA,      // accept a W beat (256b) into wbeat
-    S_W_XFER,      // drain wbeat as 16 hbmc words
-    S_W_RESP,      // emit B
-    S_R_XFER,      // issue hbmc read command
-    S_R_COLLECT,   // gather 16 hbmc words into rbeat
-    S_R_RESP       // emit R
+  typedef enum logic [3:0] {
+    S_IDLE,          // wait for AW (write priority) or AR
+    S_W_DATA,        // accept a W beat (256b) into wbeat
+    S_W_RMW_READ,    // partial WSTRB: issue hbmc read of this beat first
+    S_W_RMW_COLLECT, // partial WSTRB: gather the 16 read words into rbeat (the merge background)
+    S_W_XFER,        // drain the (merged) beat as 16 hbmc words
+    S_W_RESP,        // emit B
+    S_R_XFER,        // issue hbmc read command
+    S_R_COLLECT,     // gather 16 hbmc words into rbeat
+    S_R_RESP         // emit R
   } state_t;
   state_t state;
 
@@ -106,7 +112,8 @@ module axi4_hbmc_bridge #(
 
   // ---- datapath (reset-less: written before read) ----
   logic [DATA_W-1:0]    wbeat;          // latched AXI write beat
-  logic [DATA_W-1:0]    rbeat;          // assembled AXI read beat
+  logic [WSTRB_W-1:0]   wstrb_r;        // latched AXI write strobes (per-byte); drives the RMW merge
+  logic [DATA_W-1:0]    rbeat;          // assembled AXI read beat (also the RMW read-back background)
   logic [WID_W-1:0]     awid_r;         // latched write ID -> bid
   logic [RID_W-1:0]     arid_r;         // latched read ID  -> rid (echo, required)
   logic [LEN_W-1:0]     awlen_r;        // latched write burst length
@@ -134,9 +141,15 @@ module axi4_hbmc_bridge #(
   // ---- Avalon-MM master outputs (combinational from state + datapath) ----
   assign av_burstcount = HB_BURST_W'(WORDS_PER_BEAT);
   assign av_address    = word_addr;
-  assign av_read       = (state == S_R_XFER);
+  assign av_read       = (state == S_R_XFER) || (state == S_W_RMW_READ);
   assign av_write      = (state == S_W_XFER);
-  assign av_writedata  = wbeat[16*wword_idx +: 16];
+  // Per-byte RMW merge: for the current 16-bit hbmc word, take each byte from the AXI write beat if
+  // its WSTRB bit is set, else from the read-back beat (rbeat). Full writes have wstrb_r all-ones, so
+  // this reduces to wbeat and rbeat is never consulted -> the fast path is bit-identical to v1.
+  assign av_writedata[7:0]  = wstrb_r[2*wword_idx]     ? wbeat[16*wword_idx     +: 8]
+                                                       : rbeat[16*wword_idx     +: 8];
+  assign av_writedata[15:8] = wstrb_r[2*wword_idx + 1] ? wbeat[16*wword_idx + 8 +: 8]
+                                                       : rbeat[16*wword_idx + 8 +: 8];
 
   // ---- sequential FSM ----
   always_ff @(posedge clk) begin
@@ -173,9 +186,35 @@ module axi4_hbmc_bridge #(
         S_W_DATA: begin
           if (wvalid) begin                             // wready is asserted in this state
             wbeat     <= wdata;
-            if (wstrb != {WSTRB_W{1'b1}}) wstrb_partial_seen <= 1'b1;  // detect, do not corrupt
+            wstrb_r   <= wstrb;
             wword_idx <= '0;
-            state     <= S_W_XFER;
+            if (wstrb != {WSTRB_W{1'b1}}) begin
+              wstrb_partial_seen <= 1'b1;               // partial beat -> read-modify-write it
+              state     <= S_W_RMW_READ;
+            end else begin
+              state     <= S_W_XFER;                    // full beat -> fast path (no read)
+            end
+          end
+        end
+
+        // -------- WRITE RMW: read this beat back so unstrobed bytes survive the merge --------
+        S_W_RMW_READ: begin
+          if (!av_waitrequest) begin                    // read command accepted (av_read high here)
+            rword_idx <= '0;
+            state     <= S_W_RMW_COLLECT;
+          end
+        end
+
+        // -------- WRITE RMW: gather the 16 read words into rbeat, then write the merged beat --------
+        S_W_RMW_COLLECT: begin
+          if (av_readdatavalid) begin
+            rbeat[16*rword_idx +: 16] <= av_readdata;
+            if (last_rword) begin
+              wword_idx <= '0;
+              state     <= S_W_XFER;                    // word_addr still at this beat's base
+            end else begin
+              rword_idx <= rword_idx + IDX_W'(1);
+            end
           end
         end
 

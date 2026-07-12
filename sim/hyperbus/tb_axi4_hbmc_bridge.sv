@@ -217,13 +217,52 @@ module tb_axi4_hbmc_bridge;
     // Case 4: maximum burst, 16 beats (256 words).
     run_case("len15 @0x2000",  5'h1F, 2'h3, 32'h0000_2000, 8'd15);
 
-    // ---- WSTRB partial-write DETECTION (v1: detect, do not RMW) ----
+    // ---- WSTRB partial-write DETECTION ----
     check(wstrb_partial_seen == 1'b0, "wstrb_partial_seen set before the partial-write case");
     pb = new[1];
-    pb[0] = beatval(23'(32'h0080 >> 1), 0);        // data irrelevant (v1 still writes full width)
+    pb[0] = beatval(23'(32'h0080 >> 1), 0);
     axi_write(5'h07, 32'h0000_0080, 8'd0, pb, 32'h0000_FFFF, pbid);  // partial byte-enable mask
     check(wstrb_partial_seen == 1'b1, "wstrb_partial_seen NOT raised on partial WSTRB");
     if (wstrb_partial_seen) $display("PASS: partial-WSTRB detection (wstrb_partial_seen raised)");
+
+    // ---- WSTRB partial-write READ-MODIFY-WRITE (v2): strobed bytes update, the rest of the beat
+    //      is preserved. This is the fix for the on-silicon per-beat clobbering. ----
+    begin
+      logic [255:0] full [], part [], rb2 []; logic [4:0] bo; logic [1:0] ro; logic rl;
+      logic [22:0] bw; int e0;
+      e0 = errors; bw = 23'(32'h0000_3000 >> 1);
+      full = new[1]; part = new[1];
+      full[0] = beatval(bw, 0);                                 // seed the whole beat
+      for (int i = 0; i < WORDS_PB; i++) part[0][16*i +: 16] = 16'hED00 + 16'(i);
+      axi_write(5'h0A, 32'h0000_3000, 8'd0, full, {32{1'b1}}, bo);      // 1) full write (seed)
+      axi_write(5'h0B, 32'h0000_3000, 8'd0, part, 32'h0000_FFFF, bo);   // 2) partial: low 16 bytes
+      axi_read (2'h1,  32'h0000_3000, 8'd0, rb2, ro, rl);              // 3) read back
+      for (int i = 0; i < WORDS_PB; i++) begin
+        logic [15:0] g, ex;
+        g  = rb2[0][16*i +: 16];
+        ex = (i < 8) ? (16'hED00 + 16'(i)) : wordval(bw + 23'(i));    // words 0-7 new, 8-15 preserved
+        if (g !== ex) begin $display("FAIL: RMW word %0d got %h exp %h", i, g, ex); errors++; end
+      end
+      if (errors == e0) $display("PASS: partial-WSTRB RMW word-granular (strobed updated, rest preserved)");
+
+      // byte-split within a single 16-bit word: strobe byte 0 only of word 0 (wstrb bit 0).
+      e0 = errors;
+      for (int i = 0; i < WORDS_PB; i++) part[0][16*i +: 16] = 16'hBE00 + 16'(i);
+      axi_write(5'h0C, 32'h0000_3000, 8'd0, full, {32{1'b1}}, bo);      // re-seed
+      axi_write(5'h0D, 32'h0000_3000, 8'd0, part, 32'h0000_0001, bo);   // only byte 0 strobed
+      axi_read (2'h1,  32'h0000_3000, 8'd0, rb2, ro, rl);
+      begin
+        logic [15:0] g0, ex0, orig0;
+        orig0 = wordval(bw);
+        g0  = rb2[0][15:0];
+        ex0 = {orig0[15:8], part[0][7:0]};                             // hi byte preserved, lo replaced
+        if (g0 !== ex0) begin $display("FAIL: RMW byte-split word0 got %h exp %h", g0, ex0); errors++; end
+        for (int i = 1; i < WORDS_PB; i++)
+          if (rb2[0][16*i +: 16] !== wordval(bw + 23'(i))) begin
+            $display("FAIL: RMW byte-split clobbered word %0d", i); errors++; end
+      end
+      if (errors == e0) $display("PASS: partial-WSTRB RMW byte-granular (one byte replaced, rest preserved)");
+    end
 
     check(hi_addr_seen == 1'b0, "hi_addr_seen unexpectedly set (all test addresses are < 16 MB)");
 
