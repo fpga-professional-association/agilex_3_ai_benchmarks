@@ -18,7 +18,7 @@ latency / throughput / accuracy / energy** per the benchmark's rules ([`docs/mlp
 | **Models compile to the FPGA** | ✅ **all four core MLPerf Tiny models place 100% on the Agilex-3 CoreDLA IP** — `dla_compiler`-verified, via equivalence-preserving graph surgery (MLPerf **Closed-Division-legal**) |
 | **Memory-subsystem benchmarks** | ✅ measured on the physical board (HyperRAM + on-chip M20K bandwidth) |
 | **CoreDLA on the AXC3000** | ✅ **proof-of-life on silicon** — a CoreDLA+HyperRAM bitstream programs; the CoreDLA CSR responds (ID `0x81C43991`) and the HyperRAM AXI memory path works (guard-banded writes bit-exact; the device write-wound law confirmed + mitigated). First proof CoreDLA runs on this board. |
-| **On-hardware inference numbers** | 🔶 next — the control plane + memory are validated; remaining is the host driver (load `.aot` config/weights/input → CSR handshake → parity-check output). Both a HyperRAM-backed (memory-bound) and a DDR-free (compute-bound) path are in flight. |
+| **On-hardware inference numbers** | ✅ **FIRST measured inference on silicon** — `resnet8-cifar10` INT8 runs end-to-end on CoreDLA+HyperRAM: **86% top-1** (100 CIFAR images) vs 86.64% software reference → real, correct, input-dependent compute; DLA IP compute rate **409 fps @ 200 MHz**. Unblocked by the [HyperRAM write-combiner](rtl/hyperbus/axi4_hbmc_bridge.sv) (contiguous config/weight load bit-exact) + `JtagClock=6MHz` to configure. |
 
 ### Models → CoreDLA (compile-verified, accuracy-preserved)
 
@@ -38,6 +38,7 @@ the board: [`docs/tinyml_all_models_plan.md`](docs/tinyml_all_models_plan.md).
 
 | Benchmark | Result | Status |
 |---|---|---|
+| **CoreDLA inference — `resnet8-cifar10` INT8** | **86% top-1** on 100 CIFAR images (vs 86.64% software ref); DLA IP throughput **409 fps @ 200 MHz** (on-chip-clock-measured, not the JTAG loop) — [`results/`](results/ph3_resnet8-cifar10-hyperram-onboard_20260711.json) | **measured** |
 | HyperRAM sustained bandwidth | **342 MB/s** write / 337 read (175 MHz SDR PHY) | **measured** |
 | L2 aggregate M20K bandwidth | **38.4 GB/s** banked (100% of theoretical); **32×** penalty for wrong banking geometry | **measured** |
 
