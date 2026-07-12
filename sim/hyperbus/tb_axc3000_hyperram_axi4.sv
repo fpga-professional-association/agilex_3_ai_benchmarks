@@ -108,7 +108,15 @@ module tb_axc3000_hyperram_axi4;
   // --------------------------------------------------------------------
   hyperram_model #(
       .DQ_WIDTH       (DQ_WIDTH),
-      .MEM_WORDS      (1 << 16),
+      // MEM_WORDS sizes the model's OWN backing array AND its internal `addr` register width
+      // (AW = $clog2(MEM_WORDS), sim/model/hyperram_model.sv). The page-alias regression test
+      // below (2026-07-11) probes out to byte address 0x10_0000 (word address 0x8_0000 =
+      // 524288) to mirror the real silicon symptom's sentinel addresses
+      // (scratch/hyperram_retest/addrbit_probe.tcl) -- 1<<16 (the original value, AW=16 bits)
+      // would truncate the MODEL's own address register there and manufacture a false alias
+      // that is a testbench artifact, not a DUT bug. 1<<21 gives AW=21 bits, comfortable margin
+      // above 0x8_0000.
+      .MEM_WORDS      (1 << 21),
       .LATENCY_CLOCKS (LAT),
       .FIXED_LATENCY  (1'b1),
       .ROW_WORDS      (0),          // disable mid-burst row-crossing gaps for this TB
@@ -225,6 +233,78 @@ module tb_axc3000_hyperram_axi4;
       $display("FAIL: %s had %0d error(s)", name, errors - e0);
   endtask
 
+  // --------------------------------------------------------------------
+  // Page-alias regression (2026-07-11): reproduces the on-board silicon symptom's exact SHAPE.
+  //
+  // Silicon symptom: HyperRAM aliases every byte address modulo 4096 B (2048 16-bit words) --
+  // sentinel writes at 0x0/0x1000/0x2000/0x5000/0x10000/0x100000 all land in the same cell per
+  // in-page offset; reads alias identically (scratch/hyperram_retest/addrbit_probe.tcl,
+  // gate1b.tcl's chunked bulk write/readback: every 4096 B readback chunk matched chunk 0's
+  // readback byte-for-byte, 4147/22528 total match -- i.e. everything BUT chunk 0 was wrong).
+  //
+  // The run_case() loop above is BLIND to a page alias by construction: it writes an address and
+  // immediately reads that SAME address back. Even if addr 0x1000 secretly lands in the same
+  // physical cell as addr 0x0, reading 0x1000 right after writing it still returns what was just
+  // written -- the alias only surfaces when a LATER, DIFFERENT address's write clobbers it before
+  // the read happens. This phase writes ALL pages first, THEN reads ALL pages back, matching the
+  // real bulk-write-then-bulk-read reproduction that caught the bug on hardware.
+  // --------------------------------------------------------------------
+  localparam int ALIAS_NPAGES          = 6;
+  localparam int ALIAS_PAGE_BYTES      = 4096;                              // = symptom's alias period
+  localparam int ALIAS_BURST_BYTES     = 16 * (DATA_W / 8);                 // 16 beats x 32 B = 512 B
+  localparam int ALIAS_BURSTS_PER_PAGE = ALIAS_PAGE_BYTES / ALIAS_BURST_BYTES; // 8
+
+  logic [31:0] alias_page_addr [ALIAS_NPAGES];
+  int alias_errors_base;
+
+  // Per-(page,word-index) tag: page number in bits[15:12] (0..5, needs only 3 bits, given room),
+  // in-page word index (0..2047, needs 11 bits) in bits[11:0]. A genuine 4KB alias makes page P's
+  // readback equal page 0's write at the same in-page index -- i.e. the got value's page-tag
+  // nibble reads back as 0 instead of P. That signature is printed on every mismatch below.
+  function automatic logic [15:0] alias_wordval(input int page, input int widx);
+    return {4'(page), 12'(widx)};
+  endfunction
+
+  task automatic alias_write_page(input int page, input logic [31:0] base);
+    for (int burst = 0; burst < ALIAS_BURSTS_PER_PAGE; burst++) begin
+      logic [255:0] beats [];
+      logic [WID_W-1:0] bid_o; logic [1:0] bresp_o;
+      beats = new[16];
+      for (int b = 0; b < 16; b++) begin
+        logic [255:0] v; v = '0;
+        for (int i = 0; i < WORDS_PB; i++) begin
+          int widx; widx = burst*16*WORDS_PB + b*WORDS_PB + i;
+          v[16*i +: 16] = alias_wordval(page, widx);
+        end
+        beats[b] = v;
+      end
+      axi_write(WID_W'(5'(page + 1)), base + 32'(burst * ALIAS_BURST_BYTES), LEN_W'(15), beats,
+                {32{1'b1}}, bid_o, bresp_o);
+      check(bresp_o == 2'b00, $sformatf("alias-write page%0d burst%0d: bresp != OKAY", page, burst));
+    end
+  endtask
+
+  task automatic alias_read_check_page(input int page, input logic [31:0] base);
+    for (int burst = 0; burst < ALIAS_BURSTS_PER_PAGE; burst++) begin
+      logic [255:0] rb []; logic [RID_W-1:0] rid_o; logic [1:0] rresp_o; logic rlast_o;
+      axi_read(RID_W'(page[1:0]), base + 32'(burst * ALIAS_BURST_BYTES), LEN_W'(15), rb,
+                rid_o, rresp_o, rlast_o);
+      check(rresp_o == 2'b00, $sformatf("alias-read page%0d burst%0d: rresp != OKAY", page, burst));
+      for (int b = 0; b < 16; b++)
+        for (int i = 0; i < WORDS_PB; i++) begin
+          int widx; logic [15:0] g, ex;
+          widx = burst*16*WORDS_PB + b*WORDS_PB + i;
+          g  = rb[b][16*i +: 16];
+          ex = alias_wordval(page, widx);
+          if (g !== ex) begin
+            $display("ALIAS-FAIL: page%0d burst%0d beat%0d word%0d (widx %0d): got %h exp %h (got's page-tag nibble=%0d)",
+                      page, burst, b, i, widx, g, ex, g[15:12]);
+            errors++;
+          end
+        end
+    end
+  endtask
+
   logic [255:0] pb [];
   logic [WID_W-1:0] pbid; logic [1:0] pbresp;
   int guard;
@@ -265,6 +345,26 @@ module tb_axc3000_hyperram_axi4;
     if (wstrb_partial_seen) $display("PASS: partial-WSTRB detection (wstrb_partial_seen raised)");
 
     check(hi_addr_seen == 1'b0, "hi_addr_seen unexpectedly set (all test addresses are < 16 MB)");
+
+    // ---- page-alias regression: write ALL pages first, THEN read ALL pages back (see task
+    //      comment above alias_write_page/alias_read_check_page for why this ordering matters) ----
+    alias_page_addr[0] = 32'h0000_0000;
+    alias_page_addr[1] = 32'h0000_1000;
+    alias_page_addr[2] = 32'h0000_2000;
+    alias_page_addr[3] = 32'h0000_5000;
+    alias_page_addr[4] = 32'h0001_0000;
+    alias_page_addr[5] = 32'h0010_0000;
+    alias_errors_base = errors;
+    $display("---- page-alias regression: writing %0d pages of %0d B each ----",
+              ALIAS_NPAGES, ALIAS_PAGE_BYTES);
+    for (int p = 0; p < ALIAS_NPAGES; p++) alias_write_page(p, alias_page_addr[p]);
+    $display("---- page-alias regression: reading back all %0d pages ----", ALIAS_NPAGES);
+    for (int p = 0; p < ALIAS_NPAGES; p++) alias_read_check_page(p, alias_page_addr[p]);
+    if (errors == alias_errors_base)
+      $display("PASS: page-alias regression (%0d pages x %0d B, all independent)",
+                ALIAS_NPAGES, ALIAS_PAGE_BYTES);
+    else
+      $display("FAIL: page-alias regression had %0d error(s)", errors - alias_errors_base);
 
     repeat (8) @(posedge clk);
     $display("==================================================================");
