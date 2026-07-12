@@ -162,42 +162,103 @@ class MockTinyTransport(TinyInferenceTransport):
 
 
 class CoreDlaCsrTransport(TinyInferenceTransport):
-    """Drives the real CoreDLA DDR-free datapath over Intel/Altera System Console (JTAG).
+    """Drives the real CoreDLA datapath over Intel/Altera System Console (JTAG), for EITHER of the
+    two Track DRV variants selected by `--path`:
 
-    Construction claims two master services on the JTAG-to-Avalon bridge (same procs as
-    smoke_infer.py's SystemConsoleTransport): the tensor/global-memory master (write_input /
-    read_output) and the CoreDLA CSR master (csr_* + hw timer). `run_inference` performs the
-    start/done CSR handshake owned by **Track B's `coredla_csr_handshake`** module: it writes the
-    START bit, polls STATUS.DONE, then reads the hardware-timer cycle count.
+      - `path="hyperram"` (DDR-backed): needs a resolved `aot_layout.HyperRamLayout` (`layout=`).
+        `write_input`/`read_output` are raw `write_ddr`/`read_ddr` calls; `run_inference` runs
+        `coredla_csr_handshake.CoreDlaCsrHandshake.run_inference_timed` bracketed by the on-chip
+        hw_timer (PLAN §8 method E) and returns the elapsed clk_dla cycle count.
+      - `path="ddrfree"` (streaming): needs a resolved `streaming_driver.StreamingRegisters`
+        (`streaming_regs=`) and the model's fixed `output_bytes` (`streaming_output_bytes=`).
+        `write_input`/`read_output` address the ingress/egress on-chip memories instead of HyperRAM;
+        `run_inference` queues the mSGDMA descriptors, triggers `READY_STREAMING_IFACE`, and polls
+        the same `COMPLETION_COUNT` register (see `streaming_driver.py`'s module docstring for what
+        of that path is/isn't resolved yet).
 
-    Track B seam: if `coredla_csr_handshake` (its host-side register map / sequence helper) is
-    importable, it is used verbatim; otherwise this class raises NotImplementedError rather than
-    guessing the vendor CSR bit layout (identical discipline to smoke_infer.py -- the exact
-    start/done/timer offsets are internal to the CoreDLA runtime plugin and are pinned down during
-    board bring-up, not fabricated here). Either way the class only ever runs on the board.
+    Construction actually tries to open a System Console session against `sof_path` (spawns
+    `system-console -cli`, sources the vendor's own `system_console_script.tcl`, claims the two JTAG
+    master services -- `coredla_csr_handshake.SystemConsoleTransport.open()`). Off-board (no
+    `system-console` binary, no JTAG-attached board) this always fails, and is re-raised as
+    `NotImplementedError` so callers never fall back to a fake transport -- `main()` below turns that
+    into exit code 3. On the real devkit (orchestrator-only, under `scripts/devkit_lock.sh`) this
+    opens the real JTAG session.
     """
 
-    def __init__(self, sof_path: str, jtag_path: str = "*jtag*master*"):
+    def __init__(self, sof_path: str, *, path: str = "hyperram", jtag_path: str = "*jtag*master*",
+                 layout=None, streaming_regs=None, streaming_output_bytes: int | None = None):
         self.sof_path = sof_path
-        self.jtag_path = jtag_path
-        try:
-            import coredla_csr_handshake  # noqa: F401  (Track B; may not exist yet)
-            self._handshake = coredla_csr_handshake
-        except ImportError:
-            self._handshake = None
-        raise NotImplementedError(
-            "CoreDlaCsrTransport is wired up during AXC3000 board bring-up. It needs: a programmed "
-            "DDR-free top.sof (Track A), a `system-console` install, and Track B's "
-            "`coredla_csr_handshake` start/done + hw-timer CSR sequence. The CoreDLA CSR bit layout "
-            "is internal to the vendor runtime plugin and is confirmed on-board (SignalTap / vendor "
-            "CSR map), never guessed. Use MockTinyTransport off-board. "
-            "See docs/tiny_hardware_benchmark_runbook.md.")
+        self.path = path
+        self.layout = layout
+        self.streaming_regs = streaming_regs
+        self.streaming_output_bytes = streaming_output_bytes
+        self._last_input_len = 0
+        self._streaming_driver = None
 
-    def write_input(self, addr: int, data: bytes) -> None: ...          # pragma: no cover
-    def read_output(self, addr: int, nbytes: int) -> bytes: ...         # pragma: no cover
-    def csr_write32(self, addr: int, value: int) -> None: ...           # pragma: no cover
-    def csr_read32(self, addr: int) -> int: ...                         # pragma: no cover
-    def run_inference(self, *, timeout_s: float = 30.0) -> int: ...     # pragma: no cover
+        try:
+            import coredla_csr_handshake
+        except ImportError as exc:  # pragma: no cover - always importable in this repo layout
+            raise NotImplementedError(f"coredla_csr_handshake is not importable: {exc}") from exc
+
+        job = None
+        if path == "hyperram":
+            if layout is None:
+                raise ValueError('--path hyperram needs layout=<aot_layout.HyperRamLayout>')
+            from aot_layout import build_inference_job
+            job = build_inference_job(layout)
+        elif path == "ddrfree":
+            if streaming_regs is None:
+                raise ValueError('--path ddrfree needs streaming_regs=<streaming_driver.StreamingRegisters>')
+            streaming_regs.require_resolved()
+        else:
+            raise ValueError(f"unknown path {path!r}, expected 'hyperram' or 'ddrfree'")
+
+        self._syscon = coredla_csr_handshake.SystemConsoleTransport(
+            sof_path, job=job, jtag_path=jtag_path)
+        try:
+            self._syscon.open()  # the one real hardware-dependent step (needs system-console + JTAG)
+        except Exception as exc:
+            raise NotImplementedError(
+                "CoreDlaCsrTransport needs a real board bring-up environment: a `system-console` "
+                f"install, a programmed .sof ({sof_path}), and JTAG access to the AXC3000. Off-board "
+                f"this always fails; use MockTinyTransport instead. Underlying error: {exc}") from exc
+
+        if path == "ddrfree":
+            from streaming_driver import StreamingInferenceDriver
+            self._streaming_driver = StreamingInferenceDriver(streaming_regs)
+
+    def write_input(self, addr: int, data: bytes) -> None:  # pragma: no cover - needs a board
+        self._last_input_len = len(data)
+        if self.path == "ddrfree":
+            self._streaming_driver.stage_input(self._syscon, data)
+        else:
+            self._syscon.write_ddr(addr, data)
+
+    def read_output(self, addr: int, nbytes: int) -> bytes:  # pragma: no cover - needs a board
+        if self.path == "ddrfree":
+            return self._streaming_driver.read_output(self._syscon, nbytes)
+        return self._syscon.read_ddr(addr, nbytes)
+
+    def csr_write32(self, addr: int, value: int) -> None:  # pragma: no cover - needs a board
+        self._syscon.csr_write32(addr, value)
+
+    def csr_read32(self, addr: int) -> int:  # pragma: no cover - needs a board
+        return self._syscon.csr_read32(addr)
+
+    def run_inference(self, *, timeout_s: float = 30.0) -> int:  # pragma: no cover - needs a board
+        if self.path == "ddrfree":
+            output_bytes = self.streaming_output_bytes
+            if output_bytes is None:
+                raise ValueError("--path ddrfree needs streaming_output_bytes= at construction")
+            self._streaming_driver.queue_ingress_descriptor(self._syscon, self._last_input_len)
+            self._streaming_driver.queue_egress_descriptor(self._syscon, output_bytes)
+            self._streaming_driver.handshake.start_hw_timer(self._syscon)
+            self._streaming_driver.trigger(self._syscon)
+            self._streaming_driver._poll_completion(self._syscon, timeout_s=timeout_s)
+            self._streaming_driver.handshake.stop_hw_timer(self._syscon)
+            return self._streaming_driver.handshake.read_hw_timer(self._syscon)
+        _, cycles = self._syscon.run_inference_timed(timeout_s=timeout_s)
+        return cycles
 
 
 # --------------------------------------------------------------------------------------------------
@@ -565,6 +626,16 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--timeout-s", type=float, default=30.0)
     ap.add_argument("--date", default=None)
     ap.add_argument("--jtag-path", default="*jtag*master*")
+    ap.add_argument("--path", choices=["hyperram", "ddrfree"], default="hyperram",
+                    help="DDR-backed/HyperRAM (Track A, all 4 models) or DDR-free/streaming "
+                         "(Track B/C, resnet8 + rewritten ds-cnn) -- see docs/onboard_benchmark_plan.md")
+    ap.add_argument("--ddr-buffer-info", default=None,
+                    help="[--path hyperram] a ddr_buffer_info_*.txt from aot_layout.regenerate_ddr_buffer_info "
+                         "(or a fresh dla_compiler run); resolves the guard-banded HyperRAM layout")
+    ap.add_argument("--align-bytes", type=int, default=None,
+                    help="[--path hyperram] override aot_layout.DEFAULT_ALIGN_BYTES")
+    ap.add_argument("--guard-bytes", type=int, default=None,
+                    help="[--path hyperram] override aot_layout.DEFAULT_GUARD_BYTES")
     ap.add_argument("--no-lock-check", action="store_true",
                     help="skip the devkit-lock guard (for dry docs only; never on the real board)")
     args = ap.parse_args(argv)
@@ -583,9 +654,35 @@ def main(argv: list[str] | None = None) -> int:
                   f"pass --licensed-ip to lift", file=sys.stderr)
         args.max_records = eff
 
+    transport_kwargs: dict = {"jtag_path": args.jtag_path, "path": args.path}
+    if args.path == "hyperram":
+        if not args.ddr_buffer_info:
+            print("run_tiny_benchmark --path hyperram needs --ddr-buffer-info "
+                  "(a ddr_buffer_info_*.txt; see sw/host/aot_layout.py)", file=sys.stderr)
+            return 3
+        from aot_layout import (
+            DEFAULT_ALIGN_BYTES, DEFAULT_GUARD_BYTES, parse_ddr_buffer_info, resolve_hyperram_layout)
+        info_text = Path(args.ddr_buffer_info).read_text()
+        layout = resolve_hyperram_layout(
+            parse_ddr_buffer_info(info_text),
+            align_bytes=args.align_bytes or DEFAULT_ALIGN_BYTES,
+            guard_bytes=args.guard_bytes or DEFAULT_GUARD_BYTES)
+        transport_kwargs["layout"] = layout
+        # keep the bundle's input/output addresses in lockstep with the resolved layout, so
+        # run_model's write_input(bundle.input_addr, ...)/read_output(bundle.output_addr, ...) hit
+        # exactly the guard-banded addresses the CSR handshake was told about.
+        bundle.input_addr = layout.input_addr
+        bundle.output_addr = layout.output_addr
+    else:
+        print("run_tiny_benchmark --path ddrfree needs a resolved streaming_driver.StreamingRegisters "
+              "for this platform's own Qsys address map -- not yet available from the CLI (see "
+              "streaming_driver.py's module docstring); construct CoreDlaCsrTransport(path='ddrfree', "
+              "streaming_regs=..., streaming_output_bytes=...) directly instead.", file=sys.stderr)
+        return 3
+
     # The real transport is the ONLY board-touching object; it raises off-board so nothing is faked.
     try:
-        transport: TinyInferenceTransport = CoreDlaCsrTransport(args.sof or "", jtag_path=args.jtag_path)
+        transport: TinyInferenceTransport = CoreDlaCsrTransport(args.sof or "", **transport_kwargs)
     except NotImplementedError as exc:
         print(f"run_tiny_benchmark needs a board: {exc}", file=sys.stderr)
         return 3

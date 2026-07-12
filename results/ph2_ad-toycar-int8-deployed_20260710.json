@@ -1,0 +1,26 @@
+{
+  "kind": "reference",
+  "level": "PH2",
+  "subject": "ad-toycar-int8-deployed",
+  "date": "2026-07-10",
+  "config": {
+    "device": "A3CY100BM16AE7S",
+    "board": "Arrow AXC3000",
+    "model": "ad-toycar",
+    "quantization": "int8-nncf-ptq",
+    "report_paths": [
+      "quartus/coredla_hyperram_ed/ip/models/ad-toycar/ad-toycar.xml"
+    ],
+    "tool_versions": {
+      "python": "3.12.3",
+      "openvino": "2024.6.0-17404-4c0f47d2335-releases/2024/6",
+      "tensorflow": "2.16.1"
+    }
+  },
+  "metrics": {
+    "auc": 0.7811054378011925,
+    "n_records": 2459
+  },
+  "plan_ref": "\u00a75 table",
+  "notes": "ToyCar dev-set test files, 4 machine IDs (2459 files total), per-ID AUC averaged (matches 01_test.py's metric). MLPerf Tiny reference ballpark: AUC >= 0.83; published runs vary ~0.80-0.85 depending on training-set composition and seed -- this uses the committed reference checkpoint as-is, no retraining. Computed against the DEPLOYED IR (quartus/coredla_hyperram_ed/ip/models/ad-toycar/ad-toycar.xml), i.e. the exact bytes dla_compiler turned into the .aot on the board -- not models/ir/<id>/int8/, which can drift (see build_tiny_bundle.py module docstring for the ad-toycar case where it did). Emitted by sw/model_prep/build_tiny_bundle.py --write-accuracy-result."
+}

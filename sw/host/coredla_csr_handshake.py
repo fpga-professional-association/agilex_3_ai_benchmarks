@@ -118,6 +118,20 @@ DLA_DMA_CSR_OFFSET_CLOCKS_ACTIVE_LO = 576         # 0x240  perf counter (busy cl
 DLA_DMA_CSR_OFFSET_CLOCKS_ACTIVE_HI = 580         # 0x244
 DLA_DMA_CSR_OFFSET_LICENSE_FLAG = 608             # 0x260  read: licensed?
 
+# On-chip hardware cycle counter used for latency (PLAN §8 method E: never wall-clock over JTAG).
+# NOT part of dla_dma_constants.svh / dla_dma_csr.sv -- this is a separate platform "hw_timer" IP
+# instantiated alongside CoreDLA in this repo's Qsys system (see the clock diagram in
+# docs/coredla_hyperram_onboard_findings.md §5, `hw_timer_bridge.s0_clk`), at the SAME byte offset
+# (0x800) the vendor's own System Console MMD constructor already pokes to calibrate clk_dla:
+# `runtime/coredla_device/mmd/system_console/mmd_wrapper.cpp` (`timer_address_offset = 0x800`,
+# `start_bit = 1`, `stop_bit = 2`) -- write 1 to start counting clk_dla edges, write 2 to stop, then
+# read back the same offset for the elapsed cycle count. Matches `DLA_TIMER_OFFSET = 0x8000_0800` in
+# sw/host/run_tiny_benchmark.py and `DLA_HW_TIMER_BASE_ADDRESS` in mmd_wrapper.cpp (system_console).
+DLA_HW_TIMER_OFFSET = 0x800                       # 0x800 (absolute 0x8000_0800): control on write,
+                                                   # elapsed-cycle count on read
+DLA_HW_TIMER_START = 1
+DLA_HW_TIMER_STOP = 2
+
 # Interrupt control/mask bit positions (dla_dma_constants.svh:97-98).
 DLA_DMA_CSR_INTERRUPT_ERROR_BIT = 0
 DLA_DMA_CSR_INTERRUPT_DONE_BIT = 1
@@ -267,6 +281,49 @@ class CoreDlaCsrHandshake:
         baseline = self.start(port, job)
         return self.wait_for_done(port, baseline, timeout_s=timeout_s)
 
+    # -- on-chip hw_timer: start/stop/read (see DLA_HW_TIMER_OFFSET docstring above) -----------
+    def start_hw_timer(self, port: CsrPort) -> None:
+        port.csr_write32(DLA_HW_TIMER_OFFSET, DLA_HW_TIMER_START)
+
+    def stop_hw_timer(self, port: CsrPort) -> None:
+        port.csr_write32(DLA_HW_TIMER_OFFSET, DLA_HW_TIMER_STOP)
+
+    def read_hw_timer(self, port: CsrPort) -> int:
+        return port.csr_read32(DLA_HW_TIMER_OFFSET) & _MASK32
+
+    def run_inference_timed(self, port: CsrPort, job: InferenceJob, *,
+                            timeout_s: float = 30.0) -> tuple[int, int]:
+        """Full single-inference handshake, bracketed by the on-chip hw_timer instead of host
+        wall-clock (PLAN §8 method E). Sequence:
+
+            1. baseline = COMPLETION_COUNT                          (as in start())
+            2. INTERMEDIATE_BASE_ADDR / CONFIG_BASE_ADDR / CONFIG_RANGE_MINUS_TWO writes (setup;
+               NOT timed -- for a repeated-inference run these are typically unchanged writes)
+            3. start_hw_timer()                                     -- clk_dla cycle count begins
+            4. INPUT_OUTPUT_BASE_ADDR write                          *** GO ***
+            5. wait_for_done()                                      (poll COMPLETION_COUNT)
+            6. stop_hw_timer()                                      -- cycle count ends
+            7. cycles = read_hw_timer()
+
+        Returns (completion_count, cycles). `cycles` is a REAL clk_dla hardware cycle count (not
+        host time) -- honest caveat: it also includes whatever JTAG round-trip time elapses between
+        the hardware actually finishing and this loop's next COMPLETION_COUNT poll noticing (bounded
+        by `poll_interval_s`), because the counter can only be stopped from the host after done is
+        observed. That slop is still real hardware clk_dla cycles ticking, never a host-side
+        stopwatch, so it satisfies PLAN §8 method E; keep `poll_interval_s` small to keep it tight.
+        """
+        baseline = port.csr_read32(DLA_DMA_CSR_OFFSET_COMPLETION_COUNT) & _MASK32
+        port.csr_write32(DLA_DMA_CSR_OFFSET_INTERMEDIATE_BASE_ADDR, job.intermediate_addr & _MASK32)
+        port.csr_write32(DLA_DMA_CSR_OFFSET_CONFIG_BASE_ADDR, job.config_base_addr & _MASK32)
+        port.csr_write32(DLA_DMA_CSR_OFFSET_CONFIG_RANGE_MINUS_TWO, job.config_range_minus_two())
+
+        self.start_hw_timer(port)
+        port.csr_write32(DLA_DMA_CSR_OFFSET_INPUT_OUTPUT_BASE_ADDR, job.input_addr & _MASK32)  # GO
+        completion = self.wait_for_done(port, baseline, timeout_s=timeout_s)
+        self.stop_hw_timer(port)
+        cycles = self.read_hw_timer(port)
+        return completion, cycles
+
 
 # =================================================================================================
 # Drop-in transport for smoke_infer.py.
@@ -302,29 +359,69 @@ class SystemConsoleTransport(_BaseTransport):  # type: ignore[misc,valid-type]
     DLA_CSR_RANGE = 0x0000_0900
 
     def __init__(self, sof_path: str, *, job: InferenceJob | None = None,
-                 jtag_path: str = "*jtag*master*", poll_interval_s: float = 0.001):
+                 jtag_path: str = "*jtag*master*", poll_interval_s: float = 0.001,
+                 tcl_script_path: str | None = None, system_console_bin: str = "system-console",
+                 enable_pmon: bool = False, temp_dir: str | None = None):
         self.sof_path = sof_path
         self.jtag_path = jtag_path
         self.job = job
         self._handshake = CoreDlaCsrHandshake(poll_interval_s=poll_interval_s)
-        self._proc = None  # set by open()
+        # Defaults to the vendor's OWN copy of system_console_script.tcl inside the AI Suite image
+        # ($COREDLA_ROOT/runtime/coredla_device/mmd/system_console/system_console_script.tcl) rather
+        # than a copy this repo maintains -- avoids ever drifting from whatever claim_dla_csr_service/
+        # claim_emif_ddr_service the installed AI Suite version actually defines. See
+        # docs/coredla_inference_driver.md for the exact orchestrator invocation (this must run
+        # inside the Quartus/system-console-capable, privileged-JTAG-USB container, NOT the AI Suite
+        # compiler container -- `system-console` ships with Quartus, not the AI Suite runtime image).
+        self.tcl_script_path = tcl_script_path or (
+            "$COREDLA_ROOT/runtime/coredla_device/mmd/system_console/system_console_script.tcl")
+        self.system_console_bin = system_console_bin
+        self.enable_pmon = enable_pmon
+        self.temp_dir = temp_dir  # None -> tempfile.gettempdir(), see write_ddr/read_ddr
+        self._proc: "system_console_process.SystemConsoleProcess | None" = None  # set by open()
 
     # -- lifecycle (hardware seam) ------------------------------------------------------------
     def open(self) -> "SystemConsoleTransport":  # pragma: no cover - needs a board
-        """Spawn `system-console`, load the .sof, and claim the EMIF-DDR and DLA-CSR master
-        services (the procs claim_emif_ddr_service / claim_dla_csr_service in
-        system_console_script.tcl). Left as the single hardware-dependent method."""
-        raise NotImplementedError(
-            "SystemConsoleTransport.open() spawns `system-console` on the AXC3000 board — wire it "
-            "to a subprocess that sources system_console_script.tcl, runs load_sof / "
-            "claim_emif_ddr_service / claim_dla_csr_service, then feeds _send(). This is the only "
-            "board-dependent seam; all CSR sequence logic is in CoreDlaCsrHandshake and is tested "
-            "off-board. See docs/coredla_csr_handshake_findings.md.")
+        """Spawn `system-console -cli`, load the .sof, and claim the EMIF-DDR and DLA-CSR master
+        services -- transcribed verbatim from `MmdWrapper::MmdWrapper()`
+        (`runtime/coredla_device/mmd/system_console/mmd_wrapper.cpp:253-374`):
+
+            1. spawn `system-console -cli`, wait for the initial prompt
+            2. `set ::cl(sof) <sof_path>`
+            3. (optional) `set ::cl(enable_pmon) 1`
+            4. (optional) `set ::cl(jtag_path) "<jtag_path>"`
+            5. `source <tcl_script_path>` -- runs the script's own `initialization` proc, which
+               calls `load_sof` (Tcl `design_load`), then `claim_dla_csr_service` /
+               `claim_emif_ddr_service` (system_console_script.tcl) and stashes the two service
+               handles in `::g_dla_csr_service` / `::g_emif_ddr_service`
+            6. `csr_write32(IP_RESET, 1)` -- soft-reset the IP (mmd_wrapper.cpp ctor)
+
+        The vendor ctor also runs a 500ms clk_dla calibration loop here; this repo does not need it
+        (the bitstream's `clk_dla` frequency is already known from the Quartus STA report, e.g.
+        `docs/coredla_hyperram_onboard_findings.md` §3c) so it is skipped.
+        """
+        import system_console_process
+
+        proc = system_console_process.SystemConsoleProcess(system_console_bin=self.system_console_bin)
+        proc.spawn()
+        proc.wait_for_prompt()  # initial system-console banner/prompt
+        proc.send(f"set ::cl(sof) {self.sof_path}")
+        if self.enable_pmon:
+            proc.send("set ::cl(enable_pmon) 1")
+        if self.jtag_path:
+            proc.send(f'set ::cl(jtag_path) "{self.jtag_path}"')
+        proc.send(f"source {self.tcl_script_path}")
+        self._proc = proc
+        self.csr_write32(DLA_DMA_CSR_OFFSET_IP_RESET, 1)
+        return self
 
     def close(self) -> None:  # pragma: no cover - needs a board
         if self._proc is not None:
-            self._send("close_service master $::g_dla_csr_service")
-            self._send("close_service master $::g_emif_ddr_service")
+            # Mirrors MmdWrapper::~MmdWrapper(): the sourced Tcl script defines a single
+            # `close_services` proc (closes both master services, and the pmon one if claimed).
+            self._proc.send("close_services")
+            self._proc.send("exit")
+            self._proc.close()
             self._proc = None
 
     def __enter__(self):  # pragma: no cover
@@ -334,9 +431,10 @@ class SystemConsoleTransport(_BaseTransport):  # type: ignore[misc,valid-type]
         self.close()
 
     def _send(self, tcl: str) -> str:  # pragma: no cover - needs a board
-        """Write one Tcl line to the system-console stdin and read back its reply. The single
-        hardware seam; every csr_*/ddr_* method below is expressed in terms of it."""
-        raise NotImplementedError("connect _send() to the system-console subprocess in open()")
+        """Write one Tcl line to the system-console subprocess and return its reply."""
+        if self._proc is None:
+            raise RuntimeError("SystemConsoleTransport not open; call open() first")
+        return self._proc.send(tcl)
 
     # -- CsrPort / InferenceTransport surface -------------------------------------------------
     def csr_write32(self, addr: int, value: int) -> None:  # pragma: no cover - needs a board
@@ -350,17 +448,34 @@ class SystemConsoleTransport(_BaseTransport):  # type: ignore[misc,valid-type]
                            f"0x{(self.DLA_CSR_BASE + addr) & _MASK32:08x} 1")
         return int(reply.strip().split()[-1], 0) & _MASK32
 
+    def _temp_path(self, suffix: str) -> "pathlib.Path":  # pragma: no cover - needs a board
+        import pathlib
+        import tempfile
+        import uuid
+        d = pathlib.Path(self.temp_dir) if self.temp_dir else pathlib.Path(tempfile.gettempdir())
+        return d / f"dla_syscon_{uuid.uuid4().hex}{suffix}"
+
     def write_ddr(self, addr: int, data: bytes) -> None:  # pragma: no cover - needs a board
-        # system_console_script.tcl uses master_write_from_file for block DDR writes.
-        raise NotImplementedError(
-            "write_ddr: stage `data` to a temp file and issue "
-            "`master_write_from_file $::g_emif_ddr_service <tmp> 0x{addr:08x}` (system-console has "
-            "no bulk in-line write); implement alongside _send() during bring-up.")
+        """Stage `data` to a temp file and issue `master_write_from_file` -- system-console has no
+        bulk in-line write (mmd_wrapper.cpp `write_to_ddr`). `addr` is the RAW HyperRAM byte
+        address (no base added -- `g_emif_ddr_service` already claims offset 0x0)."""
+        tmp = self._temp_path(".bin")
+        tmp.write_bytes(data)
+        try:
+            self._send(f"master_write_from_file $::g_emif_ddr_service {tmp} 0x{addr & _MASK32:08x}")
+        finally:
+            tmp.unlink(missing_ok=True)
 
     def read_ddr(self, addr: int, nbytes: int) -> bytes:  # pragma: no cover - needs a board
-        raise NotImplementedError(
-            "read_ddr: issue `master_read_to_file $::g_emif_ddr_service <tmp> 0x{addr:08x} "
-            "{nbytes}` then read the temp file back; implement alongside _send() during bring-up.")
+        """`master_read_to_file` into a temp file, then read it back (mmd_wrapper.cpp
+        `read_from_ddr`). `addr` is the RAW HyperRAM byte address, as in `write_ddr`."""
+        tmp = self._temp_path(".bin")
+        try:
+            self._send(f"master_read_to_file $::g_emif_ddr_service {tmp} "
+                       f"0x{addr & _MASK32:08x} 0x{nbytes:08x}")
+            return tmp.read_bytes()
+        finally:
+            tmp.unlink(missing_ok=True)
 
     def run_inference(self, *, timeout_s: float = 30.0) -> None:  # pragma: no cover - needs a board
         """Run the vendor CoreDLA CSR handshake for `self.job`. This is what smoke_infer calls."""
@@ -369,3 +484,12 @@ class SystemConsoleTransport(_BaseTransport):  # type: ignore[misc,valid-type]
                 "SystemConsoleTransport.run_inference needs an InferenceJob; pass job=... to the "
                 "constructor (config_base_addr, total_config_bytes, input_addr, intermediate_addr).")
         self._handshake.run_inference(self, self.job, timeout_s=timeout_s)
+
+    def run_inference_timed(self, *, timeout_s: float = 30.0) -> tuple[int, int]:  # pragma: no cover
+        """Like `run_inference`, but bracketed by the on-chip hw_timer -- see
+        `CoreDlaCsrHandshake.run_inference_timed`. Returns (completion_count, cycles)."""
+        if self.job is None:
+            raise ValueError(
+                "SystemConsoleTransport.run_inference_timed needs an InferenceJob; pass job=... to "
+                "the constructor.")
+        return self._handshake.run_inference_timed(self, self.job, timeout_s=timeout_s)

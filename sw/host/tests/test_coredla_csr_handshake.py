@@ -195,3 +195,76 @@ def test_configure_interrupts_clears_then_unmasks():
     port = MockCsrPort()
     CoreDlaCsrHandshake(poll_interval_s=0).configure_interrupts(port)
     assert port.writes == [(IRQ_CTRL, h.ALL_INTERRUPTS_MASK), (IRQ_MASK, h.ALL_INTERRUPTS_MASK)]
+
+
+# ---- on-chip hw_timer: start/stop/read + run_inference_timed() --------------------------------
+
+class MockCsrPortWithTimer(MockCsrPort):
+    """Extends MockCsrPort with a hw_timer register (DLA_HW_TIMER_OFFSET) that reports a fixed
+    programmed cycle count once stopped, and records start/stop writes for ordering assertions."""
+
+    def __init__(self, *, cycles: int = 12345, **kwargs):
+        super().__init__(**kwargs)
+        self._cycles = cycles
+        self.timer_events: list[str] = []  # "start" / "stop", in order
+
+    def csr_write32(self, addr, value):
+        super().csr_write32(addr, value)
+        if addr == h.DLA_HW_TIMER_OFFSET:
+            if value == h.DLA_HW_TIMER_START:
+                self.timer_events.append("start")
+            elif value == h.DLA_HW_TIMER_STOP:
+                self.timer_events.append("stop")
+
+    def csr_read32(self, addr):
+        if addr == h.DLA_HW_TIMER_OFFSET:
+            self.reads.append(addr)
+            return self._cycles
+        return super().csr_read32(addr)
+
+
+def test_hw_timer_start_stop_read_write_expected_values():
+    port = MockCsrPortWithTimer()
+    hs = CoreDlaCsrHandshake(poll_interval_s=0)
+    hs.start_hw_timer(port)
+    hs.stop_hw_timer(port)
+    assert port.writes[-2:] == [(h.DLA_HW_TIMER_OFFSET, h.DLA_HW_TIMER_START),
+                                (h.DLA_HW_TIMER_OFFSET, h.DLA_HW_TIMER_STOP)]
+    assert hs.read_hw_timer(port) == 12345
+
+
+def test_run_inference_timed_brackets_trigger_with_start_stop():
+    port = MockCsrPortWithTimer(complete_after_reads=2, cycles=999)
+    hs = CoreDlaCsrHandshake(poll_interval_s=0)
+    completion, cycles = hs.run_inference_timed(port, _job(), timeout_s=5.0)
+
+    assert completion == 1
+    assert cycles == 999
+    # timer starts exactly once, right before the trigger write, and stops exactly once, after done
+    assert port.timer_events == ["start", "stop"]
+    # the trigger (IO_BASE) write happens strictly after the start_hw_timer write and strictly
+    # before the stop_hw_timer write
+    start_idx = port.writes.index((h.DLA_HW_TIMER_OFFSET, h.DLA_HW_TIMER_START))
+    trigger_idx = port.writes.index((IO_BASE, 0x0000_2000))
+    stop_idx = port.writes.index((h.DLA_HW_TIMER_OFFSET, h.DLA_HW_TIMER_STOP))
+    assert start_idx < trigger_idx < stop_idx
+
+
+def test_run_inference_timed_still_does_setup_writes_before_trigger():
+    port = MockCsrPortWithTimer(complete_after_reads=2)
+    hs = CoreDlaCsrHandshake(poll_interval_s=0)
+    hs.run_inference_timed(port, _job(), timeout_s=5.0)
+    non_timer_writes = [w for w in port.writes if w[0] != h.DLA_HW_TIMER_OFFSET]
+    assert non_timer_writes == [
+        (INTERMEDIATE, 0x0),
+        (CONFIG_BASE, 0x0010_0000),
+        (CONFIG_RANGE, 8),
+        (IO_BASE, 0x0000_2000),
+    ]
+
+
+def test_run_inference_timed_propagates_timeout():
+    port = MockCsrPortWithTimer(complete_after_reads=10**9)
+    hs = CoreDlaCsrHandshake(poll_interval_s=0)
+    with pytest.raises(InferenceError, match="did not complete"):
+        hs.run_inference_timed(port, _job(), timeout_s=0.05)

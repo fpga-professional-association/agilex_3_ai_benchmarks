@@ -217,13 +217,59 @@ module tb_axi4_hbmc_bridge;
     // Case 4: maximum burst, 16 beats (256 words).
     run_case("len15 @0x2000",  5'h1F, 2'h3, 32'h0000_2000, 8'd15);
 
-    // ---- WSTRB partial-write DETECTION (v1: detect, do not RMW) ----
+    // ---- WSTRB partial-write DETECTION ----
     check(wstrb_partial_seen == 1'b0, "wstrb_partial_seen set before the partial-write case");
     pb = new[1];
-    pb[0] = beatval(23'(32'h0080 >> 1), 0);        // data irrelevant (v1 still writes full width)
+    pb[0] = beatval(23'(32'h0080 >> 1), 0);
     axi_write(5'h07, 32'h0000_0080, 8'd0, pb, 32'h0000_FFFF, pbid);  // partial byte-enable mask
     check(wstrb_partial_seen == 1'b1, "wstrb_partial_seen NOT raised on partial WSTRB");
     if (wstrb_partial_seen) $display("PASS: partial-WSTRB detection (wstrb_partial_seen raised)");
+
+    // ---- WSTRB WRITE-COMBINING (v3): 8 partial (4-byte) writes to ONE 32-byte beat are buffered and
+    //      flushed as a single full-strobe beat write, so the beat is written ONCE. The read triggers
+    //      the flush (read-your-writes) and returns the fully-assembled beat. This is the fix for the
+    //      on-silicon "beat written more than once" corruption. ----
+    begin
+      logic [255:0] part [], rb2 []; logic [4:0] bo; logic [1:0] ro; logic rl;
+      logic [22:0] bw; int e0;
+      e0 = errors; bw = 23'(32'h0000_3000 >> 1);
+      part = new[1];
+      // 8 partial writes at SUB-BEAT byte addresses (how a 32-bit master reaches a 256-bit slave:
+      // actual byte addr 0x3000, 0x3004, ... + WSTRB on the addressed lanes). Combiner must beat-align.
+      for (int g = 0; g < 8; g++) begin
+        logic [31:0] strb;
+        part[0] = beatval(bw, 0);              // full pattern; wstrb selects this group's 4 bytes
+        strb    = 32'h0000_000F << (4*g);      // bytes [4g .. 4g+3]
+        axi_write(5'h10 + 5'(g), 32'h0000_3000 + 4*g, 8'd0, part, strb, bo);
+      end
+      axi_read(2'h1, 32'h0000_3000, 8'd0, rb2, ro, rl);   // flush + read the assembled beat
+      for (int i = 0; i < WORDS_PB; i++)
+        if (rb2[0][16*i +: 16] !== wordval(bw + 23'(i))) begin
+          $display("FAIL: combine word %0d got %h exp %h", i, rb2[0][16*i +: 16], wordval(bw+23'(i)));
+          errors++;
+        end
+      if (errors == e0) $display("PASS: write-combining (8 partial writes -> one full beat, all 16 words correct)");
+
+      // Two ADJACENT beats, each assembled from partial writes, must stay independent and correct.
+      e0 = errors;
+      for (int b = 0; b < 2; b++) begin
+        logic [22:0] bwb; bwb = 23'((32'h0000_4000 + b*32) >> 1);
+        for (int g = 0; g < 8; g++) begin
+          logic [31:0] strb;
+          part[0] = beatval(bwb, 0);
+          strb    = 32'h0000_000F << (4*g);
+          axi_write(5'h18, 32'h0000_4000 + b*32 + 4*g, 8'd0, part, strb, bo);  // sub-beat byte addrs
+        end
+      end
+      for (int b = 0; b < 2; b++) begin
+        logic [22:0] bwb; bwb = 23'((32'h0000_4000 + b*32) >> 1);
+        axi_read(2'h1, 32'h0000_4000 + b*32, 8'd0, rb2, ro, rl);
+        for (int i = 0; i < WORDS_PB; i++)
+          if (rb2[0][16*i +: 16] !== wordval(bwb + 23'(i))) begin
+            $display("FAIL: combine-2beat b%0d word %0d", b, i); errors++; end
+      end
+      if (errors == e0) $display("PASS: write-combining across adjacent beats (independent, correct)");
+    end
 
     check(hi_addr_seen == 1'b0, "hi_addr_seen unexpectedly set (all test addresses are < 16 MB)");
 

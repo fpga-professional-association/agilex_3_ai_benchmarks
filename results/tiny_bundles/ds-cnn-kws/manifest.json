@@ -1,0 +1,22 @@
+{
+  "model_id": "ds-cnn-kws",
+  "mlperf_benchmark": "Keyword Spotting (KWS)",
+  "metric": "top1",
+  "n_records": 16,
+  "n_input_bytes": 490,
+  "quant": {
+    "scale": 0.3418698329551547,
+    "zero_point": 0,
+    "source": "quartus/coredla_hyperram_ed/ip/models/ds-cnn-kws/ds-cnn-kws.xml",
+    "fakequantize": {
+      "input_low": -43.75933837890625,
+      "input_high": 43.4174690246582,
+      "output_low": -43.75933837890625,
+      "output_high": 43.4174690246582,
+      "levels": 256
+    }
+  },
+  "layout": "native dataset shape (H,W,C); C=1 so NHWC/NCHW are byte-identical",
+  "element_order": "row-major (numpy/C order) INT8",
+  "notes": "See docs/tiny_reference_bundles.md for full provenance. cpu_pred is the argmax of the *deployed* IR's own simulated-INT8 (FakeQuantize) output on this exact input -- not hardware. ref_output (bit-exact device INT8 output bytes) is deliberately NOT included: CoreDLA's dla_compiler performs its own final-layer INT8 requantization internally and that scale is not observable off-hardware (dla_compiler has no simulate/dump-reference mode -- checked: `dla_compiler --help`). The primary correctness gate is cpu_pred==hardware-argmax agreement (100% expected); see parity_debugging.md."
+}

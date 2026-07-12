@@ -25,11 +25,14 @@ from onnx import TensorProto, helper, numpy_helper  # noqa: E402
 from graph_ops import (  # noqa: E402
     check_coredla_friendly,
     decompose_pools,
+    find_grouped_convs,
     find_oversized_pools,
     flatten_row_permutation,
     fold_transposes,
     make_coredla_friendly,
+    rewrite_grouped_convs_to_dense,
 )
+from graph_ops.depthwise_to_dense import dense_weight_from_grouped  # noqa: E402
 from graph_ops.pool_decompose import factorize_into  # noqa: E402
 
 ONNX_DIR = Path(__file__).resolve().parents[3] / "models" / "onnx"
@@ -190,6 +193,94 @@ def test_cascade_rejects_overlapping_stride():
     np.testing.assert_allclose(got, ref, rtol=RTOL, atol=ATOL)
 
 
+def _grouped_conv_model(cout, cin_per_group, group, kh, kw, *, h=None, w=None, bias=True):
+    """A single grouped Conv: input [1, cin_per_group*group, H, W] -> output [1, cout, H', W']."""
+    cin = cin_per_group * group
+    h = h or (kh + 2)
+    w = w or (kw + 2)
+    rng = np.random.default_rng(9)
+    wt = rng.standard_normal((cout, cin_per_group, kh, kw)).astype(np.float32)
+    x = helper.make_tensor_value_info("x", TensorProto.FLOAT, [1, cin, h, w])
+    oh, ow = h - kh + 1, w - kw + 1
+    y = helper.make_tensor_value_info("y", TensorProto.FLOAT, [1, cout, oh, ow])
+    inits = [numpy_helper.from_array(wt, name="W")]
+    inputs = ["x", "W"]
+    if bias:
+        b = rng.standard_normal((cout,)).astype(np.float32)
+        inits.append(numpy_helper.from_array(b, name="B"))
+        inputs.append("B")
+    node = helper.make_node(
+        "Conv", inputs, ["y"], name="gconv", kernel_shape=[kh, kw], group=group
+    )
+    graph = helper.make_graph([node], "gconv_g", [x], [y], initializer=inits)
+    return _finish(graph)
+
+
+# --------------------------------------------------------------------------- depthwise -> dense
+
+
+def test_dense_weight_from_grouped_is_block_diagonal():
+    rng = np.random.default_rng(11)
+    w = rng.standard_normal((4, 1, 3, 3)).astype(np.float32)  # depthwise: group == Cout == Cin
+    dense = dense_weight_from_grouped(w, group=4)
+    assert dense.shape == (4, 4, 3, 3)
+    for c in range(4):
+        np.testing.assert_array_equal(dense[c, c], w[c, 0])
+        for c2 in range(4):
+            if c2 != c:
+                assert np.all(dense[c, c2] == 0.0)
+
+
+@pytest.mark.parametrize(
+    "cout,cin_per_group,group,kh,kw",
+    [
+        (64, 1, 64, 3, 3),   # true depthwise, ds-cnn's 3x3 blocks
+        (64, 1, 64, 25, 5),  # true depthwise, ds-cnn's pool-decompose-produced 25x5 "mean" conv
+        (6, 2, 3, 3, 3),     # general grouped conv (not fully depthwise): group < Cout, cin/group>1
+        (5, 1, 5, 1, 1),     # 1x1 depthwise
+    ],
+)
+def test_grouped_conv_dense_rewrite_bit_exact(cout, cin_per_group, group, kh, kw):
+    model = _grouped_conv_model(cout, cin_per_group, group, kh, kw)
+    name, x = _first_input(model)
+    ref = _run(model, {name: x})
+    infos = find_grouped_convs(model)
+    assert len(infos) == 1 and infos[0].group == group
+    new_model, changes = rewrite_grouped_convs_to_dense(model)
+    assert len(changes) == 1
+    assert changes[0]["dense_shape"] == [cout, cin_per_group * group, kh, kw]
+    assert "group" not in [a.name for a in new_model.graph.node[0].attribute]
+    got = _run(new_model, {name: x})
+    if cin_per_group == 1:
+        # true depthwise (one real term per output channel, everything else an exact 0): bit-exact.
+        np.testing.assert_array_equal(got, ref)
+    else:
+        # general grouped conv: still mathematically identical (extra terms are exact zeros), but
+        # onnxruntime's dense-conv kernel sums over more (zero) terms in a different order than its
+        # grouped-conv kernel, so float non-associativity gives ~1e-7-level noise -- not a
+        # correctness issue, just summation order (same tolerance style as the other transforms).
+        np.testing.assert_allclose(got, ref, rtol=RTOL, atol=ATOL)
+
+
+def test_grouped_conv_dense_rewrite_requires_const_weight():
+    model = _grouped_conv_model(4, 1, 4, 3, 3)
+    # make the weight non-constant (fed from an Identity instead of an initializer)
+    w_init = next(i for i in model.graph.initializer if i.name == "W")
+    model.graph.initializer.remove(w_init)
+    ident = helper.make_node("Identity", ["W_src"], ["W"], name="w_id")
+    model.graph.node.insert(0, ident)
+    model.graph.initializer.append(numpy_helper.from_array(numpy_helper.to_array(w_init), name="W_src"))
+    with pytest.raises(ValueError):
+        rewrite_grouped_convs_to_dense(model)
+
+
+def test_ungrouped_conv_untouched_by_dense_rewrite():
+    model = _grouped_conv_model(4, 4, 1, 3, 3)  # group=1, nothing to do
+    assert find_grouped_convs(model) == []
+    new_model, changes = rewrite_grouped_convs_to_dense(model)
+    assert changes == []
+
+
 # --------------------------------------------------------------------------- transpose folding
 
 
@@ -319,6 +410,39 @@ def test_pipeline_clears_blockers_real(model_id):
     model = _real(model_id)
     new_model, report = make_coredla_friendly(model, pool_strategy="auto")
     assert report["remaining_issues"] == []
+
+
+def test_ddrfree_dscnn_full_pipeline_bit_exact():
+    """The full DDR-free ds-cnn rewrite: pool-decompose + transpose-fold + dense-ify every
+    group>1 Conv (the 4 true depthwise convs + the pool-decompose-produced one). Verifies against
+    the ORIGINAL cached ds-cnn-kws ONNX (docs/onboard_benchmark_plan.md Track B2)."""
+    model = _real("ds-cnn-kws")
+    name, x = _first_input(model)
+    ref = _run(model, {name: x})
+
+    friendly, report = make_coredla_friendly(model, pool_strategy="auto")
+    assert find_grouped_convs(friendly), "expected ds-cnn's depthwise convs to still be group>1"
+
+    dense_model, changes = rewrite_grouped_convs_to_dense(friendly)
+    assert changes, "expected grouped convs to be rewritten"
+    assert find_grouped_convs(dense_model) == [], "no group>1 Conv should remain"
+    op_types = [n.op_type for n in dense_model.graph.node]
+    assert "Concat" not in op_types
+    assert all(n.op_type != "Conv" or _group_of(n) == 1 for n in dense_model.graph.node)
+
+    got = _run(dense_model, {name: x})
+    diff = float(np.max(np.abs(got - ref)))
+    assert diff < 1e-4, f"ds-cnn DDR-free dense rewrite diff {diff}"
+    REAL_MAXDIFF["ddrfree_dense/ds-cnn-kws"] = diff
+    for c in changes:
+        REAL_MAXDIFF[f"ddrfree_dense/ds-cnn-kws/{c['node'][:24]}_growth_x"] = c["growth_x"]
+
+
+def _group_of(node):
+    for a in node.attribute:
+        if a.name == "group":
+            return a.i
+    return 1
 
 
 def test_report_real_maxdiffs(capsys):

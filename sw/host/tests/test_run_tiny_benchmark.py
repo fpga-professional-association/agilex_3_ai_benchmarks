@@ -228,6 +228,35 @@ def test_load_bundle_rejects_non_tiny_model(tmp_path):
 
 
 def test_real_transport_is_board_only():
-    # The only board-touching object must refuse to construct off-board (never fakes numbers).
+    # The only board-touching object must refuse to construct off-board (never fakes numbers),
+    # even once a valid layout is supplied -- system-console/JTAG is simply not present here.
+    from aot_layout import parse_ddr_buffer_info, resolve_hyperram_layout
+
+    text = (
+        "inputOutputBuffer size: 33280\n"
+        "\tInputs:\n\t\tinput_1: offset 0, size: 32768\n"
+        "\tOutput: offset 32768, size: 512\n\n"
+        "configFilterBuffer size: 208896\n"
+        "\t Config: offset 0, size: 22528\n"
+        "\t Filter: offset 22528, size: 186368\n"
+        "\t Bias+Scale: offset 208896, size: 0\n\n"
+        "interBuffer size: 0\n"
+    )
+    layout = resolve_hyperram_layout(parse_ddr_buffer_info(text))
     with pytest.raises(NotImplementedError, match="board bring-up"):
+        rt.CoreDlaCsrTransport("top.sof", layout=layout)
+
+
+def test_real_transport_requires_layout_for_hyperram_path():
+    with pytest.raises(ValueError, match="layout"):
         rt.CoreDlaCsrTransport("top.sof")
+
+
+def test_real_transport_requires_streaming_regs_for_ddrfree_path():
+    with pytest.raises(ValueError, match="streaming_regs"):
+        rt.CoreDlaCsrTransport("top.sof", path="ddrfree")
+
+
+def test_real_transport_rejects_unknown_path():
+    with pytest.raises(ValueError, match="unknown path"):
+        rt.CoreDlaCsrTransport("top.sof", path="bogus")

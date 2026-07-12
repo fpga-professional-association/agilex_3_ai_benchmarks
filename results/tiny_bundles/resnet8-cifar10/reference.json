@@ -1,0 +1,92 @@
+{
+  "model_id": "resnet8-cifar10",
+  "metric": "top1",
+  "output_bytes": 10,
+  "records": [
+    {
+      "file": "records/rec_00000.int8",
+      "label": 3,
+      "cpu_pred": 3
+    },
+    {
+      "file": "records/rec_00001.int8",
+      "label": 0,
+      "cpu_pred": 0
+    },
+    {
+      "file": "records/rec_00002.int8",
+      "label": 7,
+      "cpu_pred": 7
+    },
+    {
+      "file": "records/rec_00003.int8",
+      "label": 1,
+      "cpu_pred": 1
+    },
+    {
+      "file": "records/rec_00004.int8",
+      "label": 6,
+      "cpu_pred": 6
+    },
+    {
+      "file": "records/rec_00005.int8",
+      "label": 2,
+      "cpu_pred": 2
+    },
+    {
+      "file": "records/rec_00006.int8",
+      "label": 8,
+      "cpu_pred": 0
+    },
+    {
+      "file": "records/rec_00007.int8",
+      "label": 0,
+      "cpu_pred": 0
+    },
+    {
+      "file": "records/rec_00008.int8",
+      "label": 7,
+      "cpu_pred": 7
+    },
+    {
+      "file": "records/rec_00009.int8",
+      "label": 2,
+      "cpu_pred": 2
+    },
+    {
+      "file": "records/rec_00010.int8",
+      "label": 2,
+      "cpu_pred": 2
+    },
+    {
+      "file": "records/rec_00011.int8",
+      "label": 6,
+      "cpu_pred": 6
+    },
+    {
+      "file": "records/rec_00012.int8",
+      "label": 6,
+      "cpu_pred": 6
+    },
+    {
+      "file": "records/rec_00013.int8",
+      "label": 0,
+      "cpu_pred": 0
+    },
+    {
+      "file": "records/rec_00014.int8",
+      "label": 9,
+      "cpu_pred": 9
+    },
+    {
+      "file": "records/rec_00015.int8",
+      "label": 7,
+      "cpu_pred": 7
+    }
+  ],
+  "cpu_int8": {
+    "metric_name": "accuracy_top1",
+    "value": 0.8664,
+    "results_path": "results/ph2_resnet8-cifar10-int8-deployed_20260710.json"
+  }
+}

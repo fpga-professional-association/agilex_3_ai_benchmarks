@@ -17,12 +17,18 @@
 # reintroduced for synthesis/board use — exactly what a board top.sv / the standalone
 # quartus/ph3_hyperram_char/ char build also instantiate at the pins.
 #
-# NOTE (honest): the datapath is now the third_party/hyperram submodule's real, silicon-proven
-# HyperBus controller + PHY (PH3 blocker #1 CLOSED — see axc3000_hyperram_axi4.sv header), not the
-# old thin tristate stub. The AXI4/Avalon datapath through it is sim-proven
-# (sim/hyperbus/tb_axc3000_hyperram_axi4.sv against the submodule's golden hyperram_model); this PD
-# component itself has not been generated/fit on hardware — the clk2x IOPLL wiring, board pinout,
-# and .sdc closure are still open (docs/ph3_status.md "What remains").
+# NOTE (honest, updated): axc3000_hyperram_pads.sv (the TOP_LEVEL below) now defaults its
+# IO_VARIANT parameter to "DDIO_GPIO" — the board-proven chain (axi4_hbmc_bridge -> hyperbus_avalon
+# -> hyperbus_ctrl -> hyperbus_gpio_io) that measured 341.1/332.3 MB/s write/read at CK=175 MHz on
+# THIS board (third_party/hyperram/README.md, DDR x8 row; docs/ph3_submodule.md). This superseded
+# the earlier default of routing through hyperram_avalon's PHY_VARIANT dispatch (hyperbus_phy_altera,
+# "SDR"/"INTEL") — that path is still present (axc3000_hyperram_pads.sv IO_VARIANT="SPLIT_PHY") for
+# the sim TB (PHY_VARIANT="GENERIC") and the standalone quartus/ph3_hyperram_char/ char build
+# (PHY_VARIANT="SDR"), but it was never actually reachable through THIS PD component before (no
+# PHY_VARIANT parameter was ever exposed here, so it silently defaulted to axc3000_hyperram_axi4.sv's
+# own "GENERIC"/sim PHY) — see the git history of this file. clk2x is wired below to the IOPLL in
+# the instantiating ed_zero.tcl (quartus/coredla_hyperram_ed/platform/hw/qsys/ed_zero.tcl); board
+# pinout + .sdc closure live in that platform directory too.
 #
 # Discover with:  qsys-script/qsys-generate --search-path="quartus/ip/axc3000_hyperram_axi4,$"
 # or index with:  ip-make-ipx --source-directory=quartus/ip/axc3000_hyperram_axi4
@@ -51,7 +57,13 @@ set_module_property ELABORATION_CALLBACK elaborate
 # turn instantiates axi4_hbmc_bridge.sv (unchanged) and the submodule's hyperram_avalon.
 # -----------------------------------------------------------------------------------------------
 set HR_RTL ../../../third_party/hyperram/rtl
+set HR_FPGA_AXC3000 ../../../third_party/hyperram/fpga/axc3000
 
+# Note: hyperbus_phy_generic/sdr/phy.sv + hyperram_avalon.sv are only reachable through
+# axc3000_hyperram_axi4.sv's own PHY_VARIANT dispatch (the IO_VARIANT="SPLIT_PHY" generate branch
+# in axc3000_hyperram_pads.sv). fpga/axc3000/hyperbus_gpio_io.sv is the IO_VARIANT="DDIO_GPIO"
+# (default) branch's real I/O layer -- device-primitive-based (tennm_ph2_ddio_out, hbgpio_ck_cell),
+# NOT Verilator-simulable, exactly like hyperbus_phy_altera.sv already was in this fileset.
 add_fileset QUARTUS_SYNTH QUARTUS_SYNTH "" ""
 set_fileset_property QUARTUS_SYNTH TOP_LEVEL axc3000_hyperram_pads
 add_fileset_file hyperbus_pkg.sv          SYSTEM_VERILOG PATH ${HR_RTL}/hyperbus_pkg.sv
@@ -61,8 +73,10 @@ add_fileset_file hyperbus_phy_generic.sv  SYSTEM_VERILOG PATH ${HR_RTL}/phy/hype
 add_fileset_file hyperbus_phy_sdr.sv      SYSTEM_VERILOG PATH ${HR_RTL}/phy/hyperbus_phy_sdr.sv
 add_fileset_file hyperbus_phy.sv          SYSTEM_VERILOG PATH ${HR_RTL}/phy/hyperbus_phy.sv
 add_fileset_file hyperram_avalon.sv       SYSTEM_VERILOG PATH ${HR_RTL}/hyperram_avalon.sv
+add_fileset_file hyperbus_gpio_io.sv      SYSTEM_VERILOG PATH ${HR_FPGA_AXC3000}/hyperbus_gpio_io.sv
 add_fileset_file axi4_hbmc_bridge.sv      SYSTEM_VERILOG PATH ../../../rtl/hyperbus/axi4_hbmc_bridge.sv
 add_fileset_file axc3000_hyperram_axi4.sv SYSTEM_VERILOG PATH ../../../rtl/hyperbus/axc3000_hyperram_axi4.sv
+add_fileset_file hyperram_cal_csr.sv      SYSTEM_VERILOG PATH ../../../rtl/hyperbus/hyperram_cal_csr.sv
 add_fileset_file axc3000_hyperram_pads.sv SYSTEM_VERILOG PATH ../../../rtl/hyperbus/axc3000_hyperram_pads.sv
 
 add_fileset SIM_VERILOG SIM_VERILOG "" ""
@@ -74,8 +88,10 @@ add_fileset_file hyperbus_phy_generic.sv  SYSTEM_VERILOG PATH ${HR_RTL}/phy/hype
 add_fileset_file hyperbus_phy_sdr.sv      SYSTEM_VERILOG PATH ${HR_RTL}/phy/hyperbus_phy_sdr.sv
 add_fileset_file hyperbus_phy.sv          SYSTEM_VERILOG PATH ${HR_RTL}/phy/hyperbus_phy.sv
 add_fileset_file hyperram_avalon.sv       SYSTEM_VERILOG PATH ${HR_RTL}/hyperram_avalon.sv
+add_fileset_file hyperbus_gpio_io.sv      SYSTEM_VERILOG PATH ${HR_FPGA_AXC3000}/hyperbus_gpio_io.sv
 add_fileset_file axi4_hbmc_bridge.sv      SYSTEM_VERILOG PATH ../../../rtl/hyperbus/axi4_hbmc_bridge.sv
 add_fileset_file axc3000_hyperram_axi4.sv SYSTEM_VERILOG PATH ../../../rtl/hyperbus/axc3000_hyperram_axi4.sv
+add_fileset_file hyperram_cal_csr.sv      SYSTEM_VERILOG PATH ../../../rtl/hyperbus/hyperram_cal_csr.sv
 add_fileset_file axc3000_hyperram_pads.sv SYSTEM_VERILOG PATH ../../../rtl/hyperbus/axc3000_hyperram_pads.sv
 
 # -----------------------------------------------------------------------------------------------
@@ -93,8 +109,17 @@ add_parameter RID_W             INTEGER 5   "AXI read-ID width (unified to 5 for
 add_parameter LEN_W             INTEGER 8   "AXI AxLEN width"
 add_parameter HB_ADDR_W         INTEGER 23  "HyperRAM word-address width"
 add_parameter HB_BURST_W        INTEGER 8   "hbmc av_burstcount width"
-add_parameter LAT_BEATS_DEFAULT INTEGER 6   "hbmc power-on fixed latency (beats), forwarded as hyperram_avalon LATENCY_CLOCKS"
-foreach p {DATA_W ADDR_W WID_W RID_W LEN_W HB_ADDR_W HB_BURST_W LAT_BEATS_DEFAULT} {
+# FIX (this session): this used to be declared as "LAT_BEATS_DEFAULT", a name that does not match
+# any port on axc3000_hyperram_pads.sv (nor did it on the file this component pointed at before the
+# DDIO_GPIO rewrite) -- Platform Designer forwards every HDL_PARAMETER by NAME as a Verilog
+# parameter override, so that name was a real, previously-uncaught bug: any full `quartus_syn`
+# elaboration of this component hits "Error (13452): module ... has no parameter named
+# LAT_BEATS_DEFAULT". (Never exercised before because the only prior full quartus_syn pass, recorded
+# in docs/ph3_integration.md, predates this parameter's addition.) Renamed to LATENCY_CLOCKS, which
+# IS a real parameter on axc3000_hyperram_pads.sv (forwarded to both the DDIO_GPIO and SPLIT_PHY
+# branches) -- same default (6), now actually wired.
+add_parameter LATENCY_CLOCKS INTEGER 6   "CA1 -> data, clocks (fixed-latency, POR default); forwarded to axc3000_hyperram_pads.sv"
+foreach p {DATA_W ADDR_W WID_W RID_W LEN_W HB_ADDR_W HB_BURST_W LATENCY_CLOCKS} {
     set_parameter_property $p HDL_PARAMETER true
     set_parameter_property $p AFFECTS_ELABORATION true
 }
@@ -178,13 +203,14 @@ proc elaborate {} {
     add_interface_port s_axi s_axi_rready  rready  Input  1
 
     # ---- HyperBus pin conduit (exported to top-level HyperRAM balls; real inout, from
-    #      axc3000_hyperram_pads.sv's board balls) ----
+    #      axc3000_hyperram_pads.sv's board balls). Single-ended CK only: the AXC3000 HyperRAM
+    #      ball-out has no hb_ck_n pin (third_party/hyperram/fpga/axc3000/top.sv, pins.tcl) and
+    #      axc3000_hyperram_pads.sv's default IO_VARIANT="DDIO_GPIO" branch never had one either. ----
     add_interface hyperbus conduit end
     add_interface_port hyperbus hb_dq     dq     Bidir  8
     add_interface_port hyperbus hb_rwds   rwds   Bidir  1
     add_interface_port hyperbus hb_cs_n   cs_n   Output 1
     add_interface_port hyperbus hb_ck     ck     Output 1
-    add_interface_port hyperbus hb_ck_n   ck_n   Output 1
     add_interface_port hyperbus hb_rst_n  rst_n  Output 1
 
     # ---- status conduit (sticky trip-wires + init state; all optional to connect) ----
@@ -196,4 +222,42 @@ proc elaborate {} {
     # submodule's own avs_waitrequest already holds off traffic until init completes — but it is a
     # useful bring-up/debug status bit to export (e.g. to an LED or a JTAG-visible register).
     add_interface_port status init_done          init_done          Output 1
+
+    # ---- per-fit launch-trim calibration CSR (Avalon-MM agent) --------------------------------
+    # Ported from the third_party/hyperram bench's REG_DBG/REG_CAL runtime knobs (hyperram_cal_csr.sv,
+    # wired into axc3000_hyperram_pads.sv's DDIO_GPIO launch path). The host JTAG-Avalon master pokes
+    # this to calibrate the trim-calibrated (NOT SDC-constrained) DQ/CK launch per fit, in-system, no
+    # recompile — the fix for the ED-only 4 KB address alias (scratch/hyperram_retest/
+    # alias_diagnosis.md; scratch/hyperram_retest/calibrate_ed.tcl runs the sweep). ed_zero.tcl maps
+    # it at 0x4000_0000, disjoint from the CSR data bridge (0x8000_0000) and the shrunk 512 MB
+    # global-memory window (0x0..0x1FFF_FFFF); see the ed_zero.tcl CAL-DECODE FIX for why 0x9000_0000
+    # aliased to HyperRAM on silicon.
+    # Word-addressed (each 32-bit register at byte offset 4*addr). PLAIN FIXED read latency = 1 clock
+    # (readLatency 1): the RTL registers readdata one clock after the read is accepted; there is NO
+    # readdatavalid and NO waitrequest port. This is the exact shape of the silicon-proven l2_m20k_bw
+    # JTAG-Avalon CSR slave on this board (rtl/microbench/l2_m20k_bw/m20k_bw.sv). It REPLACES the
+    # earlier variable-latency declaration (readdatavalid + readLatency 0 + maximumPendingReadTransactions
+    # + a stray bridgesToMaster ""), which was the ROOT CAUSE of the on-silicon cal-CSR readback bug:
+    # with a readdatavalid port but readLatency declared 0, the interconnect / SLD master did not honour
+    # the one-clock readdatavalid handshake and sampled the shared jtag_master response bus a clock
+    # early, returning stale interconnect data (the last HyperRAM word, 0x8888_0000) instead of this
+    # slave's ID/registers. A fixed readLatency==1 makes the interconnect sample exactly when the RTL
+    # presents the data — no handshake left to mis-model. Same clk/reset domain as s_axi.
+    add_interface cal_csr avalon end
+    set_interface_property cal_csr associatedClock  clk
+    set_interface_property cal_csr associatedReset  reset
+    set_interface_property cal_csr addressUnits     WORDS
+    set_interface_property cal_csr burstOnBurstBoundariesOnly false
+    set_interface_property cal_csr holdTime         0
+    set_interface_property cal_csr linewrapBursts   false
+    set_interface_property cal_csr readLatency      1
+    set_interface_property cal_csr readWaitTime     0
+    set_interface_property cal_csr setupTime        0
+    set_interface_property cal_csr timingUnits      Cycles
+    set_interface_property cal_csr writeWaitTime    0
+    add_interface_port cal_csr csr_address       address       Input  4
+    add_interface_port cal_csr csr_read          read          Input  1
+    add_interface_port cal_csr csr_write         write         Input  1
+    add_interface_port cal_csr csr_writedata     writedata     Input  32
+    add_interface_port cal_csr csr_readdata      readdata      Output 32
 }

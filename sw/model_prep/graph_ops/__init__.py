@@ -8,19 +8,32 @@ equivalence proof.
 Public API::
 
     from graph_ops import (
-        decompose_pools,          # oversized Average/GlobalAveragePool -> conv / pool-cascade / reduce-mean
+        decompose_pools,              # oversized Average/GlobalAveragePool -> conv / pool-cascade / reduce-mean
         find_oversized_pools,
-        fold_transposes,          # Transpose feeding a Gemm/MatMul -> folded into the FC weight
-        make_coredla_friendly,    # detect + apply everything, return (model, report)
-        check_coredla_friendly,   # static check: any oversized pool or Transpose-before-FC left?
-        transform_file,           # file-in/file-out convenience wrapper
+        fold_transposes,              # Transpose feeding a Gemm/MatMul -> folded into the FC weight
+        rewrite_grouped_convs_to_dense,  # group>1 Conv -> block-diagonal group=1 dense Conv (DDR-free)
+        find_grouped_convs,
+        make_coredla_friendly,        # detect + apply everything, return (model, report)
+        check_coredla_friendly,       # static check: any oversized pool or Transpose-before-FC left?
+        transform_file,               # file-in/file-out convenience wrapper
     )
+
+``rewrite_grouped_convs_to_dense`` is a standalone step, not part of ``make_coredla_friendly``'s
+default pipeline: it is only needed by the DDR-free path (grouped Conv is fine DDR-backed) and its
+dense weight is strictly bigger, so it should be opted into deliberately, after the other transforms
+have run (see ``docs/onboard_benchmark_plan.md`` Track B2 / ``docs/dscnn_ddrfree_findings.md``).
 """
 
 from .coredla_friendly import (
     check_coredla_friendly,
     make_coredla_friendly,
     transform_file,
+)
+from .depthwise_to_dense import (
+    GroupedConvInfo,
+    dense_weight_from_grouped,
+    find_grouped_convs,
+    rewrite_grouped_convs_to_dense,
 )
 from .pool_decompose import (
     MAX_STRIDE,
@@ -42,4 +55,8 @@ __all__ = [
     "transform_file",
     "MAX_WINDOW",
     "MAX_STRIDE",
+    "GroupedConvInfo",
+    "dense_weight_from_grouped",
+    "find_grouped_convs",
+    "rewrite_grouped_convs_to_dense",
 ]

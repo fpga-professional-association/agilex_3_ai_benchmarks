@@ -1,0 +1,104 @@
+# -------------------------------------------------------------------------- #
+#
+# Copyright (C) 2024  Altera Corporation. All rights reserved.
+# Your use of Altera Corporation's design tools, logic functions
+# and other software and tools, and any partner logic
+# functions, and any output files from any of the foregoing
+# (including device programming or simulation files), and any
+# associated documentation or information are expressly subject
+# to the terms and conditions of the Altera Program License
+# Subscription Agreement, the Altera Quartus Prime License Agreement,
+# the Altera FPGA IP License Agreement, or other applicable license
+# agreement, including, without limitation, that your use is for
+# the sole purpose of programming logic devices manufactured by
+# Altera and sold by Altera or its authorized distributors.  Please
+# refer to the Altera FPGA Software License Subscription Agreements
+# on the Quartus Prime software download page.
+#
+# -------------------------------------------------------------------------- #
+# PH3 (Track P, this session): adapted from the vendor FPGA AI Suite agx3c_jtag example design's
+# top.qsf for the real Arrow AXC3000 + HyperRAM platform. Diffs from the vendor original are called
+# out below with "PH3:" comments; see docs/ph3_integration.md for the full swap recipe narrative.
+
+set_global_assignment -name TOP_LEVEL_ENTITY top
+set_global_assignment -name LAST_QUARTUS_VERSION "26.1.0 Pro Edition"
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
+set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
+set_global_assignment -name MAX_CORE_JUNCTION_TEMP 100
+set_global_assignment -name DEVICE A3CY100BM16AE7S
+set_global_assignment -name FAMILY "Agilex 3"
+set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 256
+set_global_assignment -name EDA_SIMULATION_TOOL "Questa Intel FPGA (Verilog)"
+set_global_assignment -name EDA_TIME_SCALE "1 ps" -section_id eda_simulation
+set_global_assignment -name EDA_OUTPUT_DATA_FORMAT "VERILOG HDL" -section_id eda_simulation
+
+set_global_assignment -name AUTO_RESTART_CONFIGURATION OFF
+set_global_assignment -name STRATIXV_CONFIGURATION_SCHEME "ACTIVE SERIAL X4"
+set_global_assignment -name ON_CHIP_BITSTREAM_DECOMPRESSION OFF
+# set_global_assignment -name USE_CONF_DONE SDM_IO16
+# set_global_assignment -name USE_HPS_COLD_RESET SDM_IO10
+set_global_assignment -name DEVICE_INITIALIZATION_CLOCK OSC_CLK_1_100MHZ
+set_global_assignment -name PWRMGT_VOLTAGE_OUTPUT_FORMAT "LINEAR FORMAT"
+set_global_assignment -name PWRMGT_LINEAR_FORMAT_N "-12"
+set_global_assignment -name POWER_APPLY_THERMAL_MARGIN ADDITIONAL
+# PH3: no Arrow AXC3000 board preset ships in Quartus -> drop the C-series devkit BOARD assignment.
+# set_global_assignment -name BOARD "Agilex 3 FPGA C-Series 135B Development Kit"
+
+# The reference clock is shared between PLLs (dla_pll + jtag_pll both take user_ref_clk_freq_mhz).
+# Per Quartus fitter requirement, it must be promoted to a global signal.
+# PH3: port renamed i_pll_ref_clk -> CLK_25M_C (top.sv) to match the AXC3000's only fixed clock
+# source; also asserted again (belt-and-suspenders) in pins.tcl next to its PIN_A7 location.
+set_instance_assignment -name GLOBAL_SIGNAL ON -to CLK_25M_C -entity top
+
+set_global_assignment -name SYSTEMVERILOG_FILE top.sv
+set_global_assignment -name SYSTEMVERILOG_FILE dla_platform_hw_timer.sv
+set_global_assignment -name SYSTEMVERILOG_FILE dla_platform_csr_axi_tie_off.sv
+set_global_assignment -name SYSTEMVERILOG_FILE dla_platform_interrupt_retry.sv
+
+# Set pin locations and IO standards
+# PH3: real AXC3000 board pinout (25 MHz clock, USER_BTN, HyperRAM balls) -- see pins.tcl, derived
+# from quartus/constraints/axc3000_board.tcl + third_party/hyperram/fpga/axc3000/pins.tcl (silicon-
+# resolved hb_cs_n/hb_ck = D8/D7).
+source pins.tcl
+
+# IP and QSYS files
+# set_global_assignment -name QSYS_FILE <PATH TO QSYS FILE>
+# set_global_assignment -name IP_FILE <IP FILE>
+# Shell files
+set_global_assignment -name QSYS_FILE qsys/shell.qsys
+set_global_assignment -name IP_FILE qsys/ip/ed_zero/ed_zero_jtag_address_span_extender_0.ip
+# PH3: emif_sideband_driver (ed_zero_axil_driver_0) only ever polled LPDDR4 calibration and was
+# already removed from ed_zero.tcl's do_create_system with the EMIF (instantiate_emif_sideband_driver
+# is commented out there) -- but this IP_FILE line survived the vendor->PH3 copy anyway, pointing at
+# a .ip that qsys-generate never (re)creates. Fixed this session: it was a dangling reference
+# (Critical Warning (20243) "QIP file ... does not exist" on every quartus_syn run) with no netlist
+# effect (Quartus just drops a nonexistent IP_FILE with a warning), so removing it is a pure
+# cleanliness fix, not a behavior change.
+set_global_assignment -name IP_FILE qsys/ip/ed_zero/ed_zero_axi_bridge_1.ip
+set_global_assignment -name IP_FILE qsys/ip/ed_zero/ed_zero_axi_bridge_0.ip
+set_global_assignment -name IP_FILE qsys/ip/ed_zero/ddr_usr_clk_bridge.ip
+set_global_assignment -name IP_FILE qsys/ip/ed_zero/ed_zero_usr_clock_bridge_0.ip
+set_global_assignment -name IP_FILE qsys/ip/ed_zero/ed_zero_master_0.ip
+# uncomment the following line if PMON is required
+# set_global_assignment -name IP_FILE qsys/ip/ed_zero/ed_zero_pmon_0.ip
+set_global_assignment -name IP_FILE qsys/ip/ed_zero/ed_zero_reset_bridge_0.ip
+set_global_assignment -name IP_FILE qsys/ip/ed_zero/ed_zero_reset_handler.ip
+set_global_assignment -name IP_FILE qsys/ip/ed_zero/ed_zero_rrip.ip
+set_global_assignment -name IP_FILE qsys/ip/ed_zero/ed_zero_dla_pll.ip
+set_global_assignment -name IP_FILE qsys/ip/ed_zero/ed_zero_jtag_pll.ip
+# PH3: LPDDR4 EMIF replaced by the HyperRAM AXI4 subsystem IP.
+# set_global_assignment -name IP_FILE qsys/ip/ed_zero/ed_zero_emif_io96b_lpddr4_0.ip
+set_global_assignment -name IP_FILE qsys/ip/ed_zero/ed_zero_hyperram_0.ip
+set_global_assignment -name IP_FILE qsys/ip/ed_zero/ed_zero_hw_timer_bridge.ip
+# CoreDLA files
+source dla_platform.qsf
+
+# SDC file
+# PH3: top.out.sdc was the vendor's LPDDR4-EMIF-derived SDC (clk_ddr from emif.s0_axi4_clock_out,
+# 200 MHz-class). Replaced with a hand-written top.sdc for the new 25 MHz -> {175, 350} MHz IOPLL
+# clock plan (docs/ph3_integration.md "What remains" #3 -- now written, not yet STA-verified: this
+# session's milestone is qsys-generate + quartus_syn, not quartus_fit/quartus_sta).
+set_global_assignment -name SDC_FILE top.sdc
+
+# High effort
+set_global_assignment -name OPTIMIZATION_MODE "High Performance With Aggressive Power Effort"

@@ -1,0 +1,92 @@
+{
+  "model_id": "mobilenetv1-025-vww",
+  "metric": "top1",
+  "output_bytes": 2,
+  "records": [
+    {
+      "file": "records/rec_00000.int8",
+      "label": 0,
+      "cpu_pred": 0
+    },
+    {
+      "file": "records/rec_00001.int8",
+      "label": 0,
+      "cpu_pred": 0
+    },
+    {
+      "file": "records/rec_00002.int8",
+      "label": 0,
+      "cpu_pred": 0
+    },
+    {
+      "file": "records/rec_00003.int8",
+      "label": 0,
+      "cpu_pred": 0
+    },
+    {
+      "file": "records/rec_00004.int8",
+      "label": 0,
+      "cpu_pred": 0
+    },
+    {
+      "file": "records/rec_00005.int8",
+      "label": 0,
+      "cpu_pred": 0
+    },
+    {
+      "file": "records/rec_00006.int8",
+      "label": 0,
+      "cpu_pred": 0
+    },
+    {
+      "file": "records/rec_00007.int8",
+      "label": 0,
+      "cpu_pred": 0
+    },
+    {
+      "file": "records/rec_00008.int8",
+      "label": 1,
+      "cpu_pred": 1
+    },
+    {
+      "file": "records/rec_00009.int8",
+      "label": 1,
+      "cpu_pred": 1
+    },
+    {
+      "file": "records/rec_00010.int8",
+      "label": 1,
+      "cpu_pred": 1
+    },
+    {
+      "file": "records/rec_00011.int8",
+      "label": 1,
+      "cpu_pred": 0
+    },
+    {
+      "file": "records/rec_00012.int8",
+      "label": 1,
+      "cpu_pred": 1
+    },
+    {
+      "file": "records/rec_00013.int8",
+      "label": 1,
+      "cpu_pred": 0
+    },
+    {
+      "file": "records/rec_00014.int8",
+      "label": 1,
+      "cpu_pred": 1
+    },
+    {
+      "file": "records/rec_00015.int8",
+      "label": 1,
+      "cpu_pred": 1
+    }
+  ],
+  "cpu_int8": {
+    "metric_name": "accuracy_top1",
+    "value": 0.8584199963510308,
+    "results_path": "results/ph2_mobilenetv1-025-vww-int8-deployed_20260710.json"
+  }
+}

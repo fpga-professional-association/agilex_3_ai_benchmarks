@@ -1,0 +1,22 @@
+{
+  "model_id": "mobilenetv1-025-vww",
+  "mlperf_benchmark": "Visual Wake Words (VWW)",
+  "metric": "top1",
+  "n_records": 16,
+  "n_input_bytes": 27648,
+  "quant": {
+    "scale": 0.0038478533426920575,
+    "zero_point": -128,
+    "source": "quartus/coredla_hyperram_ed/ip/models/mobilenetv1-025-vww/mobilenetv1-025-vww.xml",
+    "fakequantize": {
+      "input_low": 0.0,
+      "input_high": 0.9812026023864746,
+      "output_low": 0.0,
+      "output_high": 0.9812026023864746,
+      "levels": 256
+    }
+  },
+  "layout": "NCHW (dataset-native HWC transposed to CHW before quantize+serialize)",
+  "element_order": "row-major (numpy/C order) INT8",
+  "notes": "See docs/tiny_reference_bundles.md for full provenance. cpu_pred is the argmax of the *deployed* IR's own simulated-INT8 (FakeQuantize) output on this exact input -- not hardware. ref_output (bit-exact device INT8 output bytes) is deliberately NOT included: CoreDLA's dla_compiler performs its own final-layer INT8 requantization internally and that scale is not observable off-hardware (dla_compiler has no simulate/dump-reference mode -- checked: `dla_compiler --help`). The primary correctness gate is cpu_pred==hardware-argmax agreement (100% expected); see parity_debugging.md."
+}
