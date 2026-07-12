@@ -87,14 +87,29 @@ proc do_create_system {} {
 	# in axc3000_hyperram_axi4_hw.tcl, driving the DDIO_GPIO REG_DBG/REG_CAL runtime knobs). Poked by
 	# the host over JTAG (scratch/hyperram_retest/calibrate_ed.tcl) to calibrate the trim-calibrated
 	# (NOT SDC-constrained) DQ/CK launch per fit -> the fix path for the ED-only 4 KB address alias
-	# (scratch/hyperram_retest/alias_diagnosis.md). CAL-DECODE FIX: base moved 0x90000000 -> 0x40000000.
-	# 0x90000000 was aliasing to HyperRAM on silicon because the windowed_slave spanned 0x0..0x7FFFFFFF
-	# (old SLAVE_ADDRESS_WIDTH=29 words). With the window now shrunk to 512 MB (0x0..0x1FFFFFFF,
-	# SLAVE_ADDRESS_WIDTH=27 words), 0x40000000 is disjoint from the global-memory window, the CSR data
-	# bridge (0x80000000), and hw_timer (0x80000800), giving a clean decode: span=0b000, cal=0b010,
-	# csr=0b100 on address bits [31:29]. 16 word-registers (64 B span), 4 used.
+	# (scratch/hyperram_retest/alias_diagnosis.md).
+	#
+	# CAL-DECODE FIX v3 (0x40000000/0x90000000 both wrong -> 0x80000900). ROOT CAUSE, proven on
+	# silicon 2026-07-12 (scratch/hyperram_retest/HANDOFF3_decode_rootcause.md): the JTAG host reaches
+	# this fabric through the jtag_address_span_extender, whose windowed_slave IS the global-memory
+	# (HyperRAM) window at 0x0. Everything the vendor MMD accesses is claimed as one of exactly two
+	# sub-ranges on the single jtag master (scratch/rt_jtag/.../system_console_script.tcl):
+	#     emif/HyperRAM : {0x0        0x80000000}  -> span extender -> HyperRAM
+	#     DLA CSR+timer : {0x80000000 0x900}       -> real CSR decode (csr_data_bridge @0x8000_0000,
+	#                                                  hw_timer @0x8000_0800; both silicon-proven:
+	#                                                  ID reg read 0x81C43991, timer read 0x0).
+	# 0x40000000 and 0x90000000 BOTH sit inside the 0x0..0x7FFFFFFF HyperRAM span window, so reads
+	# there are physically HyperRAM accesses (returned HyperRAM data, not the cal ID) -- they can
+	# never decode to this slave no matter how the netlist looks. The ONLY host-reachable non-HyperRAM
+	# decode region is the DLA-CSR window 0x8000_0000..0x8000_08FF. Place cal_csr immediately above the
+	# hw_timer (0x8000_0800..0x8000_08FF) at 0x8000_0900, inside the same tightly-decoded 0x8000_0xxx
+	# block, so it decodes exactly like csr_data_bridge / hw_timer do. The host claims it via the
+	# DLA-CSR sub-range (widened to 0xA00 so 0x8000_0900..0x8000_093F is inside the claim). 16 word-
+	# registers (64 B span), 4 used. NOTE: the span-extender window is left at the proven 2 GB size
+	# (see instantiate_jtag_address_span_extender) -- the 512 MB shrink was unnecessary and, being a
+	# delta from the proof-of-life config, is reverted.
 	add_connection ${jtag_master}.master/${hyperram}.cal_csr
-	set_connection_parameter_value ${jtag_master}.master/${hyperram}.cal_csr baseAddress {0x40000000}
+	set_connection_parameter_value ${jtag_master}.master/${hyperram}.cal_csr baseAddress {0x80000900}
 	# CoreDLA DDR AXI4 master (exported emif_data_bridge_0.s0, wired in top.sv) -> HyperRAM AXI4 slave
 	add_connection ${emif_data_bridge}.m0/${hyperram}.s_axi
 	set_connection_parameter_value ${emif_data_bridge}.m0/${hyperram}.s_axi baseAddress {0x0000}
@@ -184,14 +199,13 @@ proc instantiate_jtag_address_span_extender {} {
 	set_component_parameter_value MASTER_ADDRESS_DEF {0}
 	set_component_parameter_value MASTER_ADDRESS_WIDTH $emif_addr_width
 	set_component_parameter_value MAX_PENDING_READS {1}
-	# PH3 CAL-DECODE FIX: the windowed_slave global-memory window was sized to 31 byte-address bits
-	# (SLAVE_ADDRESS_WIDTH=29 words -> 0x0..0x7FFFFFFF, a 2 GB window), which on silicon swallowed the
-	# cal_csr at 0x90000000 (reads there returned HyperRAM[0]=0x88880000, not the cal ID) despite a
-	# correct-looking netlist decode. HyperRAM is only 8 MB, so a 2 GB host window is gratuitous. Drop
-	# SLAVE_ADDRESS_WIDTH by 2 words -> 27 words -> 29 byte-address bits -> a 512 MB window
-	# (0x0..0x1FFFFFFF). That frees 0x20000000..0x7FFFFFFF so the cal_csr can move to 0x40000000
-	# (below the CSR bridge @0x80000000, outside the shrunk window) for a clean top-3-bit decode.
-	set_component_parameter_value SLAVE_ADDRESS_WIDTH [expr {32 - 1 - int(log($data_width)/log(2)) + 3 - 2}]
+	# allocate 31 out of the 32 address bits coming out of the JTAG master for DDR access.
+	# (The 2026-07-11 512 MB shrink to carve out 0x40000000 for cal_csr is REVERTED: cal_csr at
+	# 0x40000000 was inside this HyperRAM span window and thus unreachable regardless of window size --
+	# the fix was to move cal_csr to 0x8000_0900 in the DLA-CSR decode region, above this window, not
+	# to shrink the window. Restoring the proof-of-life 2 GB window minimises the delta from the
+	# silicon-proven config. See the cal_csr CAL-DECODE FIX v3 note in do_create_system.)
+	set_component_parameter_value SLAVE_ADDRESS_WIDTH [expr {32 - 1 - int(log($data_width)/log(2)) + 3}]
 	set_component_parameter_value SUB_WINDOW_COUNT {1}
 	set_component_parameter_value SYNC_RESET {0}
 	set_component_project_property HIDE_FROM_IP_CATALOG {false}
