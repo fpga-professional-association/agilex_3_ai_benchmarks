@@ -234,12 +234,13 @@ module tb_axi4_hbmc_bridge;
       logic [22:0] bw; int e0;
       e0 = errors; bw = 23'(32'h0000_3000 >> 1);
       part = new[1];
-      // 8 partial writes, each carrying one 32-bit (4-byte) group of the target beatval(bw,0):
+      // 8 partial writes at SUB-BEAT byte addresses (how a 32-bit master reaches a 256-bit slave:
+      // actual byte addr 0x3000, 0x3004, ... + WSTRB on the addressed lanes). Combiner must beat-align.
       for (int g = 0; g < 8; g++) begin
         logic [31:0] strb;
         part[0] = beatval(bw, 0);              // full pattern; wstrb selects this group's 4 bytes
         strb    = 32'h0000_000F << (4*g);      // bytes [4g .. 4g+3]
-        axi_write(5'h10 + 5'(g), 32'h0000_3000, 8'd0, part, strb, bo);
+        axi_write(5'h10 + 5'(g), 32'h0000_3000 + 4*g, 8'd0, part, strb, bo);
       end
       axi_read(2'h1, 32'h0000_3000, 8'd0, rb2, ro, rl);   // flush + read the assembled beat
       for (int i = 0; i < WORDS_PB; i++)
@@ -257,7 +258,7 @@ module tb_axi4_hbmc_bridge;
           logic [31:0] strb;
           part[0] = beatval(bwb, 0);
           strb    = 32'h0000_000F << (4*g);
-          axi_write(5'h18, 32'h0000_4000 + b*32, 8'd0, part, strb, bo);   // AF_LOAD flush between beats
+          axi_write(5'h18, 32'h0000_4000 + b*32 + 4*g, 8'd0, part, strb, bo);  // sub-beat byte addrs
         end
       end
       for (int b = 0; b < 2; b++) begin
