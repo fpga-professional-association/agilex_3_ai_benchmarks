@@ -136,7 +136,11 @@ module axi4_hbmc_bridge #(
 
   wire last_word  = (wword_idx == IDX_W'(WORDS_PER_BEAT-1));
   wire last_rword = (rword_idx == IDX_W'(WORDS_PER_BEAT-1));
-  wire [HB_ADDR_W-1:0] aw_word = awaddr[DEC_ADDR_W-1:1];   // AW byte addr -> beat-aligned word addr
+  // A 32-bit AXI write to a 256-bit slave arrives with the ACTUAL byte address (e.g. 0x..04) and a
+  // WSTRB that selects the addressed lanes -- NOT a beat-aligned address. Combining must key on the
+  // 32-byte-BEAT base, so mask the low IDX_W word bits (= low 5 byte bits) to get the beat's word addr.
+  wire [HB_ADDR_W-1:0] aw_beat = {awaddr[DEC_ADDR_W-1 : 1+IDX_W], {IDX_W{1'b0}}};
+  wire [HB_ADDR_W-1:0] ar_beat = {araddr[DEC_ADDR_W-1 : 1+IDX_W], {IDX_W{1'b0}}};
 
   // per-byte expansion of a 32-bit WSTRB into a 256-bit byte mask
   function automatic logic [DATA_W-1:0] strb_mask(input logic [WSTRB_W-1:0] s);
@@ -189,14 +193,14 @@ module axi4_hbmc_bridge #(
           if (awvalid) begin
             awid_r    <= awid;
             awlen_r   <= awlen;
-            word_addr <= aw_word;
+            word_addr <= aw_beat;
             beat_cnt  <= '0;
             if (|awaddr[ADDR_W-1:DEC_ADDR_W]) hi_addr_seen <= 1'b1;
             state     <= S_W_DATA;
           end else if (arvalid) begin
             arid_r    <= arid;
             arlen_r   <= arlen;
-            word_addr <= araddr[DEC_ADDR_W-1:1];
+            word_addr <= ar_beat;
             beat_cnt  <= '0;
             if (|araddr[ADDR_W-1:DEC_ADDR_W]) hi_addr_seen <= 1'b1;
             // read-your-writes: flush any pending combine buffer before the read
@@ -321,8 +325,11 @@ module axi4_hbmc_bridge #(
   end
 
   // Contract signals that are constant per docs/ph3_interfaces.md and intentionally not decoded.
+  //   awaddr[IDX_W:1]/araddr[IDX_W:1] (the word-within-beat bits) are intentionally unused: WSTRB is
+  //   authoritative for byte placement within the beat, and combining keys on the beat base only.
   /* verilator lint_off UNUSEDSIGNAL */
-  wire _unused_ok = &{1'b0, awsize, awburst, arsize, arburst, wlast, awaddr[0], araddr[0]};
+  wire _unused_ok = &{1'b0, awsize, awburst, arsize, arburst, wlast,
+                      awaddr[IDX_W:0], araddr[IDX_W:0]};
   /* verilator lint_on UNUSEDSIGNAL */
 endmodule
 `endif
