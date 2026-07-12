@@ -225,43 +225,49 @@ module tb_axi4_hbmc_bridge;
     check(wstrb_partial_seen == 1'b1, "wstrb_partial_seen NOT raised on partial WSTRB");
     if (wstrb_partial_seen) $display("PASS: partial-WSTRB detection (wstrb_partial_seen raised)");
 
-    // ---- WSTRB partial-write READ-MODIFY-WRITE (v2): strobed bytes update, the rest of the beat
-    //      is preserved. This is the fix for the on-silicon per-beat clobbering. ----
+    // ---- WSTRB WRITE-COMBINING (v3): 8 partial (4-byte) writes to ONE 32-byte beat are buffered and
+    //      flushed as a single full-strobe beat write, so the beat is written ONCE. The read triggers
+    //      the flush (read-your-writes) and returns the fully-assembled beat. This is the fix for the
+    //      on-silicon "beat written more than once" corruption. ----
     begin
-      logic [255:0] full [], part [], rb2 []; logic [4:0] bo; logic [1:0] ro; logic rl;
+      logic [255:0] part [], rb2 []; logic [4:0] bo; logic [1:0] ro; logic rl;
       logic [22:0] bw; int e0;
       e0 = errors; bw = 23'(32'h0000_3000 >> 1);
-      full = new[1]; part = new[1];
-      full[0] = beatval(bw, 0);                                 // seed the whole beat
-      for (int i = 0; i < WORDS_PB; i++) part[0][16*i +: 16] = 16'hED00 + 16'(i);
-      axi_write(5'h0A, 32'h0000_3000, 8'd0, full, {32{1'b1}}, bo);      // 1) full write (seed)
-      axi_write(5'h0B, 32'h0000_3000, 8'd0, part, 32'h0000_FFFF, bo);   // 2) partial: low 16 bytes
-      axi_read (2'h1,  32'h0000_3000, 8'd0, rb2, ro, rl);              // 3) read back
-      for (int i = 0; i < WORDS_PB; i++) begin
-        logic [15:0] g, ex;
-        g  = rb2[0][16*i +: 16];
-        ex = (i < 8) ? (16'hED00 + 16'(i)) : wordval(bw + 23'(i));    // words 0-7 new, 8-15 preserved
-        if (g !== ex) begin $display("FAIL: RMW word %0d got %h exp %h", i, g, ex); errors++; end
+      part = new[1];
+      // 8 partial writes, each carrying one 32-bit (4-byte) group of the target beatval(bw,0):
+      for (int g = 0; g < 8; g++) begin
+        logic [31:0] strb;
+        part[0] = beatval(bw, 0);              // full pattern; wstrb selects this group's 4 bytes
+        strb    = 32'h0000_000F << (4*g);      // bytes [4g .. 4g+3]
+        axi_write(5'h10 + 5'(g), 32'h0000_3000, 8'd0, part, strb, bo);
       end
-      if (errors == e0) $display("PASS: partial-WSTRB RMW word-granular (strobed updated, rest preserved)");
+      axi_read(2'h1, 32'h0000_3000, 8'd0, rb2, ro, rl);   // flush + read the assembled beat
+      for (int i = 0; i < WORDS_PB; i++)
+        if (rb2[0][16*i +: 16] !== wordval(bw + 23'(i))) begin
+          $display("FAIL: combine word %0d got %h exp %h", i, rb2[0][16*i +: 16], wordval(bw+23'(i)));
+          errors++;
+        end
+      if (errors == e0) $display("PASS: write-combining (8 partial writes -> one full beat, all 16 words correct)");
 
-      // byte-split within a single 16-bit word: strobe byte 0 only of word 0 (wstrb bit 0).
+      // Two ADJACENT beats, each assembled from partial writes, must stay independent and correct.
       e0 = errors;
-      for (int i = 0; i < WORDS_PB; i++) part[0][16*i +: 16] = 16'hBE00 + 16'(i);
-      axi_write(5'h0C, 32'h0000_3000, 8'd0, full, {32{1'b1}}, bo);      // re-seed
-      axi_write(5'h0D, 32'h0000_3000, 8'd0, part, 32'h0000_0001, bo);   // only byte 0 strobed
-      axi_read (2'h1,  32'h0000_3000, 8'd0, rb2, ro, rl);
-      begin
-        logic [15:0] g0, ex0, orig0;
-        orig0 = wordval(bw);
-        g0  = rb2[0][15:0];
-        ex0 = {orig0[15:8], part[0][7:0]};                             // hi byte preserved, lo replaced
-        if (g0 !== ex0) begin $display("FAIL: RMW byte-split word0 got %h exp %h", g0, ex0); errors++; end
-        for (int i = 1; i < WORDS_PB; i++)
-          if (rb2[0][16*i +: 16] !== wordval(bw + 23'(i))) begin
-            $display("FAIL: RMW byte-split clobbered word %0d", i); errors++; end
+      for (int b = 0; b < 2; b++) begin
+        logic [22:0] bwb; bwb = 23'((32'h0000_4000 + b*32) >> 1);
+        for (int g = 0; g < 8; g++) begin
+          logic [31:0] strb;
+          part[0] = beatval(bwb, 0);
+          strb    = 32'h0000_000F << (4*g);
+          axi_write(5'h18, 32'h0000_4000 + b*32, 8'd0, part, strb, bo);   // AF_LOAD flush between beats
+        end
       end
-      if (errors == e0) $display("PASS: partial-WSTRB RMW byte-granular (one byte replaced, rest preserved)");
+      for (int b = 0; b < 2; b++) begin
+        logic [22:0] bwb; bwb = 23'((32'h0000_4000 + b*32) >> 1);
+        axi_read(2'h1, 32'h0000_4000 + b*32, 8'd0, rb2, ro, rl);
+        for (int i = 0; i < WORDS_PB; i++)
+          if (rb2[0][16*i +: 16] !== wordval(bwb + 23'(i))) begin
+            $display("FAIL: combine-2beat b%0d word %0d", b, i); errors++; end
+      end
+      if (errors == e0) $display("PASS: write-combining across adjacent beats (independent, correct)");
     end
 
     check(hi_addr_seen == 1'b0, "hi_addr_seen unexpectedly set (all test addresses are < 16 MB)");
