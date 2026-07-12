@@ -15,6 +15,15 @@ example design's own JTAG-Avalon memory map (DDR global-memory window + CoreDLA 
 platform than the scoreboard/HyperRAM record-replay path the rest of this directory drives. See its
 module docstring and `docs/board_bringup.md`.
 
+## CoreDLA MLPerf Tiny inference driver (Track DRV)
+
+`aot_layout.py` (resolves the `.aot` → HyperRAM memory layout from `dla_compiler`'s own
+`ddr_buffer_info_*.txt`), `system_console_process.py` + `coredla_csr_handshake.SystemConsoleTransport`
+(the real `system-console` subprocess transport), `hyperram_loader.py` (guard-banded load + parity
+gate), and `streaming_driver.py` (DDR-free/streaming path, partially resolved) together implement the
+host side of `run_tiny_benchmark.py --path {hyperram,ddrfree}`. Full write-up, vendor-source
+citations, and the exact orchestrator invocation: `docs/coredla_inference_driver.md`.
+
 ## Accuracy parity gate (issue #21)
 
 ```

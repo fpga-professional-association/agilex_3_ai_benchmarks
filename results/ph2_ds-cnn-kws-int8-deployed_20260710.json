@@ -1,0 +1,26 @@
+{
+  "kind": "reference",
+  "level": "PH2",
+  "subject": "ds-cnn-kws-int8-deployed",
+  "date": "2026-07-10",
+  "config": {
+    "device": "A3CY100BM16AE7S",
+    "board": "Arrow AXC3000",
+    "model": "ds-cnn-kws",
+    "quantization": "int8-nncf-ptq",
+    "report_paths": [
+      "quartus/coredla_hyperram_ed/ip/models/ds-cnn-kws/ds-cnn-kws.xml"
+    ],
+    "tool_versions": {
+      "python": "3.12.3",
+      "openvino": "2024.6.0-17404-4c0f47d2335-releases/2024/6",
+      "tensorflow": "2.16.1"
+    }
+  },
+  "metrics": {
+    "accuracy_top1": 0.9171779141104295,
+    "n_records": 4890
+  },
+  "plan_ref": "\u00a75 table",
+  "notes": "Full Speech Commands v2 'test' split (4890 records) via tensorflow_datasets, matching docs/record_format.md's 4,890-record count. MLPerf Tiny quality target: 90%+ top-1. Computed against the DEPLOYED IR (quartus/coredla_hyperram_ed/ip/models/ds-cnn-kws/ds-cnn-kws.xml), i.e. the exact bytes dla_compiler turned into the .aot on the board -- not models/ir/<id>/int8/, which can drift (see build_tiny_bundle.py module docstring for the ad-toycar case where it did). Emitted by sw/model_prep/build_tiny_bundle.py --write-accuracy-result."
+}
