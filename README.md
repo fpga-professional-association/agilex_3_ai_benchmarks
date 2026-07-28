@@ -112,6 +112,11 @@ flowchart LR
 - **MLPerf Tiny v1.4** results (MLCommons): <https://mlcommons.org/benchmarks/inference-tiny/>
 - resnet8-cifar10 reference model: <https://github.com/mlcommons/tiny> (`pretrainedResnet.tflite`)
 
+## License
+
+MIT — see [`LICENSE`](LICENSE). The [`third_party/hyperram`](https://github.com/fpga-professional-association/hyperram)
+submodule and the reference models/datasets fetched by `sw/model_prep/` carry their own licenses.
+
 ---
 
 Multiple agents share one board — any on-board work must hold the
