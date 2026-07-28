@@ -85,6 +85,28 @@ gap drives every limitation here:
 Remaining follow-ups (D5_DELAY margin fix, full-set accuracy, on-chip `hw_timer` timing, the other
 MLPerf Tiny models) are tracked in **issue #71**.
 
+## How this repo was built
+
+Nearly everything here — RTL, testbenches, scripts, Quartus projects, silicon debug, and these docs —
+was produced by an AI agent (Claude Code) working the issue roadmap under the rules in
+[`AGENTS.md`](AGENTS.md), with one engineer reviewing every PR and handling the physical board.
+Write-ups on fpgapa.org:
+
+- **Case study:** [End-to-end FPGA development with Claude](https://fpgapa.org/blog/end-to-end-fpga-development-with-claude.html)
+  — empty repo to measured on-silicon inference in eight days, every number linked to its JSON in `results/`.
+- **How-to:** [How to run an AI agent on FPGA work](https://fpgapa.org/blog/ai-agent-fpga-how-to.html)
+  — the setup steps and an honest ladder of the complexity levels demonstrated here.
+
+```mermaid
+flowchart LR
+  E["Engineer\nscope · review · physical hands"] -->|reviews & merges| R["Repository\nPLAN.md · AGENTS.md · issues · results schema"]
+  R -->|issues + discipline gates| A["Agent (Claude Code)"]
+  A -->|PRs + result JSONs| R
+  A -->|scripted flows| T["Verilator · Quartus Prime"]
+  A -->|JTAG + devkit lock| B["AXC3000 board"]
+  E -.->|physical actions| B
+```
+
 ## Reference
 
 - **MLPerf Tiny v1.4** results (MLCommons): <https://mlcommons.org/benchmarks/inference-tiny/>
