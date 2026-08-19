@@ -15,6 +15,8 @@ output_files/
 *.sof
 *.pof
 *.rbf
+*.pin
+*.sld
 
 # Quartus/Platform Designer generated trees under the tracked derivative.
 fpga/**/db/
@@ -36,6 +38,7 @@ results/
 logs/
 tmp/
 *.log
+gdbopxdriscv.ini
 
 # Python caches (host-side tooling only; no WSL).
 __pycache__/

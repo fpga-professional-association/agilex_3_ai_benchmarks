@@ -1,29 +1,27 @@
 <?xml version="1.0" ?>
-<!--Your use of Intel Corporation's design tools, logic functions 
+<!--Your use of Altera Corporation's design tools, logic functions 
 and other software and tools, and any partner logic 
 functions, and any output files from any of the foregoing 
 (including device programming or simulation files), and any 
 associated documentation or information are expressly subject 
-to the terms and conditions of the Intel Program License 
-Subscription Agreement, the Intel Quartus Prime License Agreement,
-the Intel FPGA IP License Agreement, or other applicable license
+to the terms and conditions of the Altera Program License 
+Subscription Agreement, the Altera Quartus Prime License Agreement,
+the Altera FPGA IP License Agreement, or other applicable license
 agreement, including, without limitation, that your use is for
 the sole purpose of programming logic devices manufactured by
-Intel and sold by Intel or its authorized distributors.  Please
-refer to the applicable agreement for further details, at
-https://fpgasoftware.intel.com/eula.-->
+Altera and sold by Altera or its authorized distributors.-->
 <ipxact:component xmlns:altera="http://www.altera.com/XMLSchema/IPXact2014/extensions" xmlns:ipxact="http://www.accellera.org/XMLSchema/IPXACT/1685-2014">
-  <ipxact:vendor>Intel Corporation</ipxact:vendor>
+  <ipxact:vendor>Altera Corporation</ipxact:vendor>
   <ipxact:library>niosv_m</ipxact:library>
   <ipxact:name>niosv_m</ipxact:name>
   <ipxact:version>26.0.0</ipxact:version>
   <ipxact:busInterfaces>
     <ipxact:busInterface>
       <ipxact:name>clk</ipxact:name>
-      <ipxact:busType vendor="intel" library="intel" name="clock" version="25.1"></ipxact:busType>
+      <ipxact:busType vendor="intel" library="intel" name="clock" version="26.1"></ipxact:busType>
       <ipxact:abstractionTypes>
         <ipxact:abstractionType>
-          <ipxact:abstractionRef vendor="intel" library="intel" name="clock" version="25.1"></ipxact:abstractionRef>
+          <ipxact:abstractionRef vendor="intel" library="intel" name="clock" version="26.1"></ipxact:abstractionRef>
           <ipxact:portMaps>
             <ipxact:portMap>
               <ipxact:logicalPort>
@@ -57,10 +55,10 @@ https://fpgasoftware.intel.com/eula.-->
     </ipxact:busInterface>
     <ipxact:busInterface>
       <ipxact:name>reset</ipxact:name>
-      <ipxact:busType vendor="intel" library="intel" name="reset" version="25.1"></ipxact:busType>
+      <ipxact:busType vendor="intel" library="intel" name="reset" version="26.1"></ipxact:busType>
       <ipxact:abstractionTypes>
         <ipxact:abstractionType>
-          <ipxact:abstractionRef vendor="intel" library="intel" name="reset" version="25.1"></ipxact:abstractionRef>
+          <ipxact:abstractionRef vendor="intel" library="intel" name="reset" version="26.1"></ipxact:abstractionRef>
           <ipxact:portMaps>
             <ipxact:portMap>
               <ipxact:logicalPort>
@@ -89,10 +87,10 @@ https://fpgasoftware.intel.com/eula.-->
     </ipxact:busInterface>
     <ipxact:busInterface>
       <ipxact:name>platform_irq_rx</ipxact:name>
-      <ipxact:busType vendor="intel" library="intel" name="interrupt" version="25.1"></ipxact:busType>
+      <ipxact:busType vendor="intel" library="intel" name="interrupt" version="26.1"></ipxact:busType>
       <ipxact:abstractionTypes>
         <ipxact:abstractionType>
-          <ipxact:abstractionRef vendor="intel" library="intel" name="interrupt" version="25.1"></ipxact:abstractionRef>
+          <ipxact:abstractionRef vendor="intel" library="intel" name="interrupt" version="26.1"></ipxact:abstractionRef>
           <ipxact:portMaps>
             <ipxact:portMap>
               <ipxact:logicalPort>
@@ -136,10 +134,10 @@ https://fpgasoftware.intel.com/eula.-->
     </ipxact:busInterface>
     <ipxact:busInterface>
       <ipxact:name>instruction_manager</ipxact:name>
-      <ipxact:busType vendor="intel" library="intel" name="axi4lite" version="25.1"></ipxact:busType>
+      <ipxact:busType vendor="intel" library="intel" name="axi4lite" version="26.1"></ipxact:busType>
       <ipxact:abstractionTypes>
         <ipxact:abstractionType>
-          <ipxact:abstractionRef vendor="intel" library="intel" name="axi4lite" version="25.1"></ipxact:abstractionRef>
+          <ipxact:abstractionRef vendor="intel" library="intel" name="axi4lite" version="26.1"></ipxact:abstractionRef>
           <ipxact:portMaps>
             <ipxact:portMap>
               <ipxact:logicalPort>
@@ -308,6 +306,11 @@ https://fpgasoftware.intel.com/eula.-->
           <ipxact:displayName>Associated reset</ipxact:displayName>
           <ipxact:value>reset</ipxact:value>
         </ipxact:parameter>
+        <ipxact:parameter parameterId="optionalAssociatedReset" type="bit">
+          <ipxact:name>optionalAssociatedReset</ipxact:name>
+          <ipxact:displayName>Optional associated reset</ipxact:displayName>
+          <ipxact:value>false</ipxact:value>
+        </ipxact:parameter>
         <ipxact:parameter parameterId="trustzoneAware" type="bit">
           <ipxact:name>trustzoneAware</ipxact:name>
           <ipxact:displayName>trustzoneAware</ipxact:displayName>
@@ -402,10 +405,10 @@ https://fpgasoftware.intel.com/eula.-->
     </ipxact:busInterface>
     <ipxact:busInterface>
       <ipxact:name>data_manager</ipxact:name>
-      <ipxact:busType vendor="intel" library="intel" name="axi4lite" version="25.1"></ipxact:busType>
+      <ipxact:busType vendor="intel" library="intel" name="axi4lite" version="26.1"></ipxact:busType>
       <ipxact:abstractionTypes>
         <ipxact:abstractionType>
-          <ipxact:abstractionRef vendor="intel" library="intel" name="axi4lite" version="25.1"></ipxact:abstractionRef>
+          <ipxact:abstractionRef vendor="intel" library="intel" name="axi4lite" version="26.1"></ipxact:abstractionRef>
           <ipxact:portMaps>
             <ipxact:portMap>
               <ipxact:logicalPort>
@@ -574,6 +577,11 @@ https://fpgasoftware.intel.com/eula.-->
           <ipxact:displayName>Associated reset</ipxact:displayName>
           <ipxact:value>reset</ipxact:value>
         </ipxact:parameter>
+        <ipxact:parameter parameterId="optionalAssociatedReset" type="bit">
+          <ipxact:name>optionalAssociatedReset</ipxact:name>
+          <ipxact:displayName>Optional associated reset</ipxact:displayName>
+          <ipxact:value>false</ipxact:value>
+        </ipxact:parameter>
         <ipxact:parameter parameterId="trustzoneAware" type="bit">
           <ipxact:name>trustzoneAware</ipxact:name>
           <ipxact:displayName>trustzoneAware</ipxact:displayName>
@@ -668,10 +676,10 @@ https://fpgasoftware.intel.com/eula.-->
     </ipxact:busInterface>
     <ipxact:busInterface>
       <ipxact:name>timer_sw_agent</ipxact:name>
-      <ipxact:busType vendor="intel" library="intel" name="avalon" version="25.1"></ipxact:busType>
+      <ipxact:busType vendor="intel" library="intel" name="avalon" version="26.1"></ipxact:busType>
       <ipxact:abstractionTypes>
         <ipxact:abstractionType>
-          <ipxact:abstractionRef vendor="intel" library="intel" name="avalon" version="25.1"></ipxact:abstractionRef>
+          <ipxact:abstractionRef vendor="intel" library="intel" name="avalon" version="26.1"></ipxact:abstractionRef>
           <ipxact:portMaps>
             <ipxact:portMap>
               <ipxact:logicalPort>
@@ -1027,20 +1035,16 @@ https://fpgasoftware.intel.com/eula.-->
               <ipxact:name>embeddedsw.configuration.isPrintableDevice</ipxact:name>
               <ipxact:value>0</ipxact:value>
             </ipxact:parameter>
-            <ipxact:parameter parameterId="qsys.ui.connect" type="string">
-              <ipxact:name>qsys.ui.connect</ipxact:name>
-              <ipxact:value>data_manager</ipxact:value>
-            </ipxact:parameter>
           </ipxact:parameters>
         </altera:altera_assignments>
       </ipxact:vendorExtensions>
     </ipxact:busInterface>
     <ipxact:busInterface>
       <ipxact:name>dm_agent</ipxact:name>
-      <ipxact:busType vendor="intel" library="intel" name="avalon" version="25.1"></ipxact:busType>
+      <ipxact:busType vendor="intel" library="intel" name="avalon" version="26.1"></ipxact:busType>
       <ipxact:abstractionTypes>
         <ipxact:abstractionType>
-          <ipxact:abstractionRef vendor="intel" library="intel" name="avalon" version="25.1"></ipxact:abstractionRef>
+          <ipxact:abstractionRef vendor="intel" library="intel" name="avalon" version="26.1"></ipxact:abstractionRef>
           <ipxact:portMaps>
             <ipxact:portMap>
               <ipxact:logicalPort>
@@ -1388,10 +1392,6 @@ https://fpgasoftware.intel.com/eula.-->
               <ipxact:name>embeddedsw.configuration.isPrintableDevice</ipxact:name>
               <ipxact:value>0</ipxact:value>
             </ipxact:parameter>
-            <ipxact:parameter parameterId="qsys.ui.connect" type="string">
-              <ipxact:name>qsys.ui.connect</ipxact:name>
-              <ipxact:value>instruction_manager,data_manager</ipxact:value>
-            </ipxact:parameter>
           </ipxact:parameters>
         </altera:altera_assignments>
       </ipxact:vendorExtensions>
@@ -1412,6 +1412,7 @@ https://fpgasoftware.intel.com/eula.-->
         <ipxact:fileSetRef>
           <ipxact:localName>QUARTUS_SYNTH</ipxact:localName>
         </ipxact:fileSetRef>
+        <ipxact:parameters></ipxact:parameters>
       </ipxact:componentInstantiation>
     </ipxact:instantiations>
     <ipxact:ports>
@@ -1419,6 +1420,7 @@ https://fpgasoftware.intel.com/eula.-->
         <ipxact:name>clk</ipxact:name>
         <ipxact:wire>
           <ipxact:direction>in</ipxact:direction>
+          <ipxact:vectors></ipxact:vectors>
           <ipxact:wireTypeDefs>
             <ipxact:wireTypeDef>
               <ipxact:typeName>STD_LOGIC</ipxact:typeName>
@@ -1431,6 +1433,7 @@ https://fpgasoftware.intel.com/eula.-->
         <ipxact:name>reset_reset</ipxact:name>
         <ipxact:wire>
           <ipxact:direction>in</ipxact:direction>
+          <ipxact:vectors></ipxact:vectors>
           <ipxact:wireTypeDefs>
             <ipxact:wireTypeDef>
               <ipxact:typeName>STD_LOGIC</ipxact:typeName>
@@ -1497,6 +1500,7 @@ https://fpgasoftware.intel.com/eula.-->
         <ipxact:name>instruction_manager_awvalid</ipxact:name>
         <ipxact:wire>
           <ipxact:direction>out</ipxact:direction>
+          <ipxact:vectors></ipxact:vectors>
           <ipxact:wireTypeDefs>
             <ipxact:wireTypeDef>
               <ipxact:typeName>STD_LOGIC</ipxact:typeName>
@@ -1509,6 +1513,7 @@ https://fpgasoftware.intel.com/eula.-->
         <ipxact:name>instruction_manager_awready</ipxact:name>
         <ipxact:wire>
           <ipxact:direction>in</ipxact:direction>
+          <ipxact:vectors></ipxact:vectors>
           <ipxact:wireTypeDefs>
             <ipxact:wireTypeDef>
               <ipxact:typeName>STD_LOGIC</ipxact:typeName>
@@ -1557,6 +1562,7 @@ https://fpgasoftware.intel.com/eula.-->
         <ipxact:name>instruction_manager_wvalid</ipxact:name>
         <ipxact:wire>
           <ipxact:direction>out</ipxact:direction>
+          <ipxact:vectors></ipxact:vectors>
           <ipxact:wireTypeDefs>
             <ipxact:wireTypeDef>
               <ipxact:typeName>STD_LOGIC</ipxact:typeName>
@@ -1569,6 +1575,7 @@ https://fpgasoftware.intel.com/eula.-->
         <ipxact:name>instruction_manager_wready</ipxact:name>
         <ipxact:wire>
           <ipxact:direction>in</ipxact:direction>
+          <ipxact:vectors></ipxact:vectors>
           <ipxact:wireTypeDefs>
             <ipxact:wireTypeDef>
               <ipxact:typeName>STD_LOGIC</ipxact:typeName>
@@ -1599,6 +1606,7 @@ https://fpgasoftware.intel.com/eula.-->
         <ipxact:name>instruction_manager_bvalid</ipxact:name>
         <ipxact:wire>
           <ipxact:direction>in</ipxact:direction>
+          <ipxact:vectors></ipxact:vectors>
           <ipxact:wireTypeDefs>
             <ipxact:wireTypeDef>
               <ipxact:typeName>STD_LOGIC</ipxact:typeName>
@@ -1611,6 +1619,7 @@ https://fpgasoftware.intel.com/eula.-->
         <ipxact:name>instruction_manager_bready</ipxact:name>
         <ipxact:wire>
           <ipxact:direction>out</ipxact:direction>
+          <ipxact:vectors></ipxact:vectors>
           <ipxact:wireTypeDefs>
             <ipxact:wireTypeDef>
               <ipxact:typeName>STD_LOGIC</ipxact:typeName>
@@ -1659,6 +1668,7 @@ https://fpgasoftware.intel.com/eula.-->
         <ipxact:name>instruction_manager_arvalid</ipxact:name>
         <ipxact:wire>
           <ipxact:direction>out</ipxact:direction>
+          <ipxact:vectors></ipxact:vectors>
           <ipxact:wireTypeDefs>
             <ipxact:wireTypeDef>
               <ipxact:typeName>STD_LOGIC</ipxact:typeName>
@@ -1671,6 +1681,7 @@ https://fpgasoftware.intel.com/eula.-->
         <ipxact:name>instruction_manager_arready</ipxact:name>
         <ipxact:wire>
           <ipxact:direction>in</ipxact:direction>
+          <ipxact:vectors></ipxact:vectors>
           <ipxact:wireTypeDefs>
             <ipxact:wireTypeDef>
               <ipxact:typeName>STD_LOGIC</ipxact:typeName>
@@ -1719,6 +1730,7 @@ https://fpgasoftware.intel.com/eula.-->
         <ipxact:name>instruction_manager_rvalid</ipxact:name>
         <ipxact:wire>
           <ipxact:direction>in</ipxact:direction>
+          <ipxact:vectors></ipxact:vectors>
           <ipxact:wireTypeDefs>
             <ipxact:wireTypeDef>
               <ipxact:typeName>STD_LOGIC</ipxact:typeName>
@@ -1731,6 +1743,7 @@ https://fpgasoftware.intel.com/eula.-->
         <ipxact:name>instruction_manager_rready</ipxact:name>
         <ipxact:wire>
           <ipxact:direction>out</ipxact:direction>
+          <ipxact:vectors></ipxact:vectors>
           <ipxact:wireTypeDefs>
             <ipxact:wireTypeDef>
               <ipxact:typeName>STD_LOGIC</ipxact:typeName>
@@ -1779,6 +1792,7 @@ https://fpgasoftware.intel.com/eula.-->
         <ipxact:name>data_manager_awvalid</ipxact:name>
         <ipxact:wire>
           <ipxact:direction>out</ipxact:direction>
+          <ipxact:vectors></ipxact:vectors>
           <ipxact:wireTypeDefs>
             <ipxact:wireTypeDef>
               <ipxact:typeName>STD_LOGIC</ipxact:typeName>
@@ -1791,6 +1805,7 @@ https://fpgasoftware.intel.com/eula.-->
         <ipxact:name>data_manager_awready</ipxact:name>
         <ipxact:wire>
           <ipxact:direction>in</ipxact:direction>
+          <ipxact:vectors></ipxact:vectors>
           <ipxact:wireTypeDefs>
             <ipxact:wireTypeDef>
               <ipxact:typeName>STD_LOGIC</ipxact:typeName>
@@ -1839,6 +1854,7 @@ https://fpgasoftware.intel.com/eula.-->
         <ipxact:name>data_manager_wvalid</ipxact:name>
         <ipxact:wire>
           <ipxact:direction>out</ipxact:direction>
+          <ipxact:vectors></ipxact:vectors>
           <ipxact:wireTypeDefs>
             <ipxact:wireTypeDef>
               <ipxact:typeName>STD_LOGIC</ipxact:typeName>
@@ -1851,6 +1867,7 @@ https://fpgasoftware.intel.com/eula.-->
         <ipxact:name>data_manager_wready</ipxact:name>
         <ipxact:wire>
           <ipxact:direction>in</ipxact:direction>
+          <ipxact:vectors></ipxact:vectors>
           <ipxact:wireTypeDefs>
             <ipxact:wireTypeDef>
               <ipxact:typeName>STD_LOGIC</ipxact:typeName>
@@ -1881,6 +1898,7 @@ https://fpgasoftware.intel.com/eula.-->
         <ipxact:name>data_manager_bvalid</ipxact:name>
         <ipxact:wire>
           <ipxact:direction>in</ipxact:direction>
+          <ipxact:vectors></ipxact:vectors>
           <ipxact:wireTypeDefs>
             <ipxact:wireTypeDef>
               <ipxact:typeName>STD_LOGIC</ipxact:typeName>
@@ -1893,6 +1911,7 @@ https://fpgasoftware.intel.com/eula.-->
         <ipxact:name>data_manager_bready</ipxact:name>
         <ipxact:wire>
           <ipxact:direction>out</ipxact:direction>
+          <ipxact:vectors></ipxact:vectors>
           <ipxact:wireTypeDefs>
             <ipxact:wireTypeDef>
               <ipxact:typeName>STD_LOGIC</ipxact:typeName>
@@ -1941,6 +1960,7 @@ https://fpgasoftware.intel.com/eula.-->
         <ipxact:name>data_manager_arvalid</ipxact:name>
         <ipxact:wire>
           <ipxact:direction>out</ipxact:direction>
+          <ipxact:vectors></ipxact:vectors>
           <ipxact:wireTypeDefs>
             <ipxact:wireTypeDef>
               <ipxact:typeName>STD_LOGIC</ipxact:typeName>
@@ -1953,6 +1973,7 @@ https://fpgasoftware.intel.com/eula.-->
         <ipxact:name>data_manager_arready</ipxact:name>
         <ipxact:wire>
           <ipxact:direction>in</ipxact:direction>
+          <ipxact:vectors></ipxact:vectors>
           <ipxact:wireTypeDefs>
             <ipxact:wireTypeDef>
               <ipxact:typeName>STD_LOGIC</ipxact:typeName>
@@ -2001,6 +2022,7 @@ https://fpgasoftware.intel.com/eula.-->
         <ipxact:name>data_manager_rvalid</ipxact:name>
         <ipxact:wire>
           <ipxact:direction>in</ipxact:direction>
+          <ipxact:vectors></ipxact:vectors>
           <ipxact:wireTypeDefs>
             <ipxact:wireTypeDef>
               <ipxact:typeName>STD_LOGIC</ipxact:typeName>
@@ -2013,6 +2035,7 @@ https://fpgasoftware.intel.com/eula.-->
         <ipxact:name>data_manager_rready</ipxact:name>
         <ipxact:wire>
           <ipxact:direction>out</ipxact:direction>
+          <ipxact:vectors></ipxact:vectors>
           <ipxact:wireTypeDefs>
             <ipxact:wireTypeDef>
               <ipxact:typeName>STD_LOGIC</ipxact:typeName>
@@ -2061,6 +2084,7 @@ https://fpgasoftware.intel.com/eula.-->
         <ipxact:name>timer_sw_agent_read</ipxact:name>
         <ipxact:wire>
           <ipxact:direction>in</ipxact:direction>
+          <ipxact:vectors></ipxact:vectors>
           <ipxact:wireTypeDefs>
             <ipxact:wireTypeDef>
               <ipxact:typeName>STD_LOGIC</ipxact:typeName>
@@ -2091,6 +2115,7 @@ https://fpgasoftware.intel.com/eula.-->
         <ipxact:name>timer_sw_agent_write</ipxact:name>
         <ipxact:wire>
           <ipxact:direction>in</ipxact:direction>
+          <ipxact:vectors></ipxact:vectors>
           <ipxact:wireTypeDefs>
             <ipxact:wireTypeDef>
               <ipxact:typeName>STD_LOGIC</ipxact:typeName>
@@ -2121,6 +2146,7 @@ https://fpgasoftware.intel.com/eula.-->
         <ipxact:name>timer_sw_agent_waitrequest</ipxact:name>
         <ipxact:wire>
           <ipxact:direction>out</ipxact:direction>
+          <ipxact:vectors></ipxact:vectors>
           <ipxact:wireTypeDefs>
             <ipxact:wireTypeDef>
               <ipxact:typeName>STD_LOGIC</ipxact:typeName>
@@ -2133,6 +2159,7 @@ https://fpgasoftware.intel.com/eula.-->
         <ipxact:name>timer_sw_agent_readdatavalid</ipxact:name>
         <ipxact:wire>
           <ipxact:direction>out</ipxact:direction>
+          <ipxact:vectors></ipxact:vectors>
           <ipxact:wireTypeDefs>
             <ipxact:wireTypeDef>
               <ipxact:typeName>STD_LOGIC</ipxact:typeName>
@@ -2163,6 +2190,7 @@ https://fpgasoftware.intel.com/eula.-->
         <ipxact:name>dm_agent_read</ipxact:name>
         <ipxact:wire>
           <ipxact:direction>in</ipxact:direction>
+          <ipxact:vectors></ipxact:vectors>
           <ipxact:wireTypeDefs>
             <ipxact:wireTypeDef>
               <ipxact:typeName>STD_LOGIC</ipxact:typeName>
@@ -2193,6 +2221,7 @@ https://fpgasoftware.intel.com/eula.-->
         <ipxact:name>dm_agent_write</ipxact:name>
         <ipxact:wire>
           <ipxact:direction>in</ipxact:direction>
+          <ipxact:vectors></ipxact:vectors>
           <ipxact:wireTypeDefs>
             <ipxact:wireTypeDef>
               <ipxact:typeName>STD_LOGIC</ipxact:typeName>
@@ -2223,6 +2252,7 @@ https://fpgasoftware.intel.com/eula.-->
         <ipxact:name>dm_agent_waitrequest</ipxact:name>
         <ipxact:wire>
           <ipxact:direction>out</ipxact:direction>
+          <ipxact:vectors></ipxact:vectors>
           <ipxact:wireTypeDefs>
             <ipxact:wireTypeDef>
               <ipxact:typeName>STD_LOGIC</ipxact:typeName>
@@ -2235,6 +2265,7 @@ https://fpgasoftware.intel.com/eula.-->
         <ipxact:name>dm_agent_readdatavalid</ipxact:name>
         <ipxact:wire>
           <ipxact:direction>out</ipxact:direction>
+          <ipxact:vectors></ipxact:vectors>
           <ipxact:wireTypeDefs>
             <ipxact:wireTypeDef>
               <ipxact:typeName>STD_LOGIC</ipxact:typeName>
@@ -2247,7 +2278,7 @@ https://fpgasoftware.intel.com/eula.-->
   </ipxact:model>
   <ipxact:vendorExtensions>
     <altera:entity_info>
-      <ipxact:vendor>Intel Corporation</ipxact:vendor>
+      <ipxact:vendor>Altera Corporation</ipxact:vendor>
       <ipxact:library>niosv_m</ipxact:library>
       <ipxact:name>intel_niosv_m</ipxact:name>
       <ipxact:version>26.0.0</ipxact:version>
@@ -2262,12 +2293,12 @@ https://fpgasoftware.intel.com/eula.-->
         <ipxact:parameter parameterId="instSlaveMapParam" type="string">
           <ipxact:name>instSlaveMapParam</ipxact:name>
           <ipxact:displayName>instSlaveMapParam</ipxact:displayName>
-          <ipxact:value>&lt;address-map&gt;&lt;slave name='onchip_memory.s1' start='0x0' end='0x80000' datawidth='32' /&gt;&lt;slave name='niosv_m.dm_agent' start='0x80000' end='0x90000' datawidth='32' /&gt;&lt;/address-map&gt;</ipxact:value>
+          <ipxact:value>&lt;address-map&gt;&lt;slave name='onchip_memory.s1' start='0x0' end='0x10000' datawidth='32' /&gt;&lt;slave name='niosv_m.dm_agent' start='0x80000' end='0x90000' datawidth='32' /&gt;&lt;/address-map&gt;</ipxact:value>
         </ipxact:parameter>
         <ipxact:parameter parameterId="dataSlaveMapParam" type="string">
           <ipxact:name>dataSlaveMapParam</ipxact:name>
           <ipxact:displayName>dataSlaveMapParam</ipxact:displayName>
-          <ipxact:value>&lt;address-map&gt;&lt;slave name='onchip_memory.s1' start='0x0' end='0x80000' datawidth='32' /&gt;&lt;slave name='niosv_m.dm_agent' start='0x80000' end='0x90000' datawidth='32' /&gt;&lt;slave name='niosv_m.timer_sw_agent' start='0x90000' end='0x90040' datawidth='32' /&gt;&lt;slave name='sysid.control_slave' start='0x90040' end='0x90048' datawidth='32' /&gt;&lt;slave name='jtag_uart.avalon_jtag_slave' start='0x90048' end='0x90050' datawidth='32' /&gt;&lt;/address-map&gt;</ipxact:value>
+          <ipxact:value>&lt;address-map&gt;&lt;slave name='onchip_memory.s1' start='0x0' end='0x10000' datawidth='32' /&gt;&lt;slave name='niosv_m.dm_agent' start='0x80000' end='0x90000' datawidth='32' /&gt;&lt;slave name='niosv_m.timer_sw_agent' start='0x90000' end='0x90040' datawidth='32' /&gt;&lt;slave name='sysid.control_slave' start='0x90040' end='0x90048' datawidth='32' /&gt;&lt;slave name='jtag_uart.avalon_jtag_slave' start='0x90048' end='0x90050' datawidth='32' /&gt;&lt;slave name='fpga_ai.csr_axi' start='0xA0000' end='0xA0800' datawidth='32' /&gt;&lt;slave name='stream_bridge.s0' start='0xA1000' end='0xA1040' datawidth='32' /&gt;&lt;/address-map&gt;</ipxact:value>
         </ipxact:parameter>
         <ipxact:parameter parameterId="enableDebug" type="bit">
           <ipxact:name>enableDebug</ipxact:name>
@@ -2329,6 +2360,11 @@ https://fpgasoftware.intel.com/eula.-->
           <ipxact:displayName>Enable Error Detection &amp; ECC Status Reporting</ipxact:displayName>
           <ipxact:value>false</ipxact:value>
         </ipxact:parameter>
+        <ipxact:parameter parameterId="enableECCFull" type="bit">
+          <ipxact:name>enableECCFull</ipxact:name>
+          <ipxact:displayName>Enable Single Bit Correction</ipxact:displayName>
+          <ipxact:value>false</ipxact:value>
+        </ipxact:parameter>
         <ipxact:parameter parameterId="AUTO_DEVICE" type="string">
           <ipxact:name>AUTO_DEVICE</ipxact:name>
           <ipxact:displayName>Auto DEVICE</ipxact:displayName>
@@ -2357,7 +2393,7 @@ https://fpgasoftware.intel.com/eula.-->
         <ipxact:parameter parameterId="AUTO_PLATFORM_IRQ_RX_INTERRUPTS_USED" type="string">
           <ipxact:name>AUTO_PLATFORM_IRQ_RX_INTERRUPTS_USED</ipxact:name>
           <ipxact:displayName>Auto INTERRUPTS_USED</ipxact:displayName>
-          <ipxact:value>1</ipxact:value>
+          <ipxact:value>3</ipxact:value>
         </ipxact:parameter>
       </ipxact:parameters>
     </altera:altera_module_parameters>
@@ -2529,6 +2565,14 @@ https://fpgasoftware.intel.com/eula.-->
           <ipxact:displayName>bonusData</ipxact:displayName>
           <ipxact:value>bonusData 
 {
+   element $system
+   {
+      datum _originalDeviceFamily
+      {
+         value = "Agilex 3";
+         type = "String";
+      }
+   }
    element niosv_m
    {
       datum _sortIndex
@@ -2847,6 +2891,10 @@ https://fpgasoftware.intel.com/eula.-->
                         &lt;value&gt;reset&lt;/value&gt;
                     &lt;/entry&gt;
                     &lt;entry&gt;
+                        &lt;key&gt;optionalAssociatedReset&lt;/key&gt;
+                        &lt;value&gt;false&lt;/value&gt;
+                    &lt;/entry&gt;
+                    &lt;entry&gt;
                         &lt;key&gt;trustzoneAware&lt;/key&gt;
                         &lt;value&gt;true&lt;/value&gt;
                     &lt;/entry&gt;
@@ -2864,6 +2912,10 @@ https://fpgasoftware.intel.com/eula.-->
                     &lt;/entry&gt;
                     &lt;entry&gt;
                         &lt;key&gt;traceSignals&lt;/key&gt;
+                        &lt;value&gt;false&lt;/value&gt;
+                    &lt;/entry&gt;
+                    &lt;entry&gt;
+                        &lt;key&gt;isTranslator&lt;/key&gt;
                         &lt;value&gt;false&lt;/value&gt;
                     &lt;/entry&gt;
                     &lt;entry&gt;
@@ -3108,6 +3160,10 @@ https://fpgasoftware.intel.com/eula.-->
                         &lt;value&gt;reset&lt;/value&gt;
                     &lt;/entry&gt;
                     &lt;entry&gt;
+                        &lt;key&gt;optionalAssociatedReset&lt;/key&gt;
+                        &lt;value&gt;false&lt;/value&gt;
+                    &lt;/entry&gt;
+                    &lt;entry&gt;
                         &lt;key&gt;trustzoneAware&lt;/key&gt;
                         &lt;value&gt;true&lt;/value&gt;
                     &lt;/entry&gt;
@@ -3125,6 +3181,10 @@ https://fpgasoftware.intel.com/eula.-->
                     &lt;/entry&gt;
                     &lt;entry&gt;
                         &lt;key&gt;traceSignals&lt;/key&gt;
+                        &lt;value&gt;false&lt;/value&gt;
+                    &lt;/entry&gt;
+                    &lt;entry&gt;
+                        &lt;key&gt;isTranslator&lt;/key&gt;
                         &lt;value&gt;false&lt;/value&gt;
                     &lt;/entry&gt;
                     &lt;entry&gt;
@@ -3273,10 +3333,6 @@ https://fpgasoftware.intel.com/eula.-->
                     &lt;entry&gt;
                         &lt;key&gt;embeddedsw.configuration.isPrintableDevice&lt;/key&gt;
                         &lt;value&gt;0&lt;/value&gt;
-                    &lt;/entry&gt;
-                    &lt;entry&gt;
-                        &lt;key&gt;qsys.ui.connect&lt;/key&gt;
-                        &lt;value&gt;data_manager&lt;/value&gt;
                     &lt;/entry&gt;
                 &lt;/assignmentValueMap&gt;
             &lt;/assignments&gt;
@@ -3578,10 +3634,6 @@ https://fpgasoftware.intel.com/eula.-->
                         &lt;key&gt;embeddedsw.configuration.isPrintableDevice&lt;/key&gt;
                         &lt;value&gt;0&lt;/value&gt;
                     &lt;/entry&gt;
-                    &lt;entry&gt;
-                        &lt;key&gt;qsys.ui.connect&lt;/key&gt;
-                        &lt;value&gt;instruction_manager,data_manager&lt;/value&gt;
-                    &lt;/entry&gt;
                 &lt;/assignmentValueMap&gt;
             &lt;/assignments&gt;
             &lt;parameters&gt;
@@ -3831,7 +3883,7 @@ https://fpgasoftware.intel.com/eula.-->
                 &lt;suppliedSystemInfos&gt;
                     &lt;entry&gt;
                         &lt;key&gt;ADDRESS_MAP&lt;/key&gt;
-                        &lt;value&gt;&amp;lt;address-map&amp;gt;&amp;lt;slave name='onchip_memory.s1' start='0x0' end='0x80000' datawidth='32' /&amp;gt;&amp;lt;slave name='niosv_m.dm_agent' start='0x80000' end='0x90000' datawidth='32' /&amp;gt;&amp;lt;slave name='niosv_m.timer_sw_agent' start='0x90000' end='0x90040' datawidth='32' /&amp;gt;&amp;lt;slave name='sysid.control_slave' start='0x90040' end='0x90048' datawidth='32' /&amp;gt;&amp;lt;slave name='jtag_uart.avalon_jtag_slave' start='0x90048' end='0x90050' datawidth='32' /&amp;gt;&amp;lt;/address-map&amp;gt;&lt;/value&gt;
+                        &lt;value&gt;&amp;lt;address-map&amp;gt;&amp;lt;slave name='onchip_memory.s1' start='0x0' end='0x10000' datawidth='32' /&amp;gt;&amp;lt;slave name='niosv_m.dm_agent' start='0x80000' end='0x90000' datawidth='32' /&amp;gt;&amp;lt;slave name='niosv_m.timer_sw_agent' start='0x90000' end='0x90040' datawidth='32' /&amp;gt;&amp;lt;slave name='sysid.control_slave' start='0x90040' end='0x90048' datawidth='32' /&amp;gt;&amp;lt;slave name='jtag_uart.avalon_jtag_slave' start='0x90048' end='0x90050' datawidth='32' /&amp;gt;&amp;lt;slave name='fpga_ai.csr_axi' start='0xA0000' end='0xA0800' datawidth='32' /&amp;gt;&amp;lt;slave name='stream_bridge.s0' start='0xA1000' end='0xA1040' datawidth='32' /&amp;gt;&amp;lt;/address-map&amp;gt;&lt;/value&gt;
                     &lt;/entry&gt;
                 &lt;/suppliedSystemInfos&gt;
                 &lt;consumedSystemInfos/&gt;
@@ -3865,7 +3917,7 @@ https://fpgasoftware.intel.com/eula.-->
                 &lt;suppliedSystemInfos&gt;
                     &lt;entry&gt;
                         &lt;key&gt;ADDRESS_MAP&lt;/key&gt;
-                        &lt;value&gt;&amp;lt;address-map&amp;gt;&amp;lt;slave name='onchip_memory.s1' start='0x0' end='0x80000' datawidth='32' /&amp;gt;&amp;lt;slave name='niosv_m.dm_agent' start='0x80000' end='0x90000' datawidth='32' /&amp;gt;&amp;lt;/address-map&amp;gt;&lt;/value&gt;
+                        &lt;value&gt;&amp;lt;address-map&amp;gt;&amp;lt;slave name='onchip_memory.s1' start='0x0' end='0x10000' datawidth='32' /&amp;gt;&amp;lt;slave name='niosv_m.dm_agent' start='0x80000' end='0x90000' datawidth='32' /&amp;gt;&amp;lt;/address-map&amp;gt;&lt;/value&gt;
                     &lt;/entry&gt;
                 &lt;/suppliedSystemInfos&gt;
                 &lt;consumedSystemInfos/&gt;
@@ -3878,7 +3930,7 @@ https://fpgasoftware.intel.com/eula.-->
                 &lt;suppliedSystemInfos&gt;
                     &lt;entry&gt;
                         &lt;key&gt;INTERRUPTS_USED&lt;/key&gt;
-                        &lt;value&gt;1&lt;/value&gt;
+                        &lt;value&gt;3&lt;/value&gt;
                     &lt;/entry&gt;
                 &lt;/suppliedSystemInfos&gt;
                 &lt;consumedSystemInfos/&gt;

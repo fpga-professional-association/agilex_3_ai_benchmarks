@@ -1,0 +1,2 @@
+# Matches the protoc 3.21.12 runtime bundled with FPGA AI Suite 2026.1.1.
+protobuf==4.21.12

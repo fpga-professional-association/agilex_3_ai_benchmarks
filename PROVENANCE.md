@@ -19,11 +19,42 @@ Official binary prerequisites installed for FPGA AI Suite accelerator work:
 | FPGA AI Suite 2026.1.1 | Altera Quartus Pro 26.1.1 Windows downloads, `fpga_ai_suite-26.1.1.130-windows.exe` | SHA-1 `69A3035A953349C1D81D348B866FB206697A0D66`; SHA-256 `FAAED83A886299243314DFAC5704F183234AB325481819FBEEA2BC4E10704C56`; Authenticode valid, Intel Corporation; installed at `C:\altera_pro\2026.1.1` |
 | OpenVINO 2025.4 runtime | `https://storage.openvinotoolkit.org/repositories/openvino/packages/2025.4/windows/openvino_toolkit_windows_2025.4.0.20398.8fdad55727d_x86_64.zip` | Official SHA-256 `995A88DC1E34DF841CC4DB5AB118A87147608C3E4B67F7D9D86BEF1B311A273E`; installed at `C:\altera_pro\openvino_2025.4.0` |
 
+FPGA AI Suite's Windows `dla_create_ip` also required Python package
+`protobuf==4.21.12`, installed into the task-specific ignored directory
+`build/fpga_ai/python_deps` after the user explicitly lifted the installation
+constraint. This dependency came from pip rather than an Altera installer, and
+the downloaded wheel hash was not retained; the repository therefore does not
+claim a fully offline/hash-bound reinstall. Installed-content evidence:
+`google/protobuf/__init__.py` SHA-256
+`0A0A45D2C69A4A01A3FA184DB4BFD9689CA6E0A21CD13C56954EC05A1950E869`,
+METADATA SHA-256
+`2F57E3950738F9420416E45178E701AA2EF08907CF323333FE695A56E372F459`,
+and RECORD SHA-256
+`E28667F3A7ACBAC32FD40B5A1F6B1BE732F2EAE9EA5866377241EE5F8F3A4A08`.
+
 Verified artifacts:
 
 - `third_party/mlcommons_tiny/benchmark/training/image_classification/trained_models/pretrainedResnet_quant.tflite` — SHA-256 `3C002613D1B2475EB51DD78DFB85A546C8AE658DEE71CF6ADE43B022FE205415`.
 - `third_party/arrow_refdes_schematic/SCH-TEI0131-01-P001.PDF` — local SHA-256 `A3548E1B1E61498A71791C531D3D9B68844106842BC9E51FAAF5E2BA826873A9`.
 - Schematic Git blob hash — `467cf7913bc3fcdafcbba9355421f67e224e48ac`.
+- Adapted no-Softmax OpenVINO XML — SHA-256
+  `C61E8404AB6A1B034C1D43C14838DE28BAF23D724D19203511ADD3398558CF3B`
+  for the programmed run. The tracked clean-build flow removes path-bearing
+  conversion metadata and reproducibly emits
+  `C104ECDC1E0C1777B0071D51E14119BD6B280CE1B21752FA1F84AAB93DCD4A81`;
+  the BIN and compiled on-chip parameter MIFs are identical.
+- Adapted OpenVINO BIN — SHA-256
+  `519DE0A6211125C394F92FCACF5E6F4664B1DA6C9D2B0280B1BD913A0077364B`.
+- Tracked 4x4 Agilex-3 architecture — SHA-256
+  `ED9E2FC95E64D1F4DF5472E899DF23FF5D9D8FF0A59AFCFA71A42DE0C0B4C8DC`.
+- Tracked compiler-only 8x4 candidate architecture — SHA-256
+  `72F721C270DD5E07838182F77DCFD07D4D01A52798841B6DDFDC74116CEE5D16`.
+- Programmed FPGA AI RTL SOF — SHA-256
+  `2A2D6855BA8A711CC3D900EB06CEAC1C6A1F97425CB73E928349913AF4CCB1B0`.
+- Downloaded FPGA AI control/streaming ELF — SHA-256
+  `D5E08A534B2026A66CF3A79DF103235F49CA6A8653F45D1287AE75F4BC053BF1`.
+- FPGA AI JTAG-UART capture — SHA-256
+  `29CBD4AE043AA0026A3C00CA7130D7AD8CFFA7AE56D0CF2084C85F1AFDF9BBEC`.
 
 Derivative basis:
 
@@ -66,8 +97,11 @@ Timing notes supplied by the task:
 - OpenVINO archive download: exact 5.3334559 s; extraction and placement:
   exact 1.2207271 s.
 - Agilex-3 `dla_compiler --fanalyze-area` sanity check: exact 1.5573449 s.
-- Final GPT-5.6 SOL read-only installation/repository audit: exact
-  456.3888297 s, verdict GO.
+- The earlier installation audit established that the compiler/toolchain ran,
+  but it did not establish the separate CoreDLA hardware feature. The current
+  sanitized check confirms that required feature `6AF7_018B` is absent from
+  both configured license files. `dla_create_ip` therefore generated its
+  evaluation streamer, and the hardware correctness gate is NO-GO.
 
 Per-agent token counts are unavailable for every agent; they are never
 estimated. No exact Stopwatch/token metric was exposed for the unavailable

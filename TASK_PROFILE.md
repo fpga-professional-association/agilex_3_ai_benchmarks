@@ -73,8 +73,67 @@ estimated. No exact Stopwatch/token metric was exposed for unavailable entries.
   independent host regression. Raw output and hashes are in
   `reports/hardware_run.md`.
 - Accelerator toolchain: FPGA AI Suite `2026.1.1+b17` and OpenVINO 2025.4 are
-  installed on native Windows. Agilex-3 area analysis passes, and the required
-  AI Suite license feature is valid through 2026-10-22. Windows RTL simulation
-  is unsupported, so future IP/example generation uses `--skip-sim-env`.
-- Accelerator implementation: pending. The Nios V result is a scalar smoke
-  baseline only and is not an FPGA AI Suite RTL benchmark result.
+  installed on native Windows, and Agilex-3 compilation/area analysis passes.
+  The separate CoreDLA hardware feature `6AF7_018B` is absent from both
+  configured license files. `dla_create_ip` therefore selected its evaluation
+  streamer. Windows RTL simulation is unsupported, so IP generation uses
+  `--skip-sim-env`.
+- Accelerator implementation: the no-Softmax quantized graph maps wholly to
+  FPGA, integrates, fits, programs, streams, and completes jobs. It fails the
+  correctness gate because the evaluation streamer returns class 3/repeated
+  data instead of CPU-oracle class 6; license CSR is zero. See
+  `reports/fpga_ai_rtl_run.md`. The measured evaluation-image timing is not a
+  benchmark result, and 200/300 MHz or wider-core trials remain gated.
+
+## FPGA AI RTL task timings
+
+- No-Softmax graph generation plus CPU validation: `0.7196376` s.
+- Quantized graph compile failures while sizing caches: `0.2997678` s,
+  `0.5535354` s, `0.5663272` s, and `0.6689943` s.
+- Successful all-FPGA quantized no-Softmax compile: `2.1511175` s.
+- FPGA AI IP generation: `4.9025696` s; it explicitly reported an unlicensed
+  build.
+- Platform Designer attempts: `12.8795749` s, `27.4046384` s, and
+  `26.6073782` s failed while replacing stale child interfaces; instance
+  rebuild succeeded in `14.6353962` s and final system generation succeeded in
+  `17.5767034` s.
+- Full Quartus compile: `296.0313792` s, successful with timing met.
+- JTAG scan: `0.2527816` s; SOF programming: `6.6346278` s; ELF download:
+  `4.3710752` s.
+- Diagnostic firmware rebuild: `10.8768823` s; diagnostic ELF download:
+  `4.3838279` s; JTAG-UART capture: `3.0858248` s. Descriptor diagnostics
+  were zero, interrupt-control was `0x2`, and the license CSR remained zero.
+- Board workload: 25 jobs at about 14.158 ms/job; the 20 timed iterations are
+  transport timing only because output correctness failed.
+- Architecture optimizer analyses: `4.0703585` s with real-device constraints
+  on the float diagnostic graph, `3.8050956` s with relaxed resources,
+  `0.4918482` s for a missing-plugin-option failure on the exact quantized
+  graph, then `1.7567648` s and `1.7916656` s for 90%/100% ALM searches that
+  ended without a valid resource-constrained architecture.
+- Sanitized CoreDLA feature checks against the two configured license files:
+  `1.2` s wall time.
+- Tracked fail-closed license-check script verification: `0.9451794` s; it
+  correctly exited nonzero for missing feature `6AF7_018B`.
+- Clean two-stage TFLite-to-normalized-IR conversion, CPU diagnostic
+  validation, and all-FPGA `-CompileOnly` pipeline: `3.3052214` s. Repeating
+  the normalized serialization in two output directories produced identical
+  XML hashes; all 16 hardware parameter MIFs match the programmed IP's
+  generated copies. Two emulator-only MIFs are intentionally absent from the
+  hardware IP.
+- Less-capable licensing audit: `0.0944795` s; it independently matched both
+  generated protected blocks to the installed inference-limited variants.
+- Less-capable reproducibility audit subtasks: `0.1038431`, `0.1326376`,
+  `0.1529807`, `0.1287996`, `0.2064014`, `0.0968867`, `0.1003011`,
+  `0.06959`, and `0.1483591` s. Its identified clean-build gap was addressed
+  by `scripts/build_fpga_ai_rtl.ps1`.
+- 8x4 candidate first parse failure (activation width constraint):
+  `0.3096548` s; initial successful compile/estimate: `2.1463753` s; optimized
+  scratchpad-depth recompile: `2.0883777` s. The final compiler-only estimate
+  is 734.85 fps at 350 MHz, 28,788 ALMs, 127 M20Ks, and 12 DSPs.
+- Final GPT-5.6 SOL read-only audit: `464.6830041` s. Verdict: conditional
+  GO to commit the documented negative bring-up; NO-GO for benchmarking,
+  200/300 MHz work, or 8x4 hardware work until licensed 4x4 correctness.
+
+Per-agent/model token counts remain unavailable from the agent/tool APIs and
+are not estimated. Exact elapsed times are included where a Stopwatch metric
+was captured.

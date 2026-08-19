@@ -1,0 +1,4 @@
+# Platform Designer owns these generated XML-like snapshots and emits
+# significant trailing whitespace inside embedded metadata.
+*.qsys whitespace=-trailing-space
+fpga/**/ip/NIOSV_lab/*.ip whitespace=-trailing-space

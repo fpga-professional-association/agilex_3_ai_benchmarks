@@ -76,3 +76,27 @@ set_global_assignment -name IP_FILE ip/NIOSV_lab/onchip_memory.ip
 set_global_assignment -name IP_FILE ip/NIOSV_lab/jtag_uart.ip
 set_global_assignment -name IP_FILE ip/NIOSV_lab/sysid.ip
 set_global_assignment -name IP_FILE ip/NIOSV_lab/reset_release.ip
+set_global_assignment -name IP_FILE ip/NIOSV_lab/NIOSV_lab_stream_bridge_0.ip
+
+# FPGA AI Suite's Platform Designer wrapper keeps DDR-free initialization
+# filenames relative.  Make the generated on-chip parameters visible to
+# Analysis & Synthesis and register them for programming-file generation.
+set_global_assignment -name SEARCH_PATH ../../build/fpga_ai/generated_ip/altera_ai_ip/verilog/resnet8_agx3_logits_AGX3
+set_global_assignment -name SEARCH_PATH ../../build/fpga_ai/generated_ip/altera_ai_ip/verilog/sequential_ip
+set_global_assignment -name MIF_FILE ../../build/fpga_ai/generated_ip/altera_ai_ip/verilog/sequential_ip/ddrfree_bias_scale_hw_0_0.mif
+set_global_assignment -name MIF_FILE ../../build/fpga_ai/generated_ip/altera_ai_ip/verilog/sequential_ip/ddrfree_bias_scale_hw_0_0.mif.hldram_lbr.mif
+set_global_assignment -name MIF_FILE ../../build/fpga_ai/generated_ip/altera_ai_ip/verilog/sequential_ip/ddrfree_bias_scale_hw_1_0.mif
+set_global_assignment -name MIF_FILE ../../build/fpga_ai/generated_ip/altera_ai_ip/verilog/sequential_ip/ddrfree_bias_scale_hw_1_0.mif.hldram_lbr.mif
+set_global_assignment -name MIF_FILE ../../build/fpga_ai/generated_ip/altera_ai_ip/verilog/sequential_ip/ddrfree_bias_scale_hw_reconfig.mif
+set_global_assignment -name MIF_FILE ../../build/fpga_ai/generated_ip/altera_ai_ip/verilog/sequential_ip/ddrfree_config.mif
+set_global_assignment -name MIF_FILE ../../build/fpga_ai/generated_ip/altera_ai_ip/verilog/sequential_ip/ddrfree_filter_hw_exponent_0_0.mif
+set_global_assignment -name MIF_FILE ../../build/fpga_ai/generated_ip/altera_ai_ip/verilog/sequential_ip/ddrfree_filter_hw_exponent_0_0.mif.hldram_lbr.mif
+set_global_assignment -name MIF_FILE ../../build/fpga_ai/generated_ip/altera_ai_ip/verilog/sequential_ip/ddrfree_filter_hw_exponent_0_0.mif.hldram_lt.mif
+set_global_assignment -name MIF_FILE ../../build/fpga_ai/generated_ip/altera_ai_ip/verilog/sequential_ip/ddrfree_filter_hw_mantissa_0_0.mif
+set_global_assignment -name MIF_FILE ../../build/fpga_ai/generated_ip/altera_ai_ip/verilog/sequential_ip/ddrfree_filter_hw_mantissa_0_0.mif.hldram_lbr.mif
+set_global_assignment -name MIF_FILE ../../build/fpga_ai/generated_ip/altera_ai_ip/verilog/sequential_ip/ddrfree_filter_hw_mantissa_0_0.mif.hldram_lt.mif
+set_global_assignment -name MIF_FILE ../../build/fpga_ai/generated_ip/altera_ai_ip/verilog/sequential_ip/ddrfree_filter_hw_mantissa_1_0.mif
+set_global_assignment -name MIF_FILE ../../build/fpga_ai/generated_ip/altera_ai_ip/verilog/sequential_ip/ddrfree_filter_hw_mantissa_1_0.mif.hldram_lbr.mif
+set_global_assignment -name MIF_FILE ../../build/fpga_ai/generated_ip/altera_ai_ip/verilog/sequential_ip/ddrfree_filter_hw_mantissa_1_0.mif.hldram_lt.mif
+set_global_assignment -name MIF_FILE ../../build/fpga_ai/generated_ip/altera_ai_ip/verilog/sequential_ip/ddrfree_filter_hw_reconfig.mif
+set_global_assignment -name IP_FILE ip/NIOSV_lab/NIOSV_lab_fpga_ai_0.ip

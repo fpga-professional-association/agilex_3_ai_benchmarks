@@ -1,0 +1,9 @@
+set_global_assignment -name FAMILY "Agilex 3"
+set_global_assignment -name DEVICE A3CY100BM16AE7S
+set_global_assignment -name TOP_LEVEL_ENTITY resnet8_dla_fit_top
+set_global_assignment -name SYSTEMVERILOG_FILE resnet8_dla_fit_top.sv
+set_global_assignment -name SDC_FILE resnet8_dla_fit.sdc
+set_instance_assignment -name VIRTUAL_PIN ON -to *
+
+source ../../build/fpga_ai/generated_ip/altera_ai_ip/verilog/resnet8_agx3_logits_AGX3/dla_ip.qsf
+set_global_assignment -name LAST_QUARTUS_VERSION "26.1.0 Pro Edition"
