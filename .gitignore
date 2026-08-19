@@ -1,0 +1,45 @@
+# Permitted upstream repositories are cloned reproducibly by setup scripts.
+third_party/
+
+# Quartus-generated databases and programming artifacts.
+db/
+incremental_db/
+dni/
+output_files/
+*.qws
+*.qdf
+*.rpt
+*.summary
+*.smsg
+*.jdi
+*.sof
+*.pof
+*.rbf
+
+# Quartus/Platform Designer generated trees under the tracked derivative.
+fpga/**/db/
+fpga/**/qdb/
+fpga/**/dni/
+fpga/**/incremental_db/
+fpga/**/output_files/
+fpga/**/tmp-clearbox/
+fpga/**/NIOSV_lab/
+!fpga/**/ip/
+!fpga/**/ip/NIOSV_lab/
+!fpga/**/ip/NIOSV_lab/*.ip
+fpga/**/ip/NIOSV_lab/*/
+
+# Local benchmark output and transient logs.
+build/
+results/
+logs/
+tmp/
+*.log
+
+# Python caches (host-side tooling only; no WSL).
+__pycache__/
+*.py[cod]
+
+# ResNet8 constants are generated directly from model/model_manifest.json.
+software/resnet8/generated_model.h
+software/resnet8/generated/

@@ -1,0 +1,46 @@
+ResNet8 Nios V memory report
+SOPCINFO: D:\altera_demo\chat_gpt_mlperf_demo\fpga\axc3000_mlperf\NIOSV_lab\NIOSV_lab.sopcinfo
+on-chip memory: base=0x0 span=0x80000 (524288 bytes)
+JTAG UART: base=0x90048
+timer/timestamp: Nios V internal timer, expected 100000000 Hz
+ELF: D:\altera_demo\chat_gpt_mlperf_demo\software\resnet8\generated\niosv\app\build\release\resnet8.elf
+MAP: D:\altera_demo\chat_gpt_mlperf_demo\software\resnet8\generated\niosv\app\build\release\resnet8.map
+code_bytes=93440 rodata_bytes=84272 data_bytes=6368 bss_bytes=50148
+startup_entry_exceptions_bytes=488 link_end=241092
+static_used_bytes=234228 static_free_bytes=290060 capacity_bytes=524288
+shared_stack_heap_bytes=283196 stack_bottom=241092 stack_top=524288
+shared_heap_window_bytes=283196 heap_start=241092 heap_end=524288
+niosv-stack-report: program_size=229.21 KiB (234716 bytes including startup), free_stack_heap=276.56 KiB (283196 bytes)
+
+riscv32-unknown-elf-size -A:
+D:\altera_demo\chat_gpt_mlperf_demo\software\resnet8\generated\niosv\app\build\release\resnet8.elf  :
+section               size     addr
+.entry                  32        0
+.exceptions            456       32
+.text                93440      488
+.rodata              84272    93936
+.rwdata               6368   178208
+.bss                 50148   190944
+.onchip_memory           0   241092
+.comment                18        0
+.riscv.attributes       32        0
+.debug_aranges         864        0
+.debug_info          32810        0
+.debug_abbrev         8789        0
+.debug_line          86269        0
+.debug_frame          1660        0
+.debug_str            3340        0
+.debug_ranges           32        0
+.debug_loclists      63624        0
+.debug_rnglists       7019        0
+.debug_line_str       1021        0
+Total               440194
+
+
+
+
+Section accounting is taken from the linker map/size output above; startup
+entry/exception bytes are reported separately from .text. Stack and heap are
+not independently reserved: BSP exposes one shared, unbounded/free window
+from __alt_stack_base/__alt_heap_start=241092 up to 0x80000, so the exact
+283196-byte window must not be added twice.
