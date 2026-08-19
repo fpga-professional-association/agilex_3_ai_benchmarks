@@ -31,6 +31,7 @@ fpga/**/ip/NIOSV_lab/*/
 
 # Local benchmark output and transient logs.
 build/
+compiled_model_dir/
 results/
 logs/
 tmp/

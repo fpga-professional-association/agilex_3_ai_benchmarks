@@ -23,6 +23,29 @@ Execution records supplied by the task:
 - ResNet8 host benchmark: C timer `0.161` s for 20 timed inferences; PowerShell
   Stopwatch `0.24507269999999998` s including process startup; token metric
   unavailable.
+- FPGA volatile programming: `5.5929446` s, 0 errors, 0 warnings.
+- Rejected explicit-index download: `0.5790162` s; no memory write.
+- Auto-detected download with a backslash-path wrapper failure: `4.835908` s;
+  GDB reported no file loaded and the benchmark did not run.
+- Successful auto-detected ELF load and resume: `4.6261979` s.
+- AXC3000 target benchmark: `708.11326870` s for 20 timed inferences after 5
+  warmups, measured by 70,811,326,870 target ticks at 100 MHz. Mean latency is
+  `35.405663435` s and throughput is `0.02824406897` inferences/s.
+- FPGA AI Suite probe against Quartus 26.1 build-110 qinst: `0.1707427` s;
+  component correctly rejected because that qinst does not offer it.
+- FPGA AI Suite-only download through Quartus 26.1.1 qinst: `2.3903406` s.
+- FPGA AI Suite 2026.1.1 unattended native-Windows installation:
+  `101.5837781` s.
+- OpenVINO 2025.4 official archive download: `5.3334559` s; extraction and
+  placement: `1.2207271` s.
+- `dla_compiler --fanalyze-area` Agilex-3 sanity verification: `1.5573449` s.
+- Less-capable qinst-audit agent timings: initial scan `0.090313` s; help
+  `0.523388` s; component probe `0.441421` s; signature probe `0.191477` s;
+  final audit `0.501415` s.
+- Final GPT-5.6 SOL read-only installation/repository audit: `456.3888297` s;
+  verdict GO. The exact license expiry relies on the earlier sanitized license
+  audit because this final pass confirmed the feature but did not re-emit the
+  expiry in parseable output.
 
 Per-agent token counts are unavailable for every agent and must not be
 estimated. No exact Stopwatch/token metric was exposed for unavailable entries.
@@ -35,8 +58,9 @@ estimated. No exact Stopwatch/token metric was exposed for unavailable entries.
   complete for the current source set.
 - Integration: Nios V 26.1 BSP/app/CMake optimized link completed. The
   corrected SOPCINFO map is on-chip `0x0..0x80000`, debug `0x80000`, timer
-  `0x90000`, sysid `0x90040`, JTAG UART `0x90048`; no hardware programmed.
-  Build wall time was `12.6219946` s; target timing remains unavailable.
+  `0x90000`, sysid `0x90040`, JTAG UART `0x90048`. The audited SOF and ELF were
+  programmed and run successfully; build wall time was `12.6219946` s and the
+  target timing is recorded above.
   Exact ELF/map section sizes are recorded in `reports/resnet8_niosv_memory.txt`.
 - Memory/timing: 512 KiB on-chip RAM; 234,228-byte requested static image
   sections plus 488-byte startup/exception sections; 290,060 bytes remaining;
@@ -45,3 +69,12 @@ estimated. No exact Stopwatch/token metric was exposed for unavailable entries.
   runtime oracle are unavailable; no official accuracy claim may be made.
 - Pre-program audit: authorized controlled SOF + ELF bring-up after
   385.4739068 s; exact token usage was not exposed.
+- Hardware regression: pass, class 6 and checksum `0x867c28f5` matched the
+  independent host regression. Raw output and hashes are in
+  `reports/hardware_run.md`.
+- Accelerator toolchain: FPGA AI Suite `2026.1.1+b17` and OpenVINO 2025.4 are
+  installed on native Windows. Agilex-3 area analysis passes, and the required
+  AI Suite license feature is valid through 2026-10-22. Windows RTL simulation
+  is unsupported, so future IP/example generation uses `--skip-sim-env`.
+- Accelerator implementation: pending. The Nios V result is a scalar smoke
+  baseline only and is not an FPGA AI Suite RTL benchmark result.
