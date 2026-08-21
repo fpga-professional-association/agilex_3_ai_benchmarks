@@ -133,6 +133,13 @@ estimated. No exact Stopwatch/token metric was exposed for unavailable entries.
 - Final GPT-5.6 SOL read-only audit: `464.6830041` s. Verdict: conditional
   GO to commit the documented negative bring-up; NO-GO for benchmarking,
   200/300 MHz work, or 8x4 hardware work until licensed 4x4 correctness.
+- 2026-08-21 native-Windows PATH repeat: Quartus tool resolution/version
+  `1.2715173` s; direct CoreDLA feature check `4.2616576` s; user/machine
+  license-environment import and recheck `0.9643469` s; JTAG scan
+  `0.1693212` s; SOF programming `5.1400021` s; firmware rebuild
+  `23.0358526` s; ELF download `5.1800117` s; UART capture `3.0301871` s.
+  Quartus programming succeeded, but class 3/repeated output and `license=0`
+  were unchanged, so this remains a diagnostic rather than a benchmark.
 
 Per-agent/model token counts remain unavailable from the agent/tool APIs and
 are not estimated. Exact elapsed times are included where a Stopwatch metric

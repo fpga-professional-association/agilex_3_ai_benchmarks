@@ -155,3 +155,20 @@ ALMs, 127 M20Ks, and 12 DSPs. This is **not** a fit, timing, hardware, or MLPerf
 result; it will be generated and placed only after licensed 4x4 correctness.
 The candidate architecture SHA-256 is
 `72F721C270DD5E07838182F77DCFD07D4D01A52798841B6DDFDC74116CEE5D16`.
+
+## Quartus PATH repeat run (2026-08-21)
+
+The native-Windows environment was explicitly reloaded and verified:
+`quartus_sh`, `quartus_pgm`, and `qsys-generate` all resolved from the Quartus
+26.1 installation, and `quartus_sh --version` succeeded. Both process- and
+user/machine-level license environment configuration were checked without
+printing their values. CoreDLA feature `6AF7_018B` remained unavailable.
+
+The existing diagnostic SOF was then programmed again with 0 errors and 0
+warnings, the firmware was rebuilt/downloaded, and the target completed 25
+jobs. It again returned the repeated `5058 5098 506c 50f2` pattern, class 3,
+and `license=0`; the CPU oracle remains class 6. Therefore correcting PATH did
+not resolve inference correctness on this system. This is another diagnostic
+run, not a benchmark. The independent capture is
+`reports/fpga_ai_rtl_uart_2026-08-21.txt`, SHA-256
+`51B0CCD2FFDE77EFE98B3A5D4A70638EB164DCD6C018BFC90B6AEEEB1EDF88EA`.

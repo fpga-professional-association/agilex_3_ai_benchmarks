@@ -55,6 +55,8 @@ Verified artifacts:
   `D5E08A534B2026A66CF3A79DF103235F49CA6A8653F45D1287AE75F4BC053BF1`.
 - FPGA AI JTAG-UART capture — SHA-256
   `29CBD4AE043AA0026A3C00CA7130D7AD8CFFA7AE56D0CF2084C85F1AFDF9BBEC`.
+- FPGA AI JTAG-UART PATH-repeat capture (2026-08-21) — SHA-256
+  `51B0CCD2FFDE77EFE98B3A5D4A70638EB164DCD6C018BFC90B6AEEEB1EDF88EA`.
 
 Derivative basis:
 
@@ -102,6 +104,12 @@ Timing notes supplied by the task:
   sanitized check confirms that required feature `6AF7_018B` is absent from
   both configured license files. `dla_create_ip` therefore generated its
   evaluation streamer, and the hardware correctness gate is NO-GO.
+- Native-Windows Quartus PATH repeat: tool resolution/version 1.2715173 s;
+  CoreDLA feature check 4.2616576 s; license-environment import/recheck
+  0.9643469 s; JTAG scan 0.1693212 s; SOF programming 5.1400021 s; firmware
+  rebuild 23.0358526 s; ELF download 5.1800117 s; UART capture 3.0301871 s.
+  Programming succeeded, but class 3, repeated output, and `license=0`
+  remained, so this is diagnostic evidence and not a benchmark result.
 
 Per-agent token counts are unavailable for every agent; they are never
 estimated. No exact Stopwatch/token metric was exposed for the unavailable

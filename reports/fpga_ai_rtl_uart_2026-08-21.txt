@@ -1,0 +1,16 @@
+Date: 2026-08-21 America/Chicago
+Purpose: repeat diagnostic after verifying Quartus on native-Windows PATH
+Cable: USB Blaster III [USB-1]
+Device IDCODE: 4361B0DD
+SOF SHA-256: 2A2D6855BA8A711CC3D900EB06CEAC1C6A1F97425CB73E928349913AF4CCB1B0
+ELF SHA-256: D5E08A534B2026A66CF3A79DF103235F49CA6A8653F45D1287AE75F4BC053BF1
+
+fpga_ai_resnet8 start csr=0x000a0000 bridge=0x000a1000 clock=100000000
+raw_outputs words=16: 5058 5098 506c 50f2 5058 5098 506c 50f2 5058 5098 506c 50f2 0000 0000 0000 0000
+class=3 output_beats=2
+warmups=5 timed=20 cycles_min=1415700 cycles_max=1416158 cycles_avg=1415822 latency_us_avg=14158
+bridge_status=0x00000f01 input_tail=000050e0,59d85000,58e050e0 license=0x00000000 irq=0x00000002 diagnostics=0x00000000
+
+The host viewer ended after its configured three-second window with its known
+native-Windows console-attribute restoration exception. Target output was
+complete before that host-only exception.
