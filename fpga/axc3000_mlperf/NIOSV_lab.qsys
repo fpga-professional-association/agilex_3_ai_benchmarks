@@ -50,7 +50,7 @@ Altera and sold by Altera or its authorized distributors.-->
    {
       datum _sortIndex
       {
-         value = "10";
+         value = "9";
          type = "int";
       }
    }
@@ -138,7 +138,7 @@ Altera and sold by Altera or its authorized distributors.-->
    {
       datum _sortIndex
       {
-         value = "9";
+         value = "8";
          type = "int";
       }
    }
@@ -2662,7 +2662,7 @@ Altera and sold by Altera or its authorized distributors.-->
                 &lt;parameterValueMap&gt;
                     &lt;entry&gt;
                         &lt;key&gt;associatedAddressablePoint&lt;/key&gt;
-                        &lt;value&gt;NIOSV_lab_fpga_ai_0.csr_axi&lt;/value&gt;
+                        &lt;value&gt;NIOSV_lab_fpga_ai.csr_axi&lt;/value&gt;
                     &lt;/entry&gt;
                     &lt;entry&gt;
                         &lt;key&gt;associatedClock&lt;/key&gt;
@@ -2693,39 +2693,39 @@ Altera and sold by Altera or its authorized distributors.-->
               <ipxact:name>generationInfoDefinition</ipxact:name>
               <ipxact:displayName>Generation Behavior</ipxact:displayName>
               <ipxact:value>&lt;generationInfoDefinition&gt;
-    &lt;hdlLibraryName&gt;NIOSV_lab_fpga_ai_0&lt;/hdlLibraryName&gt;
+    &lt;hdlLibraryName&gt;NIOSV_lab_fpga_ai&lt;/hdlLibraryName&gt;
     &lt;fileSets&gt;
         &lt;fileSet&gt;
-            &lt;fileSetName&gt;NIOSV_lab_fpga_ai_0&lt;/fileSetName&gt;
-            &lt;fileSetFixedName&gt;NIOSV_lab_fpga_ai_0&lt;/fileSetFixedName&gt;
+            &lt;fileSetName&gt;NIOSV_lab_fpga_ai&lt;/fileSetName&gt;
+            &lt;fileSetFixedName&gt;NIOSV_lab_fpga_ai&lt;/fileSetFixedName&gt;
             &lt;fileSetKind&gt;QUARTUS_SYNTH&lt;/fileSetKind&gt;
             &lt;fileSetFiles/&gt;
             &lt;fileSetFileChangeDefs/&gt;
         &lt;/fileSet&gt;
         &lt;fileSet&gt;
-            &lt;fileSetName&gt;NIOSV_lab_fpga_ai_0&lt;/fileSetName&gt;
-            &lt;fileSetFixedName&gt;NIOSV_lab_fpga_ai_0&lt;/fileSetFixedName&gt;
+            &lt;fileSetName&gt;NIOSV_lab_fpga_ai&lt;/fileSetName&gt;
+            &lt;fileSetFixedName&gt;NIOSV_lab_fpga_ai&lt;/fileSetFixedName&gt;
             &lt;fileSetKind&gt;SIM_VERILOG&lt;/fileSetKind&gt;
             &lt;fileSetFiles/&gt;
             &lt;fileSetFileChangeDefs/&gt;
         &lt;/fileSet&gt;
         &lt;fileSet&gt;
-            &lt;fileSetName&gt;NIOSV_lab_fpga_ai_0&lt;/fileSetName&gt;
-            &lt;fileSetFixedName&gt;NIOSV_lab_fpga_ai_0&lt;/fileSetFixedName&gt;
+            &lt;fileSetName&gt;NIOSV_lab_fpga_ai&lt;/fileSetName&gt;
+            &lt;fileSetFixedName&gt;NIOSV_lab_fpga_ai&lt;/fileSetFixedName&gt;
             &lt;fileSetKind&gt;SIM_VHDL&lt;/fileSetKind&gt;
             &lt;fileSetFiles/&gt;
             &lt;fileSetFileChangeDefs/&gt;
         &lt;/fileSet&gt;
         &lt;fileSet&gt;
-            &lt;fileSetName&gt;NIOSV_lab_fpga_ai_0&lt;/fileSetName&gt;
-            &lt;fileSetFixedName&gt;NIOSV_lab_fpga_ai_0&lt;/fileSetFixedName&gt;
+            &lt;fileSetName&gt;NIOSV_lab_fpga_ai&lt;/fileSetName&gt;
+            &lt;fileSetFixedName&gt;NIOSV_lab_fpga_ai&lt;/fileSetFixedName&gt;
             &lt;fileSetKind&gt;CDC&lt;/fileSetKind&gt;
             &lt;fileSetFiles/&gt;
             &lt;fileSetFileChangeDefs/&gt;
         &lt;/fileSet&gt;
         &lt;fileSet&gt;
-            &lt;fileSetName&gt;NIOSV_lab_fpga_ai_0&lt;/fileSetName&gt;
-            &lt;fileSetFixedName&gt;NIOSV_lab_fpga_ai_0&lt;/fileSetFixedName&gt;
+            &lt;fileSetName&gt;NIOSV_lab_fpga_ai&lt;/fileSetName&gt;
+            &lt;fileSetFixedName&gt;NIOSV_lab_fpga_ai&lt;/fileSetFixedName&gt;
             &lt;fileSetKind&gt;CDC_VHDL&lt;/fileSetKind&gt;
             &lt;fileSetFiles/&gt;
             &lt;fileSetFileChangeDefs/&gt;
@@ -2751,7 +2751,7 @@ Altera and sold by Altera or its authorized distributors.-->
             <ipxact:parameter parameterId="logicalView" type="string">
               <ipxact:name>logicalView</ipxact:name>
               <ipxact:displayName>Logical view</ipxact:displayName>
-              <ipxact:value>ip/NIOSV_lab/NIOSV_lab_fpga_ai_0.ip</ipxact:value>
+              <ipxact:value>ip/NIOSV_lab/NIOSV_lab_fpga_ai.ip</ipxact:value>
             </ipxact:parameter>
             <ipxact:parameter parameterId="moduleAssignmentDefinition" type="string">
               <ipxact:name>moduleAssignmentDefinition</ipxact:name>

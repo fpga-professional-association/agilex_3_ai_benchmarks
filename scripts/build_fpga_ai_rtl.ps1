@@ -1,6 +1,7 @@
 [CmdletBinding()]
 param(
     [switch]$CompileOnly,
+    [switch]$Evaluation,
     [switch]$SkipQuartus,
     [string]$QuartusRoot = "C:\altera_pro\26.1\quartus"
 )
@@ -63,13 +64,22 @@ if ($CompileOnly) {
     exit 0
 }
 
-# Hardware IP must never silently fall back to the inference-limited variant.
-& (Join-Path $PSScriptRoot "check_coredla_license.ps1") -QuartusRoot $QuartusRoot
+# Evaluation hardware is valid for the first 10,000 inferences.  Make that
+# choice explicit; production builds still fail closed when CoreDLA is absent.
+$licenseArgument = ""
+if ($Evaluation) {
+    $licenseArgument = " --unlicensed"
+    Write-Host "ip_license_mode=evaluation_10000_inferences"
+} else {
+    & (Join-Path $PSScriptRoot "check_coredla_license.ps1") -QuartusRoot $QuartusRoot
+    $licenseArgument = " --licensed"
+    Write-Host "ip_license_mode=production"
+}
 
 Run-AiCommand (
     "dla_create_ip --skip-sim-env --overwrite --ip-dir `"$ipDir`" " +
     "--arch `"$arch`" --model `"$adaptedIr`" " +
-    "--on-chip-parameters-dir `"$parameterDir`""
+    "--on-chip-parameters-dir `"$parameterDir`"$licenseArgument"
 )
 
 if (-not $SkipQuartus) {
@@ -77,15 +87,24 @@ if (-not $SkipQuartus) {
     $qsysGenerateExe = Join-Path $QuartusRoot "sopc_builder\bin\qsys-generate.exe"
     $quartusSh = Join-Path $QuartusRoot "bin64\quartus_sh.exe"
     $searchPath = "$ipDir,$bridgeDir,`$"
+    $qsysDirectory = Split-Path -Parent $qsys
+    $qsysFileName = Split-Path -Leaf $qsys
 
-    Run-Tool $qsysScriptExe @(
-        "--system-file=$qsys", "--quartus-project=$qpf",
-        "--search-path=$searchPath", "--script=$qsysScript"
-    )
-    Run-Tool $qsysGenerateExe @(
-        $qsys, "--synthesis=VERILOG", "--quartus-project=$qpf",
-        "--search-path=$searchPath", "--parallel=off"
-    )
+    Push-Location $qsysDirectory
+    try {
+        # qsys-script 26.1 on Windows interprets an absolute system path as an
+        # HDL entity name.  Run in the project directory with a leaf filename.
+        Run-Tool $qsysScriptExe @(
+            "--system-file=$qsysFileName", "--quartus-project=$qpf",
+            "--search-path=$searchPath", "--script=$qsysScript"
+        )
+        Run-Tool $qsysGenerateExe @(
+            $qsysFileName, "--synthesis=VERILOG", "--quartus-project=$qpf",
+            "--search-path=$searchPath", "--parallel=off"
+        )
+    } finally {
+        Pop-Location
+    }
     Run-Tool $quartusSh @("--flow", "compile", $qpf)
 }
 

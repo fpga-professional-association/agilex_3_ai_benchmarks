@@ -80,8 +80,9 @@ estimated. No exact Stopwatch/token metric was exposed for unavailable entries.
   `--skip-sim-env`.
 - Accelerator implementation: the no-Softmax quantized graph maps wholly to
   FPGA, integrates, fits, programs, streams, and completes jobs. It fails the
-  correctness gate because the evaluation streamer returns class 3/repeated
-  data instead of CPU-oracle class 6; license CSR is zero. See
+  correctness gate with class 3/repeated data instead of CPU-oracle class 6.
+  Evaluation mode should remain numerically valid below 10,000 inferences, and
+  the out-of-inferences bit is clear, so `license=0` is not the cause. See
   `reports/fpga_ai_rtl_run.md`. The measured evaluation-image timing is not a
   benchmark result, and 200/300 MHz or wider-core trials remain gated.
 
@@ -132,7 +133,7 @@ estimated. No exact Stopwatch/token metric was exposed for unavailable entries.
   is 734.85 fps at 350 MHz, 28,788 ALMs, 127 M20Ks, and 12 DSPs.
 - Final GPT-5.6 SOL read-only audit: `464.6830041` s. Verdict: conditional
   GO to commit the documented negative bring-up; NO-GO for benchmarking,
-  200/300 MHz work, or 8x4 hardware work until licensed 4x4 correctness.
+  200/300 MHz work, or 8x4 hardware work until 4x4 correctness.
 - 2026-08-21 native-Windows PATH repeat: Quartus tool resolution/version
   `1.2715173` s; direct CoreDLA feature check `4.2616576` s; user/machine
   license-environment import and recheck `0.9643469` s; JTAG scan
@@ -144,3 +145,13 @@ estimated. No exact Stopwatch/token metric was exposed for unavailable entries.
 Per-agent/model token counts remain unavailable from the agent/tool APIs and
 are not estimated. Exact elapsed times are included where a Stopwatch metric
 was captured.
+
+## 2026-08-21 evaluation correction
+
+The clean single-source regeneration, programming, and internal-profiler run
+are itemized in `reports/task_profile_2026-08-21.md`. Directly instrumented
+commands total `735.4872203` seconds. One zero frame produced 512 bridge input
+beats, one completion, 922,553 core-active clocks, and 888,576 accepted
+input-feeder-to-sequencer transactions, while still returning the fixed class-3
+pattern. Per-agent token and wall-clock telemetry remained unavailable and was
+not estimated.

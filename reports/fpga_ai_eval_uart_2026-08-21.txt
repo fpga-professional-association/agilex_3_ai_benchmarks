@@ -1,0 +1,10 @@
+fpga_ai_resnet8 start csr=0x000a0000 bridge=0x000a1000 clock=100000000
+case=zero raw_words=10 strobes=ffff,000f raw: 5058 5098 506c 50f2 5058 5098 506c 50f2 5058 5098 class=3
+zero_progress input_beats=512 output_beats=2 completions_delta=1 active_clocks_delta=922578 core_clocks_delta=922553 if9_transactions_delta=888576
+case=all255 raw_words=10 strobes=ffff,000f raw: 5058 5098 506c 50f2 5058 5098 506c 50f2 5058 5098 class=3
+case=synthetic_nhwc_stream raw_words=10 strobes=ffff,000f raw: 5058 5098 506c 50f2 5058 5098 506c 50f2 5058 5098 class=3
+case=synthetic_nchw_stream raw_words=10 strobes=ffff,000f raw: 5058 5098 506c 50f2 5058 5098 506c 50f2 5058 5098 class=3
+case=timed_synthetic_nhwc_stream raw_words=10 strobes=ffff,000f raw: 5058 5098 506c 50f2 5058 5098 506c 50f2 5058 5098 class=3
+class=3 output_beats=2
+warmups=5 timed=20 cycles_min=1327995 cycles_max=1328446 cycles_avg=1328160 latency_us_avg=13281
+bridge_status=0x00000f01 input_tail=000050e0,59d85000,58e050e0 license=0x00000000 irq=0x00000002 diagnostics=0x00000000 completion_count=87 bridge_counts=14848,58

@@ -99,4 +99,4 @@ set_global_assignment -name MIF_FILE ../../build/fpga_ai/generated_ip/altera_ai_
 set_global_assignment -name MIF_FILE ../../build/fpga_ai/generated_ip/altera_ai_ip/verilog/sequential_ip/ddrfree_filter_hw_mantissa_1_0.mif.hldram_lbr.mif
 set_global_assignment -name MIF_FILE ../../build/fpga_ai/generated_ip/altera_ai_ip/verilog/sequential_ip/ddrfree_filter_hw_mantissa_1_0.mif.hldram_lt.mif
 set_global_assignment -name MIF_FILE ../../build/fpga_ai/generated_ip/altera_ai_ip/verilog/sequential_ip/ddrfree_filter_hw_reconfig.mif
-set_global_assignment -name IP_FILE ip/NIOSV_lab/NIOSV_lab_fpga_ai_0.ip
+set_global_assignment -name IP_FILE ip/NIOSV_lab/NIOSV_lab_fpga_ai.ip

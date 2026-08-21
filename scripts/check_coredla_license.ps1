@@ -45,4 +45,4 @@ foreach ($source in $licenseSources) {
     }
 }
 
-throw "CoreDLA hardware license feature $Feature is unavailable. Do not generate or benchmark inference-limited IP. Checked $($licenseSources.Count) configured license source(s)."
+throw "CoreDLA production feature $Feature is unavailable. Production IP generation is blocked. Use build_fpga_ai_rtl.ps1 -Evaluation only when the 10,000-inference hardware limit is acceptable. Checked $($licenseSources.Count) configured license source(s)."

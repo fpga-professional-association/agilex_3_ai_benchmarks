@@ -73,14 +73,21 @@ RTL path, as documented in `reports/fpga_ai_rtl_run.md`.
 An earlier read-only installation audit verified the registry entry,
 environment script, compiler/build versions, local artifact hashes and
 signatures, area-report values, Windows limitation, and HyperRAM constraint.
-Its GO verdict applied to tool installation, not licensed hardware-IP
-generation. The later exact feature check showed that `6AF7_018B` is absent;
-`dla_create_ip` selected inference-limited RTL and hardware inference failed
-the correctness gate.
+Its GO verdict applied to tool installation, not unlimited production
+deployment. The later exact feature check showed that `6AF7_018B` is absent;
+`dla_create_ip` selected inference-limited RTL. The current hardware run fails
+the numerical correctness gate before the 10,000-inference limit is reached.
 
 Native Windows RTL simulation is not supported in FPGA AI Suite 2026.1.1.
 Future IP/example generation must use `--skip-sim-env`; Quartus compilation and
 hardware execution remain available on Windows.
+
+The current host now discovers only Python 3.14. NumPy is absent, and the
+workspace's older protobuf native extension is incompatible with Python 3.14.
+Consequently, the 2026-08-21 clean hardware correction regenerated Platform
+Designer and Quartus from the existing hash-audited evaluation IP rather than
+rerunning TFLite conversion and `dla_create_ip`. No PyPI dependency was
+downloaded under the task's source constraints.
 
 ## Installation incident disclosure
 
@@ -96,7 +103,9 @@ downloaded only FPGA AI Suite into a task-specific temporary directory.
 
 The toolchain enables model conversion, compiler analysis, IP generation, and
 Quartus integration. The pinned ResNet-8 graph has been compiled wholly to
-FPGA, integrated, fit, programmed, and exercised on the board. A valid
-CoreDLA hardware license is now required to replace the inference-limited
-streamer and pass the 100 MHz correctness gate. Only then should wider cores
-and 200/300 MHz trials proceed. HyperRAM remains inactive at 0 MHz.
+FPGA, integrated, fit, programmed, and exercised on the board. Evaluation IP
+should produce valid results for its first 10,000 inferences; a production
+CoreDLA license is required to remove that deployment limit, not to validate
+the first inference. The present 100 MHz numerical failure remains under
+investigation, so wider cores and 200/300 MHz trials remain gated. HyperRAM
+remains inactive at 0 MHz.
