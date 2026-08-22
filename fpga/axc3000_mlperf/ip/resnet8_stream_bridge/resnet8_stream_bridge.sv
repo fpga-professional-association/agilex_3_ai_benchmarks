@@ -14,11 +14,15 @@ module resnet8_stream_bridge (
     output wire         m_axis_tvalid,
     input  wire         m_axis_tready,
 
-    input  wire [127:0] s_axis_tdata,
+    /* The DLA aux/xbar output bus is 64 bits (xbar_k_vector 4 * FP16), so the
+     * architecture now declares a 64-bit output_stream_interface and no width
+     * adaptation happens inside the encrypted output streamer.  One beat
+     * carries exactly one 4-lane k-group. */
+    input  wire [63:0]  s_axis_tdata,
     input  wire         s_axis_tvalid,
     output wire         s_axis_tready,
     input  wire         s_axis_tlast,
-    input  wire [15:0]  s_axis_tstrb
+    input  wire [7:0]   s_axis_tstrb
 );
     logic [31:0] input_word0;
     logic [31:0] input_word1;
@@ -26,8 +30,8 @@ module resnet8_stream_bridge (
     logic        input_pending;
     logic        input_overflow;
 
-    logic [127:0] output_payload;
-    logic [15:0]  output_strobe;
+    logic [63:0] output_payload;
+    logic [7:0]  output_strobe;
     logic         output_last;
     logic         output_pending;
     logic         output_overflow;
@@ -37,7 +41,10 @@ module resnet8_stream_bridge (
 
     wire input_fire = input_pending && m_axis_tready;
     wire output_fire = s_axis_tvalid && s_axis_tready;
-    wire output_ack = av_read && (av_address == 4'd7);
+    /* The last output data word is now word1 (address 5), so that read is the
+     * one that acknowledges the beat.  Software must sample BR_OUTPUT_LAST
+     * (address 8) before issuing it. */
+    wire output_ack = av_read && (av_address == 4'd5);
 
     assign av_waitrequest = 1'b0;
     assign m_axis_tdata = input_payload;
@@ -47,9 +54,10 @@ module resnet8_stream_bridge (
     always_comb begin
         case (av_address)
             4'd0: av_readdata = {
-                input_beat_count[7:0],
-                output_strobe,
-                4'b0,
+                input_beat_count[7:0],  /* [31:24] */
+                8'b0,                   /* [23:16] */
+                output_strobe,          /* [15:8]  */
+                4'b0,                   /* [7:4]   */
                 output_overflow,
                 input_overflow,
                 output_pending,
@@ -60,8 +68,10 @@ module resnet8_stream_bridge (
             4'd3: av_readdata = input_payload[95:64];
             4'd4: av_readdata = output_payload[31:0];
             4'd5: av_readdata = output_payload[63:32];
-            4'd6: av_readdata = output_payload[95:64];
-            4'd7: av_readdata = output_payload[127:96];
+            /* Addresses 6 and 7 held the upper half of the old 128-bit beat
+             * and are now unused. */
+            4'd6: av_readdata = 32'b0;
+            4'd7: av_readdata = 32'b0;
             4'd8: av_readdata = {31'b0, output_last};
             4'd9: av_readdata = input_beat_count;
             4'd10: av_readdata = output_beat_count;
@@ -76,8 +86,8 @@ module resnet8_stream_bridge (
             input_payload <= 96'b0;
             input_pending <= 1'b0;
             input_overflow <= 1'b0;
-            output_payload <= 128'b0;
-            output_strobe <= 16'b0;
+            output_payload <= 64'b0;
+            output_strobe <= 8'b0;
             output_last <= 1'b0;
             output_pending <= 1'b0;
             output_overflow <= 1'b0;

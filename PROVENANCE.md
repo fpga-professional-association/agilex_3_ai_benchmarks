@@ -65,6 +65,73 @@ Verified artifacts:
 - Final counter-enabled FPGA AI evaluation capture (2026-08-21) — SHA-256
   `59A68DB1C2A701E7893541F27F3755DFD13C86D57A692D515CF54E0C9AFAA77F`.
 
+2026-08-21 correctness and clock-scaling campaign artifacts. All four SOFs below
+passed the same board correctness gate and returned bit-for-bit identical FP16
+logits; none of these files is committed, and the SOFs live under the ignored
+`build/` tree. Digests were computed from the working tree on 2026-08-21.
+
+- Working Agilex-3 architecture (vendor `AGX3_Performance` option set at 8x8,
+  DDR-resident parameters) — `fpga/ai_suite/resnet8_agx3_vendor_8x8.arch`,
+  SHA-256 `494B91C6C551A52006A55AD823A6AD7CC293487612676A7F5D05EFF2888BA4C0`.
+  `build/fpga_ai/arch_vendor/V1_8x8.arch` is byte-identical (same digest).
+- Passing 100 MHz SOF — `build/fpga_ai/phase9_good_100mhz/axc3000_top.sof`,
+  SHA-256 `D38620D6B063C14A5C2D6BC1112557DBA14DBAB80EDFAEDE077A5ED188B13B80`.
+- Passing 200 MHz SOF — `build/fpga_ai/phase10_200mhz/axc3000_top.sof`, SHA-256
+  `45ED1A747ECA8BF6B0E5D73DA77704E1E6876C6462F111FCBA2290E3A45DCDCC`.
+- Passing 225 MHz SOF (conservative fallback rung) —
+  `build/fpga_ai/phase11_225mhz/axc3000_top.sof`, SHA-256
+  `DC1EDB6620FE6FA688D600EA635B24EED46A7691BD5260CE5390A3BB550F7394`.
+- Passing 300 MHz SOF (current working-tree configuration, currently programmed
+  on the board) — `build/fpga_ai/phase11_300mhz/axc3000_top.sof`, SHA-256
+  `3D24885C1D684938C7B33E56D2F8ECBA3864D1BADABEE656E6F842AD66E5B7EC`.
+- Nios V control/I/O ELFs downloaded with those SOFs —
+  `build/fpga_ai/phase10_200mhz/fpga_ai_resnet8.elf` SHA-256
+  `50421BF3FD1376FDDA153A711B5CA084C21DC3EE19F496EC67D60BBBA9BCCA4B`;
+  `build/fpga_ai/phase11_225mhz/fpga_ai_resnet8.elf` SHA-256
+  `A4625B281C8B7E452D4F5AC1E5FC696A62E1473572329F9B41AD79B9A1DC383A`;
+  `build/fpga_ai/phase11_300mhz/fpga_ai_resnet8.elf` SHA-256
+  `8388829DEA8FA68CCA769FBF4BA97EBD06612E9B0DDB3510A6C95050471CF54D`.
+  The 100 MHz snapshot directory holds no ELF copy.
+- DDR parameter memory-initialization images, 186,880 config+filter bytes total,
+  read back in silicon as FNV-1a `0xe0a8c009` —
+  `fpga/axc3000_mlperf/mem/dla_par0.mif` SHA-256
+  `A08A3EFEF6F4B5B972717F4CFDAE722F120727C487611681C5CA275A7BEE31BB`;
+  `fpga/axc3000_mlperf/mem/dla_par1.mif` SHA-256
+  `5742A5AE48F43AC2C2410E7CBFF68F4983E9AD224151731169A84CB2E840DED7`.
+- Passing JTAG-UART captures. 100 MHz —
+  `reports/fpga_ai_vendor_arch_uart_2026-08-21.txt`, SHA-256
+  `FFD2870979D6382AA36D5D4CF6B978B95F64A7A8EEC11DC87792B779A86B3451`.
+  200 MHz (post input-copy fix) —
+  `reports/fpga_ai_phase10_200mhz_fastcopy_2026-08-21.txt`, SHA-256
+  `F7CEE2DE6A87141CEB12A7C27449686ED4FFF6B54E242A61E9A8D7D0D7EA85F7`.
+  225 MHz — `reports/fpga_ai_phase11_225mhz_uart_2026-08-21.txt`, SHA-256
+  `5E7D804A0D68257317B8539CEF3E9BE5CBA454C25275DFD0AF836A93CAE53DC2`.
+  300 MHz — `reports/fpga_ai_phase11_300mhz_uart_2026-08-21.txt`, SHA-256
+  `C717641A66F8050616B822A97EF21CD747A6B95BDBAA26EF922BEA993C277841`.
+  Each snapshot directory's `uart_capture.txt` is byte-identical to the
+  corresponding report copy.
+- Truncated-graph elimination experiment (§7.6 of the escalation report) —
+  IR `build/fpga_ai/truncated_ir/resnet8_trunc_t2.xml` SHA-256
+  `F898E7104505087BD246D6B939CB646C8461DFCA768AE2F75AEA931F16C67999`,
+  capture `reports/fpga_ai_trunc_t2_uart_2026-08-21.txt` SHA-256
+  `E270350556CD5C5575D8DCFD8FEEAAC99AE6B53F31EAFFD831DDE276C7F7CD57`,
+  programmed SOF SHA-256
+  `10D42F3D2F8FB7F3ACA741806F051BE1297A8EB3D800922E6CCE4116D5C063B6`.
+
+Corrections to earlier entries in this file:
+
+- The note below recording the hardware correctness gate as NO-GO reflects the
+  state on 2026-08-19/21 before the vendor-option architecture was built. That
+  gate passed on 2026-08-21 at 100, 200, 225 and 300 MHz. The absent CoreDLA
+  production feature `6AF7_018B` and the resulting evaluation IP selection are
+  unchanged and were never the cause: evaluation IP produces valid inferences up
+  to its documented limit and then hard-stops via descriptor-diagnostics bit 2,
+  which stayed clear, and the `LICENSE` CSR reads `0x00000000` in the passing
+  builds as well — it is a static build-identity bit, not a runtime gate.
+- The `Tracked 4x4 Agilex-3 architecture` and `Tracked compiler-only 8x4
+  candidate architecture` digests above remain valid digests of those files, but
+  both describe superseded configurations.
+
 Derivative basis:
 
 - `fpga/axc3000_mlperf` derives from the pinned Arrow checkout's

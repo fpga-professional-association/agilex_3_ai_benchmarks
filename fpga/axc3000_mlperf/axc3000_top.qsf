@@ -68,35 +68,74 @@ set_instance_assignment -name IO_STANDARD "1.3-V LVCMOS" -to HR_DQ[4]
 set_instance_assignment -name IO_STANDARD "1.3-V LVCMOS" -to HR_DQ[5]
 set_instance_assignment -name IO_STANDARD "1.3-V LVCMOS" -to HR_DQ[6]
 set_instance_assignment -name IO_STANDARD "1.3-V LVCMOS" -to HR_DQ[7]
-set_global_assignment -name IP_FILE ip/NIOSV_lab/NIOSV_lab_clock_in.ip
-set_global_assignment -name IP_FILE ip/NIOSV_lab/NIOSV_lab_reset_in.ip
-set_global_assignment -name IP_FILE ip/NIOSV_lab/NIOSV_lab_iopll_0.ip
-set_global_assignment -name IP_FILE ip/NIOSV_lab/niosv_m.ip
-set_global_assignment -name IP_FILE ip/NIOSV_lab/onchip_memory.ip
-set_global_assignment -name IP_FILE ip/NIOSV_lab/jtag_uart.ip
-set_global_assignment -name IP_FILE ip/NIOSV_lab/sysid.ip
-set_global_assignment -name IP_FILE ip/NIOSV_lab/reset_release.ip
-set_global_assignment -name IP_FILE ip/NIOSV_lab/NIOSV_lab_stream_bridge_0.ip
 
 # FPGA AI Suite's Platform Designer wrapper keeps DDR-free initialization
 # filenames relative.  Make the generated on-chip parameters visible to
 # Analysis & Synthesis and register them for programming-file generation.
-set_global_assignment -name SEARCH_PATH ../../build/fpga_ai/generated_ip/altera_ai_ip/verilog/resnet8_agx3_logits_AGX3
+set_global_assignment -name SEARCH_PATH ../../build/fpga_ai/generated_ip/altera_ai_ip/verilog/resnet8_agx3_int8_k16c8_AGX3
 set_global_assignment -name SEARCH_PATH ../../build/fpga_ai/generated_ip/altera_ai_ip/verilog/sequential_ip
-set_global_assignment -name MIF_FILE ../../build/fpga_ai/generated_ip/altera_ai_ip/verilog/sequential_ip/ddrfree_bias_scale_hw_0_0.mif
-set_global_assignment -name MIF_FILE ../../build/fpga_ai/generated_ip/altera_ai_ip/verilog/sequential_ip/ddrfree_bias_scale_hw_0_0.mif.hldram_lbr.mif
-set_global_assignment -name MIF_FILE ../../build/fpga_ai/generated_ip/altera_ai_ip/verilog/sequential_ip/ddrfree_bias_scale_hw_1_0.mif
-set_global_assignment -name MIF_FILE ../../build/fpga_ai/generated_ip/altera_ai_ip/verilog/sequential_ip/ddrfree_bias_scale_hw_1_0.mif.hldram_lbr.mif
-set_global_assignment -name MIF_FILE ../../build/fpga_ai/generated_ip/altera_ai_ip/verilog/sequential_ip/ddrfree_bias_scale_hw_reconfig.mif
-set_global_assignment -name MIF_FILE ../../build/fpga_ai/generated_ip/altera_ai_ip/verilog/sequential_ip/ddrfree_config.mif
-set_global_assignment -name MIF_FILE ../../build/fpga_ai/generated_ip/altera_ai_ip/verilog/sequential_ip/ddrfree_filter_hw_exponent_0_0.mif
-set_global_assignment -name MIF_FILE ../../build/fpga_ai/generated_ip/altera_ai_ip/verilog/sequential_ip/ddrfree_filter_hw_exponent_0_0.mif.hldram_lbr.mif
-set_global_assignment -name MIF_FILE ../../build/fpga_ai/generated_ip/altera_ai_ip/verilog/sequential_ip/ddrfree_filter_hw_exponent_0_0.mif.hldram_lt.mif
-set_global_assignment -name MIF_FILE ../../build/fpga_ai/generated_ip/altera_ai_ip/verilog/sequential_ip/ddrfree_filter_hw_mantissa_0_0.mif
-set_global_assignment -name MIF_FILE ../../build/fpga_ai/generated_ip/altera_ai_ip/verilog/sequential_ip/ddrfree_filter_hw_mantissa_0_0.mif.hldram_lbr.mif
-set_global_assignment -name MIF_FILE ../../build/fpga_ai/generated_ip/altera_ai_ip/verilog/sequential_ip/ddrfree_filter_hw_mantissa_0_0.mif.hldram_lt.mif
-set_global_assignment -name MIF_FILE ../../build/fpga_ai/generated_ip/altera_ai_ip/verilog/sequential_ip/ddrfree_filter_hw_mantissa_1_0.mif
-set_global_assignment -name MIF_FILE ../../build/fpga_ai/generated_ip/altera_ai_ip/verilog/sequential_ip/ddrfree_filter_hw_mantissa_1_0.mif.hldram_lbr.mif
-set_global_assignment -name MIF_FILE ../../build/fpga_ai/generated_ip/altera_ai_ip/verilog/sequential_ip/ddrfree_filter_hw_mantissa_1_0.mif.hldram_lt.mif
-set_global_assignment -name MIF_FILE ../../build/fpga_ai/generated_ip/altera_ai_ip/verilog/sequential_ip/ddrfree_filter_hw_reconfig.mif
-set_global_assignment -name IP_FILE ip/NIOSV_lab/NIOSV_lab_fpga_ai.ip
+# The Platform Designer rebuild script recreates the fpga_ai instance, which
+# mints a new .ip filename each time.  Only the current one may be assigned:
+# the previous NIOSV_lab_fpga_ai.ip still names the removed
+# resnet8_agx3_logits_AGX3 architecture directory.
+# Phase 5 in-silicon capture of the CoreDLA streamer output datapath.
+# Authored headlessly by build/fpga_ai/signaltap/gen_stp.py and enabled with
+# "quartus_stp axc3000_top --stp_file=dla_out_capture.stp --enable".
+# The Logic Analyzer Interface is a separate (unused) feature and is left off:
+# quartus_stp --enable turns both on, and there is no .lai file in this project.
+# set_global_assignment -name USE_SIGNALTAP_FILE dla_out_capture.stp
+set_global_assignment -name ENABLE_SIGNALTAP OFF
+set_global_assignment -name ENABLE_LOGIC_ANALYZER_INTERFACE OFF
+# ---------------------------------------------------- Phase 10 / Phase 11
+# The CoreDLA core clock is split out of the single 100 MHz domain:
+# iopll_0.outclk1 drives fpga_ai.dla_clk only, while
+# outclk0 (100 MHz) keeps driving the Nios, the pseudo-DDR RAMs
+# and fpga_ai's ddr_clk / irq_clk.  No SDC changes are needed or wanted: the
+# IOPLL IP derives both clocks automatically, and every ddr_clk<->dla_clk path
+# inside the CoreDLA IP goes through dla_clock_cross_full_sync /
+# dla_clock_cross_half_sync / dla_cdc_reset_async, all of which are already
+# cut by the IP's own dla_clock_cross_sync.sdc.  Adding our own false paths
+# would only mask real violations.
+#
+# Phase 11 raises outclk1 to 225 MHz.  The 600 MHz VCO cannot make 225 while
+# holding outclk0 at exactly 100, so the IOPLL re-solved to VCO 1800 MHz with
+# M=72, N=1, C0=18 (100.000 MHz) and C1=8 (225.000 MHz).  Both are exact -- no
+# frequency error on either domain.  Verified in the generated
+# ip/NIOSV_lab/NIOSV_lab_iopll_0/altera_iopll_2110/synth/*.v (out_clk_0_freq /
+# out_clk_1_freq) rather than from the .ip's gui_* parameters, which ip-deploy
+# leaves stale: the IOPLL is in basic mode and re-derives every counter from
+# the desired output frequencies at generation time.
+#
+# Phase 9 closed at 100 MHz with 1.889 ns of slack to spare, so the fitter had
+# no reason to optimise anything.  A post-fit STA probe of that snapshot
+# (scripts/probe_dla_fmax.tcl) measured the CoreDLA-internal Fmax at only
+# 146.6 MHz unconstrained, so 200 MHz needs real fitter effort rather than
+# luck.  ALLOW_REGISTER_RETIMING is already On by default for Agilex 3.
+set_global_assignment -name OPTIMIZATION_MODE "Superior Performance With Maximum Placement Effort"
+set_global_assignment -name FITTER_EFFORT "Standard Fit"
+
+# rebuild_fpga_ai_instance.tcl re-adds fpga_ai and the three pseudo-DDR RAMs,
+# which mints fresh .ip filenames every run and leaves the previous ones behind
+# in this file.  Only the set that NIOSV_lab.qsys actually references may be
+# assigned -- a stale entry points at a removed architecture directory and
+# breaks Analysis & Synthesis.  Phase 11 retired _fpga_ai_5 / _dla_par0_0 /
+# _dla_par1_0 / _dla_io_0 in favour of the _6 / _1 generation below.
+
+# ---------------------------------------------------------------- Phase 12
+# Nios-less, JTAG-hosted system.  niosv_m / jtag_uart / sysid / onchip_memory
+# are gone; altera_jtag_avalon_master ("jtag_master") is the only host.
+# scripts/rebuild_phase12_niosless.tcl mints fresh NIOSV_lab_<inst>_<n>.ip
+# names on every run, so this list is re-derived from the saved NIOSV_lab.qsys
+# after each rebuild -- a stale entry points at a removed architecture
+# directory and breaks Analysis & Synthesis.
+set_global_assignment -name IP_FILE ip/NIOSV_lab/NIOSV_lab_clock_in.ip
+set_global_assignment -name IP_FILE ip/NIOSV_lab/NIOSV_lab_reset_in.ip
+set_global_assignment -name IP_FILE ip/NIOSV_lab/NIOSV_lab_iopll_0.ip
+set_global_assignment -name IP_FILE ip/NIOSV_lab/reset_release.ip
+set_global_assignment -name IP_FILE ip/NIOSV_lab/NIOSV_lab_jtag_master.ip
+set_global_assignment -name IP_FILE ip/NIOSV_lab/NIOSV_lab_fpga_ai_8.ip
+set_global_assignment -name IP_FILE ip/NIOSV_lab/NIOSV_lab_dla_par0_3.ip
+set_global_assignment -name IP_FILE ip/NIOSV_lab/NIOSV_lab_dla_par1_3.ip
+set_global_assignment -name IP_FILE ip/NIOSV_lab/NIOSV_lab_dla_par2.ip
+set_global_assignment -name IP_FILE ip/NIOSV_lab/NIOSV_lab_dla_io0.ip
+set_global_assignment -name IP_FILE ip/NIOSV_lab/NIOSV_lab_dla_io1.ip

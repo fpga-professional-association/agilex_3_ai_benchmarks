@@ -418,7 +418,6 @@ Altera and sold by Altera or its authorized distributors.-->
         <ipxact:fileSetRef>
           <ipxact:localName>QUARTUS_SYNTH</ipxact:localName>
         </ipxact:fileSetRef>
-        <ipxact:parameters></ipxact:parameters>
       </ipxact:componentInstantiation>
     </ipxact:instantiations>
     <ipxact:ports>
@@ -426,7 +425,6 @@ Altera and sold by Altera or its authorized distributors.-->
         <ipxact:name>clock</ipxact:name>
         <ipxact:wire>
           <ipxact:direction>in</ipxact:direction>
-          <ipxact:vectors></ipxact:vectors>
           <ipxact:wireTypeDefs>
             <ipxact:wireTypeDef>
               <ipxact:typeName>STD_LOGIC</ipxact:typeName>
@@ -439,7 +437,6 @@ Altera and sold by Altera or its authorized distributors.-->
         <ipxact:name>reset_n</ipxact:name>
         <ipxact:wire>
           <ipxact:direction>in</ipxact:direction>
-          <ipxact:vectors></ipxact:vectors>
           <ipxact:wireTypeDefs>
             <ipxact:wireTypeDef>
               <ipxact:typeName>STD_LOGIC</ipxact:typeName>
@@ -470,7 +467,6 @@ Altera and sold by Altera or its authorized distributors.-->
         <ipxact:name>address</ipxact:name>
         <ipxact:wire>
           <ipxact:direction>in</ipxact:direction>
-          <ipxact:vectors></ipxact:vectors>
           <ipxact:wireTypeDefs>
             <ipxact:wireTypeDef>
               <ipxact:typeName>STD_LOGIC</ipxact:typeName>
@@ -508,7 +504,7 @@ Altera and sold by Altera or its authorized distributors.-->
         <ipxact:parameter parameterId="HASH_INT" type="string">
           <ipxact:name>HASH_INT</ipxact:name>
           <ipxact:displayName>Auto Generated HASH</ipxact:displayName>
-          <ipxact:value>983eaade</ipxact:value>
+          <ipxact:value>812f366b</ipxact:value>
         </ipxact:parameter>
       </ipxact:parameters>
     </altera:altera_module_parameters>
@@ -1003,7 +999,7 @@ Altera and sold by Altera or its authorized distributors.-->
                 &lt;suppliedSystemInfos&gt;
                     &lt;entry&gt;
                         &lt;key&gt;CPU_INFO_ID&lt;/key&gt;
-                        &lt;value&gt;983eaade&lt;/value&gt;
+                        &lt;value&gt;812f366b&lt;/value&gt;
                     &lt;/entry&gt;
                 &lt;/suppliedSystemInfos&gt;
                 &lt;consumedSystemInfos&gt;

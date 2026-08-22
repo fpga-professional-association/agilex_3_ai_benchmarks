@@ -4,7 +4,7 @@ set_module_property NAME resnet8_stream_bridge
 set_module_property DISPLAY_NAME "ResNet-8 MM/AXI-stream bridge"
 set_module_property VERSION 1.0
 set_module_property GROUP "MLPerf Tiny"
-set_module_property DESCRIPTION "Three 32-bit writes form one 96-bit DLA input beat; four reads drain one 128-bit output beat."
+set_module_property DESCRIPTION "Three 32-bit writes form one 96-bit DLA input beat; two reads drain one 64-bit output beat."
 set_module_property OPAQUE_ADDRESS_MAP true
 
 add_fileset synth QUARTUS_SYNTH ""
@@ -48,8 +48,8 @@ add_interface_port source m_axis_tready tready Input 1
 add_interface sink axi4stream end
 set_interface_property sink associatedClock clk
 set_interface_property sink associatedReset reset
-add_interface_port sink s_axis_tdata tdata Input 128
+add_interface_port sink s_axis_tdata tdata Input 64
 add_interface_port sink s_axis_tvalid tvalid Input 1
 add_interface_port sink s_axis_tready tready Output 1
 add_interface_port sink s_axis_tlast tlast Input 1
-add_interface_port sink s_axis_tstrb tstrb Input 16
+add_interface_port sink s_axis_tstrb tstrb Input 8

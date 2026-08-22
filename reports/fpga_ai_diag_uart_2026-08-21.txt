@@ -1,0 +1,36 @@
+juart-terminal: connected to hardware target using JTAG UART on cable
+juart-terminal: "USB Blaster III [USB-1]", device 1, instance 0
+juart-terminal: (Use the IDE stop button or Ctrl-C to terminate)
+
+fpga_ai_resnet8 diag build=phase1 csr=0x000a0000 bridge=0x000a1000 clock=100000000
+bringup ip_reset=1 settle_ticks=8192 mask=0x00000003 irq_after_clear=0x00000000 ready_streaming_readback=0x00000001 diagnostics=0x00000000 completion_count=0 license=0x00000000
+discovery off=0x0004 value=0x73a2b220 expected=0x73a2b220 match=1
+discovery off=0x0010 value=0x36323032 expected=0x36323032 match=1
+discovery off=0x0014 value=0x312e312e expected=0x312e312e match=1
+discovery off=0x0018 value=0x0037312f expected=0x0037312f match=1
+discovery off=0x0030 value=0x6e736572 expected=0x6e736572 match=1
+discovery off=0x0034 value=0x5f387465 expected=0x5f387465 match=1
+discovery off=0x0038 value=0x33786761 expected=0x33786761 match=1
+discovery off=0x003c value=0x676f6c5f expected=0x676f6c5f match=1
+discovery off=0x0040 value=0x00737469 expected=0x00737469 match=1
+discovery_summary words=9 zero=0 mismatch=0
+profile_abs tag=post_reset IF0=0 IF1=0 IF2=0 IF3=1 IF4=2 IF5=3 IF6=6 IF9=0 IF10=0 IF11=0 IF12=0 IF17=0 IF18=0
+case=zero_inf1 raw_words=10 beats=2 cycles=1022144 strobes=ffff,000f raw: 5058 5098 506c 50f2 5058 5098 506c 50f2 5058 5098 class=3
+status tag=zero_inf1 irq=0x00000002 diagnostics=0x00000000 completion_count=1
+profile_delta tag=inf1 IF0=0 IF1=0 IF2=0 IF3=37 IF4=74 IF5=111 IF6=48 IF9=888576 IF10=66889 IF11=29731 IF12=29731 IF17=66886 IF18=0
+progress tag=inf1 input_beats=512 output_beats=2 completions_delta=1 active_clocks_delta=1021121 core_clocks_delta=1021096
+case=zero_inf2 raw_words=10 beats=2 cycles=1022146 strobes=ffff,000f raw: 5058 5098 506c 50f2 5058 5098 506c 50f2 5058 5098 class=3
+status tag=zero_inf2 irq=0x00000002 diagnostics=0x00000000 completion_count=2
+profile_delta tag=inf2 IF0=0 IF1=0 IF2=0 IF3=37 IF4=74 IF5=111 IF6=48 IF9=888576 IF10=66889 IF11=29731 IF12=29731 IF17=66886 IF18=0
+progress tag=inf2 input_beats=1024 output_beats=4 completions_delta=2
+case=zero raw_words=10 beats=2 cycles=1022571 strobes=ffff,000f raw: 5058 5098 506c 50f2 5058 5098 506c 50f2 5058 5098 class=3
+status tag=zero irq=0x00000002 diagnostics=0x00000000 completion_count=3
+case=all255 raw_words=10 beats=2 cycles=1478968 strobes=ffff,000f raw: 5058 5098 506c 50f2 5058 5098 506c 50f2 5058 5098 class=3
+status tag=all255 irq=0x00000002 diagnostics=0x00000000 completion_count=4
+case=synthetic_nhwc_stream raw_words=10 beats=2 cycles=1445022 strobes=ffff,000f raw: 5058 5098 506c 50f2 5058 5098 506c 50f2 5058 5098 class=3
+status tag=synthetic_nhwc_stream irq=0x00000002 diagnostics=0x00000000 completion_count=5
+case=synthetic_nchw_stream raw_words=10 beats=2 cycles=1491100 strobes=ffff,000f raw: 5058 5098 506c 50f2 5058 5098 506c 50f2 5058 5098 class=3
+status tag=synthetic_nchw_stream irq=0x00000002 diagnostics=0x00000000 completion_count=6
+final bridge_status=0x00000f01 license=0x00000000 irq=0x00000000 diagnostics=0x00000000 ready_streaming=0x00000001 completion_count=6 bridge_counts=3072,12
+inferences_this_run=6
+done

@@ -1,0 +1,60 @@
+juart-terminal: connected to hardware target using JTAG UART on cable
+juart-terminal: "USB Blaster III [USB-1]", device 1, instance 0
+juart-terminal: (Use the IDE stop button or Ctrl-C to terminate)
+
+case=zero_inf1 raw_words=10 beats=2 cycles=1022148 strobes=ffff,000f raw: 5058 5098 506c 50f2 5058 5098 506c 50f2 5058 5098 class=3
+status tag=zero_inf1 irq=0x00000002 diagnostics=0x00000000 completion_count=1
+profile_delta tag=inf1 IF0=0 IF1=0 IF2=0 IF3=37 IF4=74 IF5=111 IF6=48 IF7=0 IF8=0 IF9=888576 IF10=66889 IF11=29731 IF12=29731 IF13=0 IF14=0 IF15=0 IF16=0 IF17=66886 IF18=0 IF19=0 IF20=0
+ifprofile tag=inf1 IF0 vld=0 rdy=0 txn=0 bp=0 starv=0
+ifprofile tag=inf1 IF1 vld=0 rdy=0 txn=0 bp=0 starv=0
+ifprofile tag=inf1 IF2 vld=0 rdy=0 txn=0 bp=0 starv=0
+ifprofile tag=inf1 IF3 vld=0 rdy=0 txn=37 bp=24541835 starv=0
+ifprofile tag=inf1 IF4 vld=0 rdy=0 txn=74 bp=24541798 starv=0
+ifprofile tag=inf1 IF5 vld=0 rdy=0 txn=111 bp=24541761 starv=0
+ifprofile tag=inf1 IF6 vld=0 rdy=0 txn=48 bp=24541824 starv=0
+ifprofile tag=inf1 IF7 vld=0 rdy=0 txn=0 bp=0 starv=0
+ifprofile tag=inf1 IF8 vld=0 rdy=0 txn=0 bp=0 starv=0
+ifprofile tag=inf1 IF9 vld=0 rdy=0 txn=888576 bp=109089 starv=0
+ifprofile tag=inf1 IF10 vld=0 rdy=0 txn=66889 bp=124639 starv=827971
+ifprofile tag=inf1 IF11 vld=0 rdy=0 txn=29731 bp=124587 starv=864983
+ifprofile tag=inf1 IF12 vld=0 rdy=0 txn=29731 bp=129159 starv=860411
+ifprofile tag=inf1 IF13 vld=0 rdy=0 txn=0 bp=0 starv=0
+ifprofile tag=inf1 IF14 vld=0 rdy=0 txn=0 bp=0 starv=0
+ifprofile tag=inf1 IF15 vld=0 rdy=0 txn=0 bp=0 starv=0
+ifprofile tag=inf1 IF16 vld=0 rdy=0 txn=0 bp=0 starv=0
+ifprofile tag=inf1 IF17 vld=0 rdy=0 txn=66886 bp=129176 starv=823204
+ifprofile tag=inf1 IF18 vld=0 rdy=0 txn=0 bp=0 starv=0
+ifprofile tag=inf1 IF19 vld=0 rdy=0 txn=0 bp=0 starv=0
+ifprofile tag=inf1 IF20 vld=0 rdy=0 txn=0 bp=0 starv=0
+progress tag=inf1 input_beats=512 output_beats=2 completions_delta=1 active_clocks_delta=1021124 core_clocks_delta=1021099
+case=synthetic_nhwc_inf2 raw_words=10 beats=2 cycles=1432733 strobes=ffff,000f raw: 5058 5098 506c 50f2 5058 5098 506c 50f2 5058 5098 class=3
+status tag=synthetic_nhwc_inf2 irq=0x00000002 diagnostics=0x00000000 completion_count=2
+profile_delta tag=inf2 IF0=0 IF1=0 IF2=0 IF3=37 IF4=74 IF5=111 IF6=48 IF7=0 IF8=0 IF9=888576 IF10=66889 IF11=29731 IF12=29731 IF13=0 IF14=0 IF15=0 IF16=0 IF17=66886 IF18=0 IF19=0 IF20=0
+ifprofile tag=inf2 IF0 vld=0 rdy=0 txn=0 bp=0 starv=0
+ifprofile tag=inf2 IF1 vld=0 rdy=0 txn=0 bp=0 starv=0
+ifprofile tag=inf2 IF2 vld=0 rdy=0 txn=0 bp=0 starv=0
+ifprofile tag=inf2 IF3 vld=0 rdy=0 txn=37 bp=23120168 starv=0
+ifprofile tag=inf2 IF4 vld=0 rdy=0 txn=74 bp=23120131 starv=0
+ifprofile tag=inf2 IF5 vld=0 rdy=0 txn=111 bp=23120094 starv=0
+ifprofile tag=inf2 IF6 vld=0 rdy=0 txn=48 bp=23120157 starv=0
+ifprofile tag=inf2 IF7 vld=0 rdy=0 txn=0 bp=0 starv=0
+ifprofile tag=inf2 IF8 vld=0 rdy=0 txn=0 bp=0 starv=0
+ifprofile tag=inf2 IF9 vld=0 rdy=0 txn=888576 bp=450364 starv=0
+ifprofile tag=inf2 IF10 vld=0 rdy=0 txn=66889 bp=514560 starv=24498665
+ifprofile tag=inf2 IF11 vld=0 rdy=0 txn=29731 bp=514508 starv=24535875
+ifprofile tag=inf2 IF12 vld=0 rdy=0 txn=29731 bp=533486 starv=24516897
+ifprofile tag=inf2 IF13 vld=0 rdy=0 txn=0 bp=0 starv=0
+ifprofile tag=inf2 IF14 vld=0 rdy=0 txn=0 bp=0 starv=0
+ifprofile tag=inf2 IF15 vld=0 rdy=0 txn=0 bp=0 starv=0
+ifprofile tag=inf2 IF16 vld=0 rdy=0 txn=0 bp=0 starv=0
+ifprofile tag=inf2 IF17 vld=0 rdy=0 txn=66886 bp=533503 starv=823205
+ifprofile tag=inf2 IF18 vld=0 rdy=0 txn=0 bp=0 starv=0
+ifprofile tag=inf2 IF19 vld=0 rdy=0 txn=0 bp=0 starv=0
+ifprofile tag=inf2 IF20 vld=0 rdy=0 txn=0 bp=0 starv=0
+progress tag=inf2 input_beats=1024 output_beats=4 completions_delta=2
+final bridge_status=0x00000f01 license=0x00000000 irq=0x00000000 diagnostics=0x00000000 ready_streaming=0x00000001 completion_count=2 bridge_counts=1024,4
+inferences_this_run=2
+done
+
+
+juart-terminal: exiting due to user timeout
