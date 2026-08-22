@@ -1,0 +1,39 @@
+{
+  "kind": "measured",
+  "level": "PH4",
+  "subject": "resnet8-cifar10-niosless-jtag-340mhz",
+  "date": "2026-08-22",
+  "config": {
+    "device": "A3CY100BM16AE7S",
+    "board": "Arrow AXC3000",
+    "fclk_mhz": 340,
+    "model": "resnet8-cifar10",
+    "quantization": "int8-tflite-mlperf-pretrained",
+    "arch_file": "fpga/ai_suite/resnet8_agx3_int8_k16c8.arch",
+    "bitstream_sha256": "d983a0fa78d5bd9a3de356d252456619cee812854037e41f0f3e2aaff7aea2b1",
+    "report_paths": [
+      "reports/fpga_ai_speed_hunt_2026-08-21.md",
+      "reports/fpga_ai_clock_scaling_2026-08-21.md"
+    ],
+    "tool_versions": {
+      "quartus": "26.1.0 Build 110 (Pro, Agilex 3)",
+      "fpga_ai_suite": "2026.1.1+b17",
+      "openvino": "2025.4.0 (runtime install only; not in the deploy loop)",
+      "python": "3.14 + NumPy host tooling"
+    },
+    "utilization": {
+      "alm": 24024,
+      "dsp": 24,
+      "m20k": 254
+    },
+    "licensed_ip": false
+  },
+  "metrics": {
+    "accuracy_top1": 0.84,
+    "n_records": 200,
+    "fps": 2178.4,
+    "latency_us_p50": 459.05,
+    "fmax_mhz": 342.94
+  },
+  "notes": "Same Nios-less k16/c8 design as ph4_*full10k*, clocked at the die's practical ceiling: dla_clk 340.000 MHz, ddr_clk 130.769 MHz (IOPLL VCO 1700, M=68, C0=13, C1=5). 340 sits 0.9% under the hard Minimum-Pulse-Width silicon limit of this -E7S speed grade (Quartus Restricted Fmax 342.94 MHz; a 375 MHz build met setup/hold/recovery but failed MPW at -0.250 ns and was rejected). Timing met on every check: dla setup +0.157 ns, MPW +0.025 ns. METRICS: single-stream engine latency 459.05 us = 60,029 ddr ticks x 7.64706 ns (jobs_active-gated CLOCKS_ACTIVE; tick is 7.647 ns here because ddr_clk=130.769 MHz - not the 10 ns of the 100 MHz builds) -> 2,178.4 fps; pipelined marginal job 440.39 us at descriptor-queue depth >= 8 -> 2,270.7 fps (fit: ticks(N)=57,590N+2,439, saturated at depth 8). Empirical scaling law across all measured rungs: job_us = 141,840/f_dla_MHz + fixed (fixed term 54.77 us at ddr 100 MHz, 41.9 us at 130.769 MHz); the 205 KB per-job parameter re-fetch was directly measured to be only ~6% of the job and is not the bottleneck. ACCURACY: official MLPerf Tiny ic01 200-image class-balanced subset (perf_samples_idxs.npy), 168/200 = 84.00% - bit-identical logits, class decisions, and confusion matrix to the full-10k build (which scored 86.33% on all 10,000; at n=200 the sampling SE is ~2.6 pp so 84.00% is statistically consistent with both the 85% floor and the 86.5% reference). Bit-exactness across the clock change was verified on all 200 ic01 images plus the deterministic synthetic self-check. Remaining headroom on this die is blocked, not unexplored: the 2x k16c16 core (256 MACs/cycle) was built and measured at 295.73 us but returns constant logits because it only fits via the defective enable_on_chip_parameters mode; with working DDR-served parameters it needs ~275 M20K vs the C100's 262. NOT an official MLPerf Tiny submission."
+}

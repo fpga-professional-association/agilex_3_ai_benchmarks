@@ -31,10 +31,10 @@ fpga/**/NIOSV_lab/
 !fpga/**/ip/NIOSV_lab/*.ip
 fpga/**/ip/NIOSV_lab/*/
 
-# Local benchmark output and transient logs.
+# Local benchmark output and transient logs. Canonical result records in
+# results/ (org schema, copied byte-identical into the results repo) are tracked.
 build/
 compiled_model_dir/
-results/
 logs/
 tmp/
 *.log

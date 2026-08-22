@@ -1,0 +1,42 @@
+{
+  "kind": "measured",
+  "level": "PH4",
+  "subject": "resnet8-cifar10-niosless-jtag-full10k",
+  "date": "2026-08-22",
+  "config": {
+    "device": "A3CY100BM16AE7S",
+    "board": "Arrow AXC3000",
+    "fclk_mhz": 300,
+    "model": "resnet8-cifar10",
+    "quantization": "int8-tflite-mlperf-pretrained",
+    "arch_file": "fpga/ai_suite/resnet8_agx3_int8_k16c8.arch",
+    "bitstream_sha256": "d16828ff8f66d783ad5af1c75d9e1343cffc1d65d10d3d9727be6d737495c588",
+    "report_paths": [
+      "reports/fpga_ai_cifar10_niosless_2026-08-21.md",
+      "reports/fpga_ai_streaming_egress_escalation.md"
+    ],
+    "tool_versions": {
+      "quartus": "26.1.0 Build 110 (Pro, Agilex 3)",
+      "fpga_ai_suite": "2026.1.1+b17",
+      "openvino": "2025.4.0 (runtime install only; not in the deploy loop)",
+      "python": "3.14 + NumPy host tooling"
+    },
+    "utilization": {
+      "alm": 23991,
+      "dsp": 24,
+      "m20k": 254
+    },
+    "licensed_ip": false
+  },
+  "metrics": {
+    "accuracy_top1": 0.8633,
+    "n_records": 10000,
+    "fps": 1895.5,
+    "latency_us_p50": 527.57,
+    "latency_us_p99": 527.57,
+    "latency_us_min": 520.86,
+    "latency_us_max": 527.57,
+    "fmax_mhz": 330.36
+  },
+  "notes": "Full CIFAR-10 test set (all 10,000 images), one inference each, on the Nios-less design: no soft CPU, host PC drives a JTAG-to-Avalon master via System Console (tools/run_cifar10_jtag.py + tools/jtag_worker.tcl); CoreDLA k16/c8 FP12AGX (DSP INT9 tensor mode TENSOR1X2_MULT8, 128 int8 MACs/cycle, 24 DSPs), parameters (205,056 B, FNV-1a 0x191007b5, verified by JTAG readback every programming cycle) MIF-baked into on-chip pseudo-DDR RAM; no HyperRAM, no external memory. top1 = 8633/10000 = 86.33% (95% CI 85.66-87.00) vs the 85% MLPerf Tiny closed-division floor and the 86.5% reference-model figure; per-class recall min 71.3% (cat), dominant confusion cat<->dog. METRIC PROVENANCE: fps and latency are the DLA's jobs_active-gated CLOCKS_ACTIVE CSR delta (10 ns ticks at ddr_clk=100 MHz), i.e. descriptor-fetch -> feature-writer-done device time; JTAG transfer is excluded by construction (JTAG-inclusive wall rate was ~57 img/s, input-write bound). Latency is deterministic: 9,748/10,000 jobs read exactly 52,757 ticks; the sub-527.57 us tail (min 520.86) is a reproducible counter settling ramp over the first ~252 jobs of each programming cycle, not data-dependent variation. Run used 2 programming cycles (9,499 + 501 images) to respect the unlicensed-IP inference cap; diagnostics bit 2 never asserted. Integrity: all 10,000 logit vectors distinct; the 200-image ic01 subset ran in both cycles and returned bit-identical logits 200/200. Accuracy oracle is the CIFAR-10 test labels; golden integer TFLite model used for the per-cycle warm-up self-check (argmax must equal 6 on the deterministic synthetic image). NOT an official MLPerf Tiny submission. Companion record ph4_*niosless-jtag-340mhz* pushes the same arch to the 340 MHz silicon ceiling with bit-identical logits on the ic01 subset. The enable_on_chip_parameters weight-storage mode remains defective (input-invariant output; see reports/fpga_ai_streaming_egress_escalation.md, cross-referenced with the July ph3 record's DDR-free-path observation) - it is what blocks the fitted-but-wrong 2x k16c16 core."
+}
