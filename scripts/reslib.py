@@ -19,8 +19,9 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 RESULTS_DIR = REPO_ROOT / "results"
 SCHEMA_PATH = RESULTS_DIR / "schema" / "result.schema.json"
 
-# Directories under results/ that hold generated artifacts, not result JSONs.
-_NON_RESULT_DIRS = {"schema", "reports"}
+# Directories under results/ that hold generated artifacts or reference-data
+# bundle manifests (docs/tiny_reference_bundles.md), not result JSONs.
+_NON_RESULT_DIRS = {"schema", "reports", "tiny_bundles"}
 
 
 @dataclass(frozen=True)

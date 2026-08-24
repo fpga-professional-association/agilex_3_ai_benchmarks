@@ -1,0 +1,102 @@
+# resnet8_agx3_int8_k16c8.arch -- SAFE candidate
+#
+# 24 DSPs, 128 int8 MACs/cycle: 2x the DSPs and 2x the MAC rate of the
+# shipping 8x8 arch, and c_vector stays 8 so the DDR input image, the 32 KiB
+# dla_io region and main.c's INPUT_CVEC == 8 packing are all unchanged.
+#
+# Measured, dla_compiler --fanalyze-area on build/fpga_ai/openvino_ir/
+# resnet8_fpga_logits.xml:
+#   ALM(est) 20485   -> ~8.9k actual at 2.3x
+#   DSP      24      = 8 PEs x [2 accum + ceil(8/10)=1 dot]
+#   M20K     131     (IP only; current 8x8 is 109)
+#   configFilterBuffer 205,056 B (config 19,456 + filter 185,600)
+#   inputOutputBuffer   16,896 B (input 16,384 + output 512)
+#   interBuffer              0 B
+#
+# There is NO integer/INT8 arch_precision in FPGA AI Suite 2026.1.1: the
+# ArchParameters.DataType enum (dla/arch/proto/coredla.proto:339-353) contains
+# only FP11/FP16/FP13AGX/FP12AGX/FP15/FP14/FP13/FP12/FP10/FP9/FP8/FP7/S_E8_1_M6.
+# FP12AGX is the int8 path: calc_dot_width(FP12AGX) = 8 bits (sign + 7-bit
+# explicit-one mantissa) and it is the only precision that
+#   (a) is accepted for an INT8-quantized graph -- FP11/FP8/S_E8_1_M6 are
+#       rejected with "Quantized graphs are only supported by precisions with a
+#       mantissa of at least 8 bits", and
+#   (b) selects PeArray dot_mode TENSOR1X2_MULT8, the Agilex 5/3 DSP tensor
+#       mode with 8-bit multipliers ("TENSOR1X2_MULT8 will share 1 feature data
+#       with 2 filter data in 2 columns of multipliers",
+#       dla/fpga/pe_array/dual_inc/dla_pe_array_enums.svh:24).
+# family 'AGX3' maps to DEVICE_AGX5 (arch_params.cpp:1478-1479), which is what
+# unlocks TENSOR1X2_MULT8 on this part.
+#
+# DSP count is fully determined by the arch (arch_params.cpp:952-1080):
+#   filters_per_pe = 2 for TENSOR1X2_MULT8            -> num_pes = k_vector/2
+#   accum DSPs = num_pes * num_features(1) * 2        (ACCUM_FP32_DSP)
+#   dot   DSPs = num_pes * ceil(c_vector / 10)        (NUM_DSP_MULTS = 10)
+# All PEs are DSP-mapped because pe_array.dsp_limit defaults to 100000, i.e.
+# 100% of the MAC math is already in DSP blocks -- the only way to get MORE
+# DSP-resident math is a bigger k_vector/c_vector (or num_lanes).
+#
+# Hard arch rules discovered by compile probe (all confirmed by error text):
+#   * k_vector >= c_vector AND k_vector % c_vector == 0
+#     (input_feeder_k_vector = c_vector at arch_params.cpp:1443, then the
+#      xbar_k_vector check at arch_params.cpp:1445)
+#   * activation.k_vector <= min(k_vector, c_vector)
+#   * pe_array.num_interleaved_features >= 12 for FP12AGX
+#
+
+family : 'AGX3'
+k_vector : 16
+c_vector : 8
+arch_precision : FP12AGX
+
+# stream_buffer_depth must be large enough that every ResNet-8 intermediate
+# tensor stays resident: at 8192 the compiler reports
+# "interBuffer size: 0" (no DDR spill).  Smaller depths spill and add a
+# 55-131 KiB intermediate buffer that would have to be found in M20K.
+stream_buffer_depth : 8192
+
+output_channels_max : 8192
+
+filter_size_width_max : 28
+filter_size_height_max : 28
+
+pe_array {
+  # >= 12 is mandatory for FP12AGX (arch_params.cpp:2878) and is the gate for
+  # TENSOR1X2_MULT8 appearing in get_valid_dot_modes (arch_params.cpp:1955-1958).
+  num_interleaved_features : 12
+  num_interleaved_filters : 1
+  exit_fifo_depth : 1024
+  enable_scale : true
+}
+
+filter_scratchpad {
+  filter_depth : 512
+  bias_scale_depth : 512
+}
+
+dma {
+  csr_addr_width : 11
+  csr_data_bytes : 4
+  ddr_addr_width : 32
+  ddr_burst_width : 4
+  ddr_data_bytes : 32
+  ddr_read_id_width : 2
+  ddr_write_id_width : 5
+}
+
+activation {
+  k_vector : 8
+  enable_clamp : false
+  enable_round_clamp : true
+  enable_leaky_relu : false
+  enable_sigmoid : false
+  enable_prelu : false
+}
+
+pool {
+  k_vector : 1
+  max_window_height : 3
+  max_window_width : 3
+  max_stride_vertical : 4
+  max_stride_horizontal : 4
+}
