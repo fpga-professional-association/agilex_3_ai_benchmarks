@@ -35,6 +35,22 @@ official 200-image `ic01` subset:
 > 10,000-inference cap; the full-10k run used two programming cycles. **Not an official MLPerf
 > Tiny submission.**
 
+### Watch it classify — live JTAG viewer
+
+[`sw/ph4_jtag_host/live_viewer.py`](sw/ph4_jtag_host/live_viewer.py) tails a run's append-only
+`results.jsonl` and shows each CIFAR-10 image being sent over JTAG and classified on the board:
+the 16,384-byte FP16 tensor transfer (measured time and KiB/s), the ten FP16 logits the DLA
+returns, predicted vs true class, device-time latency, and a running top-1 score. Read-only on
+the run directory, so it cannot perturb a measurement in progress. The runner that produced the
+PH4 records lives alongside it — see [`sw/ph4_jtag_host/`](sw/ph4_jtag_host/README.md).
+
+![Live viewer replaying the full-10k hardware run: truck #6218 classified correctly, logit bars,
+527.6 µs device time, JTAG transfer stats](docs/images/live_viewer_truck_6218.png)
+
+![Final frame of the full-10k replay: image #9999 (horse) correct, running score 8633/10000 =
+86.33 % top-1 — the canonical accuracy, re-derived frame by frame from the raw hardware
+records](docs/images/live_viewer_final_9999.png)
+
 ## System configuration — current best (Nios-less, on-chip parameters)
 
 | | |
@@ -126,8 +142,9 @@ was produced by an AI agent (Claude Code) working the issue roadmap under the ru
 [`AGENTS.md`](AGENTS.md), with one engineer reviewing every PR and handling the physical board.
 The PH4 Nios-less records were produced by a second, independent AI-agent campaign in a separate
 native-Windows workspace against the same board and pinned MLCommons sources; its result JSONs,
-architecture file, and the four supporting reports under `docs/fpga_ai_*` were imported here
-verbatim (paths rebased to this repo).
+architecture file, the four supporting reports under `docs/fpga_ai_*`, and the host tooling under
+[`sw/ph4_jtag_host/`](sw/ph4_jtag_host/README.md) (runner, System Console worker, live viewer)
+were imported here verbatim (record paths rebased to this repo).
 Write-ups on fpgapa.org:
 
 - **Case study:** [End-to-end FPGA development with Claude](https://fpgapa.org/blog/end-to-end-fpga-development-with-claude.html)
